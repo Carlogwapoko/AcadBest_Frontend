@@ -1,0 +1,20 @@
+:host{display:block;min-width:0}
+.user-name{display:inline-flex;align-items:center;gap:9px;min-width:0}
+.user-avatar,.account-picture-preview{display:grid;place-items:center;flex:0 0 auto;overflow:hidden;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--navy2));color:#fff;font-weight:700}
+.user-avatar{width:34px;height:34px;font-size:11px}
+.user-avatar img,.account-picture-preview img{width:100%;height:100%;object-fit:cover}
+.account-picture-editor{display:flex;align-items:center;gap:14px;padding:14px 0;margin:4px 0 10px;border-bottom:1px solid var(--bd)}
+.account-picture-preview{width:64px;height:64px;font-size:19px}
+.account-picture-controls{min-width:0}
+.account-picture-controls>strong{color:var(--navy2)}
+.account-picture-controls .sub{margin-top:3px}
+.account-picture-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:9px}
+.account-picture-input{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;clip-path:inset(50%);border:0}
+.account-picture-input:focus-visible+.btn{outline:3px solid var(--blue);outline-offset:3px}
+.user-actions{gap:8px}
+.user-actions .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:84px;padding:6px 10px}
+.user-actions app-icon{margin:0}
+@media(max-width:600px){
+  .account-picture-editor{align-items:flex-start}
+  .account-picture-preview{width:56px;height:56px}
+}

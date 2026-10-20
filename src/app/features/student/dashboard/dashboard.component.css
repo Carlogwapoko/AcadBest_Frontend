@@ -1,0 +1,3 @@
+:host{display:block;min-width:0}
+.announcement-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.announcement-empty .eic{flex:0 0 auto}

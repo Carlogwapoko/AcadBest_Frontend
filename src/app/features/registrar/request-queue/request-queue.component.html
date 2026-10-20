@@ -1,0 +1,8 @@
+<div class="feature-content"><div class="row"><input placeholder="Search by ID, student or type" [(ngModel)]="q" (ngModelChange)="searchChanged()">
+<select [(ngModel)]="st" (ngModelChange)="filtersChanged()">@for(x of statuses;track x){<option>{{x}}</option>}</select><select [(ngModel)]="ty" (ngModelChange)="filtersChanged()"><option>All</option>@for(t of d.reqTypes;track t){<option>{{t}}</option>}</select></div>
+@if(loadError){<div class="empty" role="alert">{{loadError}} <button class="btn sec sm" (click)="loadPage(page)">Retry</button></div>}
+@else if(loading&&!list.length){<div class="empty" role="status"><span class="sp"></span>Loading requests…</div>}
+@else if(!loading&&!list.length){<div class="empty"><div class="eic"><app-icon name="inbox" [size]="24"/></div>No records found. No requests match your search or filters.</div>}
+@else if(list.length){<div class="tw"><table><tr><th>ID</th><th>Student</th><th>Type</th><th>Needed</th><th>Status</th></tr>@for(r of list;track r.id){<tr class="cl" (click)="sel=r"><td>{{r.id}}</td><td>{{r.by}}</td><td>{{r.type}}</td><td>{{r.need}}</td><td><span class="sb" [class]="'sb '+chip(r.st)"><app-icon [name]="statusIcon(r.st)" [size]="14"/>{{r.st}}</span></td></tr>}</table></div>
+<div class="row"><span>{{total}} requests</span></div>}</div>
+<app-req-detail [r]="sel" [canAct]="true"/>

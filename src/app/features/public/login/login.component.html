@@ -1,0 +1,8 @@
+<div id="login"><div class="lcard"><div class="lside"><div class="logo" style="padding:0;border:0;margin:0"><i class="lm">A</i><div>Acad<span>Best</span><small>ACES Tagum College</small></div></div>
+<div><h2>Welcome back to your school portal</h2><p>Grades, schedules, requests, and announcements — all in one secure place.</p></div><p style="font-size:11.5px">© 2026 ACES Tagum College</p></div>
+<div class="lform"><a class="lx" routerLink="/" aria-label="Close"><app-icon name="x" [size]="16"/></a><h3>Log in</h3><p class="sub">Sign in to continue to your dashboard.</p>
+<app-field label="E-mail"><input [(ngModel)]="email" placeholder="Enter your email address" autocomplete="username" (keyup.enter)="go()"></app-field>
+<app-field label="Password"><div class="password-control"><input [type]="showPassword?'text':'password'" [(ngModel)]="pw" placeholder="Enter your password" autocomplete="current-password" (keyup.enter)="go()"><button type="button" class="password-toggle" (click)="showPassword=!showPassword" [attr.aria-label]="showPassword?'Hide password':'Show password'" [attr.aria-pressed]="showPassword"><app-icon [name]="showPassword?'eye-off':'eye'" [size]="17"/></button></div></app-field>
+<div class="err" style="margin-top:4px;font-size:13px">{{err}}</div>
+<button class="btn" style="width:100%;margin-top:16px;padding:12px" [disabled]="busy" (click)="go()">@if(busy){<span class="sp"></span>}Log In</button>
+</div></div></div>

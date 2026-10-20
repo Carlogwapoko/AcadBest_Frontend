@@ -1,0 +1,14 @@
+<div class="feature-content"><div class="tabs"><button [class.on]="tab=='new'" (click)="tab='new'">New Request</button><button [class.on]="tab=='my'" (click)="tab='my'">My Requests ({{total}})</button></div>
+@if(tab=='new'){<div class="fm"><div class="fmh"><span class="fi"><app-icon name="file" [size]="20"/></span><div><h3 style="margin:0">New service request</h3><p class="sub">Complete all required fields, then submit for registrar review.</p></div></div>
+<app-field label="Request type" [error]="e['type']"><select [(ngModel)]="f.type" [class.bad]="e['type']"><option value="Select…">Select a request type</option>@for(t of d.reqTypes;track t){<option>{{t}}</option>}</select></app-field>
+<app-field label="Purpose" [error]="e['purpose']"><input [(ngModel)]="f.purpose" [class.bad]="e['purpose']" placeholder="e.g. Scholarship application"></app-field>
+<app-field label="Number of copies (1–5)" [error]="e['copies']"><input type="number" min="1" max="5" [(ngModel)]="f.copies" [class.bad]="e['copies']" placeholder="Enter number of copies"></app-field>
+<app-field label="Date needed" [error]="e['need']"><input type="date" [min]="d.today" [(ngModel)]="f.need" [class.bad]="e['need']"></app-field>
+<app-field label="Remarks (optional)"><textarea rows="2" [(ngModel)]="f.rem" placeholder="Enter your remarks (optional)"></textarea></app-field>
+<div class="acts"><button class="btn" [disabled]="busy" (click)="submit()">@if(busy){<span class="sp"></span>}Submit Request</button></div></div>}
+@else{@if(loading){<div class="empty" role="status"><span class="sp"></span>Loading your requests…</div>}
+@else if(loadError){<div class="empty" role="alert">{{loadError}} <button class="btn sec sm" (click)="loadPage(page)">Retry</button></div>}
+@else if(!mine.length){<div class="empty"><div class="eic"><app-icon name="inbox" [size]="24"/></div>No records found. You have not submitted any requests yet.</div>}
+@else{<div class="tw request-list" (scroll)="onListScroll($event)"><table><tr><th>ID</th><th>Type</th><th>Needed</th><th>Status</th></tr>@for(r of mine;track r.id){<tr class="cl" (click)="sel=r"><td>{{r.id}}</td><td>{{r.type}}</td><td>{{r.need}}</td><td><span class="chip" [class]="chip(r.st)">{{r.st}}</span></td></tr>}</table></div>
+<div class="request-pagination"><span>{{total}} requests · Page {{page}} of {{lastPage}}</span>@if(loading){<span class="sub" role="status">Loading more…</span>}</div>}}</div>
+<app-req-detail [r]="sel"/>

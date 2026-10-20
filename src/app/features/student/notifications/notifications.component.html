@@ -1,0 +1,14 @@
+<div class="feature-content">
+  <div class="row" style="align-items:center">
+    <span class="sub" style="flex:1;min-width:200px">Grade posts and academic alerts from your instructors. {{unread?unread+' unread.':'You are all caught up.'}}</span>
+    <button class="btn sec" style="flex:0 0 auto" [disabled]="markingAll||!unread" (click)="markAll()">@if(markingAll){<span class="sp"></span>}@else{<app-icon name="check" [size]="16"/>}Mark all as read</button>
+  </div>
+  @for(n of list;track n.id){
+    <div class="ann nt" [class.unread]="!n.read" (click)="read(n)">
+      <div class="ni" [class]="'ni '+n.type"><app-icon [name]="n.type=='alert'?'alert':'trend'" [size]="18"/></div>
+      <div style="flex:1"><b>{{n.t}}</b>@if(!n.read){ <span class="chip">New</span>}<br><span style="color:var(--mu);font-size:13px">{{n.m}}</span><br><small style="color:var(--mu)">{{n.d}}</small></div>
+    </div>
+  } @empty {
+    @if(!d.loading&&!d.loadError){<div class="empty"><div class="eic"><app-icon name="bell" [size]="24"/></div>No records found. No notifications yet.</div>}
+  }
+</div>

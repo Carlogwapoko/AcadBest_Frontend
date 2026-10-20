@@ -1,0 +1,3 @@
+@for(a of items;track a.id){<div class="ann" (click)="sel=a"><b>{{a.t}}</b> @if(a.dt>d.today){<span class="chip">Scheduled</span>}<br><small style="color:var(--mu)">{{a.d}} · {{a.aud}}</small></div>}
+@empty{@if(!loading){<div class="empty"><div class="eic"><app-icon name="inbox" [size]="24"/></div>{{emptyMessage}}</div>}}
+<app-modal [open]="!!sel" [title]="sel?.t||''" (closed)="sel=null">@if(sel){<p><span class="chip">{{sel.aud}}</span></p><p>{{sel.m}}</p><small style="color:var(--mu)">Posted by {{sel.by}} · {{sel.d}}</small>}</app-modal>

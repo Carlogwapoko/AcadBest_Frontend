@@ -1,0 +1,7 @@
+:host{display:block;min-width:0}
+.subject-actions{gap:8px}
+.subject-actions .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:84px;padding:6px 10px}
+.subject-actions app-icon{margin:0}
+.assign-action{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:96px;padding:6px 10px}
+.assign-action app-icon{margin:0}
+.assign-action-cell{text-align:center;vertical-align:middle}

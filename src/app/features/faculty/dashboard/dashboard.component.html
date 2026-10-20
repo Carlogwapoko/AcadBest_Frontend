@@ -1,0 +1,7 @@
+<div class="grid g3"><div class="card stat"><app-icon name="book" [size]="20"/>Subjects<b>{{d.mySubjects(uid).length}}</b><a routerLink="../subjects">View →</a></div>
+<div class="card stat"><app-icon name="users" [size]="20"/>Advisees<b>{{d.myStudents(uid).length}}</b>In your classes</div>
+<div class="card stat"><app-icon name="alert" [size]="20"/>At-Risk<b style="color:var(--er)">{{risk.length}}</b><a routerLink="../at-risk">Review →</a></div></div>
+@if(!d.mySubjects(uid).length){<div class="card" style="margin-top:20px">@if(!d.loading&&!d.loadError){<div class="empty">No records found. No subjects are assigned to your faculty account yet.</div>}</div>}
+@else{<div class="card" style="margin-top:20px"><h3>Needs attention</h3>@if(risk.length){<app-risk-table [items]="risk.slice(0,3)"/>}
+@else if(!d.loading&&!d.loadError){<div class="empty"><div class="eic"><app-icon name="inbox" [size]="24"/></div>No records found. No at-risk advisees at this time.</div>}</div>}
+<div class="card" style="margin-top:20px"><h3>Announcements</h3><app-ann-list [items]="d.anns.slice(0,5)" [loading]="d.loading||!!d.loadError"/></div>

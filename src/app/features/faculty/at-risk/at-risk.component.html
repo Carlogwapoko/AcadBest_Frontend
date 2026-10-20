@@ -1,0 +1,1 @@
+<div class="feature-content"><p style="color:var(--mu);margin-top:0">Flagged when average is below {{d.rules.safe}} (At Risk) or {{d.rules.pass}} (Failing). Thresholds are set by the administrator.</p><app-risk-table [items]="d.atRisk(a.user!.id)" [loading]="d.loading||!!d.loadError"/></div>

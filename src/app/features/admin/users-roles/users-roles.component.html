@@ -1,0 +1,38 @@
+@if(pending.length){
+<div class="card" style="margin-bottom:20px;border-left:4px solid var(--blue)"><h3>Online enrollment applicants</h3>
+  <p class="sub" style="margin:-6px 0 12px">An account can be created only after the registrar approves the application. Student accounts only.</p>
+  <div class="tw"><table><tr><th>Reference</th><th>Name</th><th>Program</th><th>Registrar status</th><th></th></tr>
+  @for(p of pending;track p.ref){<tr><td>{{p.ref}}</td><td>{{fullName(p.name,p.middle_name)}}</td><td>{{p.prog}} · Year {{p.yr}}</td>
+    <td><span class="sb" [class]="'sb '+(p.st=='Enrolled'?'ok':(p.st=='Rejected'?'er':'wn'))"><app-icon [name]="p.st=='Rejected'?'alert':(p.st=='Pending'?'clock':'check')" [size]="14"/>{{p.st=='Enrolled'?'Approved':p.st}}</span></td>
+    <td>@if(p.st=='Enrolled'){<button class="btn sm" (click)="open(null,p)"><app-icon name="plus" [size]="14"/>Create Account</button>}@else{<span class="chip wn"><app-icon name="clock" [size]="12"/>Awaiting approval</span>}</td></tr>}</table></div>
+</div>}
+<div class="feature-content"><div class="row"><input placeholder="Search users" [(ngModel)]="q" (ngModelChange)="searchChanged()"><button class="btn" style="flex:0 0 auto" (click)="open()"><app-icon name="plus" [size]="16"/>Add Users</button></div>
+@if(loadError){<div class="empty" role="alert">{{loadError}} <button class="btn sec sm" (click)="loadUsers(page)">Retry</button></div>}
+@else if(!loading&&!list.length){<div class="empty"><div class="eic"><app-icon name="inbox" [size]="24"/></div>No records found.</div>}
+@else if(list.length){<div class="tw"><table><tr><th>Name</th><th>E-mail</th><th>Role</th><th>Status</th><th></th></tr>@for(u of list;track u.id){<tr><td><span class="user-name"><span class="user-avatar">@if(u.avatar){<img [src]="u.avatar" alt="">}@else{ {{avatarInitials(u.name)}} }</span>{{fullName(u.name,u.middle_name)}}</span></td><td>{{u.email}}</td><td>{{u.role}}</td><td><span class="chip" [class]="u.act?'ok':'er'">{{u.act?'Active':'Inactive'}}</span></td><td><div class="table-actions user-actions"><button type="button" class="btn sm sec" (click)="open(u)"><app-icon name="edit" [size]="14"/>Edit</button><button type="button" class="btn sm dg" (click)="del(u)"><app-icon name="trash" [size]="14"/>Delete</button></div></td></tr>}</table></div>
+<div class="row"><span>{{total}} users</span></div>}</div>
+
+<app-modal [open]="!!m" [maxWidth]="640" [title]="m?(m.ref?'Create student account':(m.id?'Edit':'Add')+' user'):''" (closed)="m=null">@if(m){
+@if(m.lock){<p class="sub" style="margin:-6px 0 4px">@if(m.ref){Approved online applicant {{m.ref}}. }Accounts from enrollment applications are Student accounts only.</p>}
+@if(m.id){<section class="account-picture-editor" aria-label="Manage user profile picture">
+  <div class="account-picture-preview">@if(m.avatar){<img [src]="m.avatar" alt="Selected user profile picture">}@else{<span>{{avatarInitials(m.name)}}</span>}</div>
+  <div class="account-picture-controls">
+    <strong>Profile picture</strong>
+    <p class="sub">JPG, PNG, or WebP · up to 5 MB. This picture appears on the user’s profile and navigation.</p>
+    <div class="account-picture-actions">
+      <input id="account-profile-picture" class="account-picture-input" type="file" accept="image/jpeg,image/png,image/webp"
+        [disabled]="processingPicture" (change)="selectPicture($event)">
+      <label class="btn sec sm" for="account-profile-picture">Choose picture</label>
+      @if(m.avatar){<button class="btn sec sm" type="button" (click)="removePicture()" [disabled]="processingPicture">Remove</button>}
+      @if(processingPicture){<span class="sub" role="status">Preparing picture…</span>}
+    </div>
+  </div>
+</section>}
+<app-field label="Full name" [error]="e['n']"><input [(ngModel)]="m.name" [class.bad]="e['n']" placeholder="Enter full name"></app-field>
+<app-field label="Middle name"><input [(ngModel)]="m.middle_name" placeholder="Enter middle name (optional)"></app-field>
+<app-field label="E-mail" [error]="e['e']"><input type="email" [(ngModel)]="m.email" [class.bad]="e['e']" placeholder="Enter your email address"></app-field>
+<app-field label="Role"><select [(ngModel)]="m.role" [disabled]="m.lock">@if(m.lock){<option>Student</option>}@else{<option>Faculty</option><option>Registrar Staff</option><option>Admin</option>}</select></app-field>
+@if(m.id){<app-field label="Status"><select [(ngModel)]="m.status"><option>Active</option><option>Inactive</option></select></app-field>}
+<app-field [label]="m.id?'New password (leave blank to keep current)':'Temporary password (min. 8 characters)'" [error]="e['p']"><div class="password-control"><input [type]="showPassword?'text':'password'" [(ngModel)]="m.pw" [class.bad]="e['p']" [placeholder]="m.id?'Enter a new password':'Enter a temporary password'" autocomplete="new-password"><button type="button" class="password-toggle" (click)="showPassword=!showPassword" [attr.aria-label]="showPassword?'Hide password':'Show password'" [attr.aria-pressed]="showPassword"><app-icon [name]="showPassword?'eye-off':'eye'" [size]="17"/></button></div></app-field>
+@if(m.lock){<app-field label="Program"><select [(ngModel)]="m.prog"><option>BSTM</option><option>BSED</option><option>BEED</option><option>BSE</option><option>BSMA</option><option>BSHM</option><option>BSIT</option><option>BSBA</option></select></app-field>}
+<div class="acts"><button class="btn" (click)="save()" [disabled]="processingPicture||saving">@if(processingPicture||saving){<span class="sp"></span>}Save User</button></div>}</app-modal>

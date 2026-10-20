@@ -1,0 +1,5 @@
+:host{display:block;min-width:0}
+.risk-summary{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.risk-action{text-align:center;vertical-align:middle}
+.risk-view{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:112px;padding:7px 12px;white-space:nowrap}
+.risk-view app-icon{margin:0}

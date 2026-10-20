@@ -1,0 +1,2 @@
+<div id="toast">@for(t of ui.toasts();track t.id){<div class="t" [class.ok]="t.kind=='ok'" [class.er]="t.kind=='er'"><app-icon [name]="t.kind=='ok'?'check':'alert'" [size]="16"/><span>{{t.msg}}</span></div>}</div>
+@if(ui.confirmState();as c){<div class="modal on" style="z-index:1300"><div class="mb"><h3>{{c.title}}</h3><p>{{c.msg}}</p><div class="acts"><button class="btn sec" (click)="ui.answer(false)">Cancel</button><button class="btn" [class.dg]="c.danger" (click)="ui.answer(true)">{{c.label}}</button></div></div></div>}
