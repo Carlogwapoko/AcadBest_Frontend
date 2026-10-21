@@ -13,7 +13,7 @@ import { fullName } from '../../../shared/full-name';
  */
 @Component({selector:'app-users-roles',standalone:true,imports:[COMMON],styleUrl:'./users-roles.component.css',templateUrl:'./users-roles.component.html'})
 export class UsersRolesComponent{
-  q='';m:any=null;e:any={};processingPicture=false;saving=false;showPassword=false;
+  q='';m:any=null;e:any={};processingPicture=false;saving=false;deletingId:number|null=null;showPassword=false;
   page=1;lastPage=1;total=0;loading=true;loadError='';private searchTimer?:ReturnType<typeof setTimeout>;
   constructor(public d:DataService,private a:AuthService,private ui:UiService,private cdr:ChangeDetectorRef){}
   ngOnInit(){void Promise.all([this.loadUsers(),this.loadApplicants()])}
@@ -65,30 +65,36 @@ export class UsersRolesComponent{
       p:(!m.id||m.pw)&&m.pw.length<8?'Password must be at least 8 characters.':''};
     if(Object.values(this.e).some(x=>x))return;
     const act=m.id?m.status=='Active':true;
+    this.saving=true;
     if(old&&(old.role!=m.role||(old.act&&!act))&&!await this.ui.confirm('Confirm important change',
       `${old.name}: ${old.role!=m.role?`role changes from ${old.role} to ${m.role}. `:''}${old.act&&!act?'Account will be deactivated.':''}`,
-      'Apply Change'))return;
+      'Apply Change')){this.saving=false;this.cdr.markForCheck();return}
     const payload:Record<string,unknown>={name:m.name.trim(),middle_name:m.middle_name.trim(),email:em,role:m.role,
       phone:old?.phone||'',program:m.prog||'BSTM'};
     if(old)payload['active']=act;
     if(m.pw)payload['password']=m.pw;
     if(m.ref)payload['application_ref']=m.ref;
     if(old&&(old.avatar??null)!==m.avatar)payload['avatar_data']=m.avatar;
-    this.saving=true;
     try{
       const user=await this.d.saveUser(old?.id,payload);
       if(this.a.user?.id===user.id)Object.assign(this.a.user,user);
       if(!old)this.total++;
+      if(m.ref)this.d.markEnrollmentAccountIssued(m.ref);
       this.ui.toast(old?'Account updated.':`Account created for ${user.name}. Give the e-mail and temporary password to the user.`);
       this.m=null;
     }catch(error){this.ui.toast(this.message(error),'er')}
     finally{this.saving=false;this.cdr.detectChanges()}
   }
   async del(u:User){if(u.id==this.a.user!.id)return this.ui.toast('You cannot delete your own account.','er');
-    if(await this.ui.confirm('Delete user?',`${u.name} will be permanently removed.`,
-      'Delete',true)){try{await this.d.deleteUser(u.id);this.total=Math.max(0,this.total-1);
-      this.lastPage=Math.max(1,Math.ceil(this.total/25));this.ui.toast('User deleted.')}
-      catch(error){this.ui.toast(this.message(error),'er')}}}
+    if(this.deletingId!==null)return;
+    this.deletingId=u.id;
+    if(!await this.ui.confirm('Delete user?',`${u.name} will be permanently removed.`,
+      'Delete',true)){this.deletingId=null;this.cdr.markForCheck();return}
+    try{await this.d.deleteUser(u.id);this.total=Math.max(0,this.total-1);
+      this.lastPage=Math.max(1,Math.ceil(this.total/25));this.ui.toast('User deleted.');
+      if(!this.d.users.length&&this.page>1)await this.loadUsers(this.page-1)}
+    catch(error){this.ui.toast(this.message(error),'er')}
+    finally{this.deletingId=null;this.cdr.detectChanges()}}
   private message(error:unknown){
     const value=(error as {error?:{message?:string;errors?:Record<string,string[]>}})?.error;
     return value?.errors?Object.values(value.errors).flat()[0]:value?.message

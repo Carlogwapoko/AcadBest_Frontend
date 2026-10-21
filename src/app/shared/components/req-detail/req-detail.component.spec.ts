@@ -18,4 +18,18 @@ describe('ReqDetailComponent',()=>{
     expect(fixture.componentInstance).toBeTruthy();
     expect(fixture.debugElement.componentInstance).toBe(fixture.componentInstance);
   });
+
+  it('notifies the parent when the request dialog closes',()=>{
+    const fixture=TestBed.createComponent(ReqDetailComponent);
+    fixture.componentInstance.r={
+      id:'REQ-1',sid:1,by:'Student',type:'Transcript',purpose:'Scholarship',
+      copies:1,need:'2026-10-21',rem:'',st:'Pending',log:[],
+    };
+    const closed=vi.spyOn(fixture.componentInstance.closed,'emit');
+
+    fixture.componentInstance.close();
+
+    expect(fixture.componentInstance.r).toBeNull();
+    expect(closed).toHaveBeenCalledOnce();
+  });
 });

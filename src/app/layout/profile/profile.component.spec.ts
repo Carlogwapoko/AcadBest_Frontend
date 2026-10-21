@@ -42,4 +42,15 @@ describe('ProfileComponent',()=>{
     expect(fixture.nativeElement.querySelector('.profile-note')?.textContent)
       .toContain('managed by the school administrator');
   });
+
+  it('displays a school ID on an enrolled student profile',()=>{
+    const auth=TestBed.inject(AuthService);
+    auth.user={id:1,name:'Test Student',email:'student@example.com',phone:'',role:'Student',act:true,schoolId:'2026001460'};
+
+    const fixture=TestBed.createComponent(ProfileComponent);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('School ID');
+    expect(fixture.nativeElement.textContent).toContain('2026001460');
+  });
 });

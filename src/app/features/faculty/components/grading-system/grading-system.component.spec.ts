@@ -21,7 +21,7 @@ describe('GradingSystemComponent',()=>{
     expect(fixture.debugElement.componentInstance).toBe(fixture.componentInstance);
   });
 
-  it('opens the grading editor with the selected subject weights',()=>{
+  it('opens the grading editor with component weights and no period-weight section',()=>{
     const fixture=TestBed.createComponent(GradingSystemComponent);
     const component=fixture.componentInstance;
     component.d.subjects['IT101']={n:'Information Technology',u:3,d:'Mon/Wed',tm:'8:00–9:30 AM',
@@ -37,7 +37,9 @@ describe('GradingSystemComponent',()=>{
     expect(fixture.nativeElement.textContent).toContain('Written Works (%)');
     expect(fixture.nativeElement.textContent).toContain('Performance Tasks (%)');
     expect(fixture.nativeElement.textContent).toContain('Exams (%)');
-    expect(component.w).toEqual([25,35,40]);
+    expect(fixture.nativeElement.textContent).toContain('Components in each selected term');
+    expect(fixture.nativeElement.textContent).not.toContain('Grading period weights');
+    expect(fixture.nativeElement.textContent).not.toContain('Prelim (%)');
     expect(component.cw).toEqual([30,50,20]);
   });
 });

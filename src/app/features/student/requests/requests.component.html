@@ -11,4 +11,4 @@
 @else if(!mine.length){<div class="empty"><div class="eic"><app-icon name="inbox" [size]="24"/></div>No records found. You have not submitted any requests yet.</div>}
 @else{<div class="tw request-list" (scroll)="onListScroll($event)"><table><tr><th>ID</th><th>Type</th><th>Needed</th><th>Status</th></tr>@for(r of mine;track r.id){<tr class="cl" (click)="sel=r"><td>{{r.id}}</td><td>{{r.type}}</td><td>{{r.need}}</td><td><span class="chip" [class]="chip(r.st)">{{r.st}}</span></td></tr>}</table></div>
 <div class="request-pagination"><span>{{total}} requests · Page {{page}} of {{lastPage}}</span>@if(loading){<span class="sub" role="status">Loading more…</span>}</div>}}</div>
-<app-req-detail [r]="sel"/>
+<app-req-detail [r]="sel" (closed)="sel=null"/>

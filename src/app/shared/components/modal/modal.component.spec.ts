@@ -30,6 +30,26 @@ describe('ModalComponent',()=>{
     expect(fixture.nativeElement.querySelector('.mb')?.style.getPropertyValue('--modal-width')).toBe('640px');
   });
 
+  it('prevents dismissing an active dialog while its request is processing',()=>{
+    const fixture=TestBed.createComponent(ModalComponent);
+    fixture.componentRef.setInput('open',true);
+    fixture.componentRef.setInput('disableClose',true);
+    fixture.detectChanges();
+    const closed=vi.spyOn(fixture.componentInstance.closed,'emit');
+
+    fixture.componentInstance.esc();
+    fixture.componentInstance.back(new MouseEvent('click'));
+    (fixture.nativeElement.querySelector('.lx') as HTMLButtonElement).click();
+
+    expect(closed).not.toHaveBeenCalled();
+    expect((fixture.nativeElement.querySelector('.lx') as HTMLButtonElement).disabled).toBe(true);
+
+    fixture.componentRef.setInput('disableClose',false);
+    fixture.detectChanges();
+    fixture.componentInstance.esc();
+    expect(closed).toHaveBeenCalledTimes(1);
+  });
+
   it('locks background scrolling only while the modal is open',()=>{
     document.body.style.overflow='auto';
     const fixture=TestBed.createComponent(ModalComponent);

@@ -1,9 +1,6 @@
-<app-modal [open]="!!code" [title]="'Grading System – '+code" (closed)="code=''">
-<p class="sub">{{code?d.subjects[code].n:''}} · each set of weights must total 100%.</p>
-<h4>Grading period weights</h4><div class="r2" style="margin-top:6px"><app-field label="Prelim (%)" [error]="e[0]"><input type="number" min="0" max="100" [(ngModel)]="w[0]" [class.bad]="e[0]" placeholder="Enter percentage"></app-field><app-field label="Midterm (%)" [error]="e[1]"><input type="number" min="0" max="100" [(ngModel)]="w[1]" [class.bad]="e[1]" placeholder="Enter percentage"></app-field></div>
-<app-field label="Final (%)" [error]="e[2]"><input type="number" min="0" max="100" [(ngModel)]="w[2]" [class.bad]="e[2]" placeholder="Enter percentage"></app-field>
-<p style="margin:6px 0 14px"><b>Period total: {{total}}%</b></p>
-<h4>Components in every period</h4><div class="r2" style="margin-top:6px"><app-field label="Written Works (%)" [error]="ce[0]"><input type="number" min="0" max="100" [(ngModel)]="cw[0]" [class.bad]="ce[0]" placeholder="Enter percentage"></app-field><app-field label="Performance Tasks (%)" [error]="ce[1]"><input type="number" min="0" max="100" [(ngModel)]="cw[1]" [class.bad]="ce[1]" placeholder="Enter percentage"></app-field></div>
+<app-modal [open]="!!code" [title]="'Grading System – '+code" [disableClose]="busy" (closed)="code=''">
+<p class="sub">{{code?d.subjects[code].n:''}} · component weights must total 100%.</p>
+<h4>Components in each selected term</h4><div class="r2" style="margin-top:6px"><app-field label="Written Works (%)" [error]="ce[0]"><input type="number" min="0" max="100" [(ngModel)]="cw[0]" [class.bad]="ce[0]" placeholder="Enter percentage"></app-field><app-field label="Performance Tasks (%)" [error]="ce[1]"><input type="number" min="0" max="100" [(ngModel)]="cw[1]" [class.bad]="ce[1]" placeholder="Enter percentage"></app-field></div>
 <app-field label="Exams (%)" [error]="ce[2]"><input type="number" min="0" max="100" [(ngModel)]="cw[2]" [class.bad]="ce[2]" placeholder="Enter percentage"></app-field>
 <p style="margin:6px 0 0"><b>Component total: {{componentTotal}}%</b></p><div class="err" style="font-size:13px;margin-top:6px">{{err}}</div>
 <div class="acts"><button class="btn" [disabled]="busy" (click)="save()">@if(busy){<span class="sp"></span>}Save Grading System</button></div></app-modal>

@@ -5,4 +5,4 @@
 @else if(!loading&&!list.length){<div class="empty"><div class="eic"><app-icon name="inbox" [size]="24"/></div>No records found. No requests match your search or filters.</div>}
 @else if(list.length){<div class="tw"><table><tr><th>ID</th><th>Student</th><th>Type</th><th>Needed</th><th>Status</th></tr>@for(r of list;track r.id){<tr class="cl" (click)="sel=r"><td>{{r.id}}</td><td>{{r.by}}</td><td>{{r.type}}</td><td>{{r.need}}</td><td><span class="sb" [class]="'sb '+chip(r.st)"><app-icon [name]="statusIcon(r.st)" [size]="14"/>{{r.st}}</span></td></tr>}</table></div>
 <div class="row"><span>{{total}} requests</span></div>}</div>
-<app-req-detail [r]="sel" [canAct]="true"/>
+<app-req-detail [r]="sel" [canAct]="true" (closed)="sel=null" (updated)="refreshAfterAction()"/>

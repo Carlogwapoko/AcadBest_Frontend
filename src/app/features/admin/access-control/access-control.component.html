@@ -5,7 +5,7 @@
     @for(m of mods;track m.role+m.key){
       <tr><td>{{roleName[m.role]}}</td><td>{{m.label}}</td><td style="white-space:normal;min-width:240px">{{scope[m.role]}}</td>
       <td>@if(m.locked){<span class="chip"><app-icon name="shield" [size]="12"/> Locked</span>}
-          @else{<button class="tg" [class.on]="on(m)" (click)="toggle(m)" role="switch" [attr.aria-checked]="on(m)" [attr.aria-label]="'Toggle '+m.label"><i></i></button>}</td></tr>
+          @else{<button class="tg" [class.on]="on(m)" [disabled]="busy.has(m.role+':'+m.key)" (click)="toggle(m)" role="switch" [attr.aria-checked]="on(m)" [attr.aria-label]="'Toggle '+m.label"><i></i></button>}</td></tr>
     }
   </table></div>
 </div>

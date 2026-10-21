@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef,Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { COMMON } from '../../../shared/common';
 import { AuthService } from '../../../core/auth.service';
@@ -14,10 +14,9 @@ export class GradeEntryComponent{
   terms=['Prelim','Midterm','Final'];term='Prelim';subj='';
   entries:Record<number,{written_works:ComponentInput;performance_tasks:ComponentInput;exams:ComponentInput}>={};
   bad:Record<number,boolean>={};err='';busy=false;
-  constructor(public d:DataService,private a:AuthService,private ui:UiService,route:ActivatedRoute){
+  constructor(public d:DataService,private a:AuthService,private ui:UiService,private cdr:ChangeDetectorRef,route:ActivatedRoute){
     const q=route.snapshot.queryParamMap.get('s');this.subj=q&&this.mine.includes(q)?q:this.mine[0]||'';this.load()}
   get mine(){return this.d.mySubjects(this.a.user!.id)}
-  get w(){return this.d.subjects[this.subj]?.w||[30,30,40]}
   get cw(){return this.d.subjects[this.subj]?.cw||[30,50,20]}
   get rows(){const rows=this.d.students.filter(s=>this.subj in s.g);
     const termIndex=this.terms.indexOf(this.term);
@@ -32,7 +31,7 @@ export class GradeEntryComponent{
     const values=[entry.written_works,entry.performance_tasks,entry.exams].map(Number);
     if(values.some(value=>!Number.isFinite(value)||value<0||value>100))return null;
     return Number(((values[0]*this.cw[0]+values[1]*this.cw[1]+values[2]*this.cw[2])/100).toFixed(2))}
-  async save(){this.bad={};const ch:Array<{student_id:number;written_works:number;performance_tasks:number;exams:number}>=[];let invalid=0;
+  async save(){if(this.busy)return;this.bad={};const ch:Array<{student_id:number;written_works:number;performance_tasks:number;exams:number}>=[];let invalid=0;
     for(const s of this.rows){const entry=this.entries[s.id];
       const values=[entry?.written_works,entry?.performance_tasks,entry?.exams];
       if(values.every(value=>value===null||value===undefined||value===''))continue;
@@ -42,12 +41,12 @@ export class GradeEntryComponent{
     if(invalid){this.err=`${invalid} student(s) need valid scores in all three components (0 to 100).`;return this.ui.toast('Grades not saved – fix invalid scores.',
       'er')}this.err='';
     if(!ch.length)return this.ui.toast('Enter at least one score to save.','er');
-    if(!await this.ui.confirm('Save grades?',`Save Written Works, Performance Tasks, and Exams scores for ${ch.length} student(s) in ${this.term} (${this.subj}).`,
-      'Save'))return;
     this.busy=true;
+    if(!await this.ui.confirm('Save grades?',`Save Written Works, Performance Tasks, and Exams scores for ${ch.length} student(s) in ${this.term} (${this.subj}).`,
+      'Save')){this.busy=false;this.cdr.markForCheck();return}
     try{await this.d.saveGrades(this.subj,this.term,ch);
       this.load();this.ui.toast(`Grades saved for ${this.subj} (${this.term}).`)}
     catch(error){this.ui.toast((error as {error?:{message?:string}})?.error?.message
       ||(error instanceof Error?error.message:'Grades could not be saved.'),'er')}
-    finally{this.busy=false}}
+    finally{this.busy=false;this.cdr.markForCheck()}}
 }

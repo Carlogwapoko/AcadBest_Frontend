@@ -1,5 +1,5 @@
-<app-modal [open]="!!target" title="Subjects & Units" (closed)="closed.emit()">@if(target){
+<app-modal [open]="!!target" title="Subjects & Units" [disableClose]="busy" (closed)="closed.emit()">@if(target){
 <p class="sub">{{fullName(target.name,target.middle_name)}} · {{target.prog}} Year {{target.yr}}{{kind=='e'?' · Applicant '+target.ref:''}}</p>
 @if(d.subjectList.length){<div style="margin-top:12px">@for(s of d.subjectList;track s.code){<label class="ck"><input type="checkbox" [checked]="picked.has(s.code)" (change)="toggle(s.code)"><span><b>{{s.code}}</b> – {{s.n}}<br><small style="color:var(--mu)">{{s.d}} · {{s.tm}} · {{s.r}}</small></span><span class="chip">{{s.u}} units</span>@if(rec(s)){<span class="chip ok">Recommended</span>}</label>}</div>}@else if(!d.loading&&!d.loadError){<div class="empty">No records found. Add subjects before assigning a load.</div>}
 <div class="err" style="margin-top:8px;font-size:13px">{{err}}</div><p style="margin:10px 0 0"><b>Total: {{units}} units</b> <span class="sub">(maximum 27)</span></p>
-<div class="acts"><button class="btn sec" (click)="recommended()">Select recommended</button><button class="btn" (click)="save()">Save Load</button></div>}</app-modal>
+<div class="acts"><button class="btn sec" [disabled]="busy" (click)="recommended()">Select recommended</button><button class="btn" [disabled]="busy" (click)="save()">@if(busy){<span class="sp"></span>}Save Load</button></div>}</app-modal>

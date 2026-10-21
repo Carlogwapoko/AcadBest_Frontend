@@ -7,6 +7,7 @@
     <div class="ann nt" [class.unread]="!n.read" (click)="read(n)">
       <div class="ni" [class]="'ni '+n.type"><app-icon [name]="n.type=='alert'?'alert':'trend'" [size]="18"/></div>
       <div style="flex:1"><b>{{n.t}}</b>@if(!n.read){ <span class="chip">New</span>}<br><span style="color:var(--mu);font-size:13px">{{n.m}}</span><br><small style="color:var(--mu)">{{n.d}}</small></div>
+      @if(reading.has(n.id)){<span class="sp" role="status" aria-label="Marking as read"></span>}
     </div>
   } @empty {
     @if(!d.loading&&!d.loadError){<div class="empty"><div class="eic"><app-icon name="bell" [size]="24"/></div>No records found. No notifications yet.</div>}

@@ -9,7 +9,7 @@ import { AssignLoadComponent } from '../components/assign-load/assign-load.compo
 @Component({selector:'app-subjects-units',standalone:true,imports:[COMMON,AssignLoadComponent],
   styleUrl:'./subjects-units.component.css',templateUrl:'./subjects-units.component.html'})
 export class SubjectsUnitsComponent{
-  tab='s';sm:any=null;fm:any=null;e:any={};stu:Student|null=null;app:Enr|null=null;busy=false;days=['Mon/Wed',
+  tab='s';sm:any=null;fm:any=null;e:any={};stu:Student|null=null;app:Enr|null=null;busy=false;actionBusy=false;deleting='';days=['Mon/Wed',
     'Tue/Thu','Mon/Wed/Fri','Fri','Sat'];
   loadingApplicants=false;private applicantsLoaded=false;
   constructor(public d:DataService,private ui:UiService,private cdr:ChangeDetectorRef){
@@ -44,18 +44,24 @@ export class SubjectsUnitsComponent{
     finally{this.busy=false;this.cdr.detectChanges()}}
   async del(c:string){if(this.count(c)||this.d.enrollments.some(e=>(e.subs||[]).includes(c)))return this.ui.toast(`${c} is assigned to students. Remove it from their loads first.`,
     'er');
-    if(await this.ui.confirm('Delete subject?',`${c} – ${this.d.subjects[c].n} will be removed from the subject list.`,
-      'Delete',true)){try{await this.d.deleteSubject(c);this.ui.toast(c+' deleted.')}
-      catch(error){this.ui.toast(this.message(error),'er')}}}
+    if(this.deleting)return;
+    this.deleting=c;
+    if(!await this.ui.confirm('Delete subject?',`${c} – ${this.d.subjects[c].n} will be removed from the subject list.`,
+      'Delete',true)){this.deleting='';this.cdr.markForCheck();return}
+    try{await this.d.deleteSubject(c);this.ui.toast(c+' deleted.')}
+    catch(error){this.ui.toast(this.message(error),'er')}
+    finally{this.deleting='';this.cdr.markForCheck()}}
   openFac(u:any){this.fm={u,picked:new Set(this.d.mySubjects(u.id)),err:''}}
   tog(c:string){const p=this.fm.picked;p.has(c)?p.delete(c):p.add(c)}
-  async saveFac(){const c=this.fmCodes,t=this.d.unitsOf(c),id=this.fm.u.id;this.fm.err=t>24?`Maximum teaching load is 24 units (currently ${t}).`:this.d.clash(c);if(this.fm.err)return this.ui.toast('Assignment not saved.',
+  async saveFac(){if(this.actionBusy||!this.fm)return;const c=this.fmCodes,t=this.d.unitsOf(c),id=this.fm.u.id;this.fm.err=t>24?`Maximum teaching load is 24 units (currently ${t}).`:this.d.clash(c);if(this.fm.err)return this.ui.toast('Assignment not saved.',
     'er');
     const mv=c.filter(x=>this.d.subjects[x].f&&this.d.subjects[x].f!=id);
+    this.actionBusy=true;
     if(!await this.ui.confirm('Save assignment?',`${this.fm.u.name} will handle ${c.length} subject(s) · ${t} units.`+(mv.length?` ${mv.join(', ')} will be moved from other instructors.`:''),
-      'Save'))return;
+      'Save')){this.actionBusy=false;this.cdr.markForCheck();return}
     try{await this.d.assignFaculty(id,c);this.ui.toast('Subjects assigned to '+this.fm.u.name+'.');this.fm=null}
-    catch(error){this.ui.toast(this.message(error),'er')}}
+    catch(error){this.ui.toast(this.message(error),'er')}
+    finally{this.actionBusy=false;this.cdr.detectChanges()}}
   private message(error:unknown){return (error as {error?:{message?:string;errors?:Record<string,string[]>}})?.error?.message
     ||Object.values((error as {error?:{errors?:Record<string,string[]>}})?.error?.errors||{}).flat()[0]
     ||(error instanceof Error?error.message:'The change could not be saved.')}

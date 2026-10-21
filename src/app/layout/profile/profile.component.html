@@ -14,6 +14,7 @@
     <div><dt>Middle name</dt><dd>{{u.middle_name||'Not provided'}}</dd></div>
     <div><dt>E-mail</dt><dd>{{u.email}}</dd></div>
     <div><dt>Role</dt><dd>{{u.role}}</dd></div>
+    @if(u.role==='Student'&&u.schoolId){<div><dt>School ID</dt><dd>{{u.schoolId}}</dd></div>}
     <div><dt>Mobile number</dt><dd>{{u.phone||'Not provided'}}</dd></div>
   </dl>
   <p class="sub profile-note"><app-icon name="shield" [size]="14"/> Profile information and pictures are managed by the school administrator.</p>
