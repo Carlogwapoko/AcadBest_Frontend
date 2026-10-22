@@ -12,11 +12,20 @@ describe('DataService list loading',()=>{
     TestBed.configureTestingModule({
       providers:[provideHttpClient(),provideHttpClientTesting()],
     });
+
     data=TestBed.inject(DataService);
     http=TestBed.inject(HttpTestingController);
   });
 
   afterEach(()=>http.verify());
+
+  it('computes an equal-weight overall grade only when all three periods are valid',()=>{
+    expect(data.avg([85,90,95])).toBe(90);
+    expect(data.avg([85,90,null])).toBeNull();
+    expect(data.avg([85,101,95])).toBeNull();
+    expect(data.overallGrade(null)).toBe('Incomplete');
+    expect(data.overallGrade(data.avg([85,90,95]))).toBe('90.00');
+  });
 
   it('coalesces and caches portal loading until an explicit refresh',async()=>{
     const first=data.load();
@@ -92,6 +101,28 @@ describe('DataService list loading',()=>{
     await Promise.all([first,second]);
   });
 
+  it('maps enrollment API name columns without splitting or rearranging them',async()=>{
+    const load=data.loadEnrollments();
+    http.expectOne(`${API_BASE_URL}/enrollments?page=1&per_page=25&search=&status=All`)
+      .flush({
+        data:[{
+          ref:'ENR-2026-ABC123',name:'Asthon Lloyd Barbante Quisquisol',
+          first_name:'Asthon Lloyd',middle_name:'Barbante',last_name:'Quisquisol',
+          email:'student@example.com',phone:'',dob:'2007-01-01',sex:'Female',addr:'Address',
+          prog:'BSIT',yr:1,type:'New',student_status:'Applicant',school:'School',
+          gname:'Guardian',gph:'',st:'Pending',date:'Oct 19',note:'',acct:false,log:[],
+        }],
+        current_page:1,last_page:1,per_page:25,total:1,
+      });
+
+    await load;
+    expect(data.enrollments[0]).toMatchObject({
+      first_name:'Asthon Lloyd',
+      middle_name:'Barbante',
+      last_name:'Quisquisol',
+    });
+  });
+
   it('removes a school ID from an enrollment when the backend returns null',async()=>{
     data.enrollments=[{
       ref:'ENR-2026-ABC123',name:'Student',email:'student@example.com',phone:'',dob:'2007-01-01',
@@ -141,15 +172,15 @@ describe('DataService list loading',()=>{
   it('updates saved grades and standing from the backend response without reloading the portal',async()=>{
     data.subjects['IT301']={
       n:'Programming',u:3,d:'Mon/Wed',tm:'08:00–09:30',start:'08:00',end:'09:30',
-      r:'Lab 1',p:'BSIT',y:1,w:[30,30,40],cw:[40,40,20],f:2,
+      r:'Lab 1',p:'BSIT',y:1,f:2,
     };
     data.students=[{
       id:4,name:'Student',prog:'BSIT',yr:1,sec:'A',g:{IT301:[80,null,null]},
-      gc:{IT301:[null,null,null]},gwa:80,st:'for_monitoring',declining:[],
+      gwa:80,st:'for_monitoring',declining:[],
     }];
 
     const operation=data.saveGrades('IT301','Midterm',[{
-      student_id:4,written_works:90,performance_tasks:85,exams:80,
+      student_id:4,score:86,
     }]);
     const request=http.expectOne(`${API_BASE_URL}/grades`);
     expect(request.request.method).toBe('PUT');
@@ -157,9 +188,7 @@ describe('DataService list loading',()=>{
     await operation;
 
     expect(data.students[0].g['IT301']).toEqual([80,86,null]);
-    expect(data.students[0].gc?.['IT301']?.[1]).toEqual({
-      written_works:90,performance_tasks:85,exams:80,
-    });
+    expect(request.request.body.grades).toEqual([{student_id:4,score:86}]);
     expect(data.students[0].gwa).toBe(84);
     expect(data.students[0].st).toBe('good_standing');
     http.expectNone(`${API_BASE_URL}/portal`);

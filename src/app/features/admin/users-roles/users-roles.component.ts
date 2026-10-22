@@ -4,7 +4,6 @@ import { AuthService } from '../../../core/auth.service';
 import { DataService,Enr,User } from '../../../core/data.service';
 import { processProfilePicture } from '../../../core/profile-picture';
 import { UiService } from '../../../core/ui.service';
-import { fullName } from '../../../shared/full-name';
 
 /**
  * Admin-only account provisioning.
@@ -37,14 +36,16 @@ export class UsersRolesComponent{
   get pending(){return this.d.enrollments.filter(x=>x.st!='Rejected'&&!x.acct)}
   get list(){return this.d.users}
   avatarInitials(name:string){return name.replace(/^(Prof\.|Dr\.)\s*/,'').split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase()}
-  fullName(name:string,middleName?:string|null){return fullName(name,middleName)}
+  formName(){return [this.m?.first_name,this.m?.middle_name,this.m?.last_name].filter(Boolean).join(' ')}
   open(u?:User|null,pre?:Enr){
     if(pre&&pre.st!='Enrolled'){this.ui.toast('This applicant must be approved by the registrar before an account can be created.',
       'er');return}
     this.e={};this.showPassword=false;
-    this.m=u?{id:u.id,name:u.name,middle_name:u.middle_name||'',email:u.email,role:u.role,status:u.act?'Active':'Inactive',
+    this.m=u?{id:u.id,first_name:u.first_name||'',middle_name:u.middle_name||'',last_name:u.last_name||'',
+      email:u.email,role:u.role,status:u.act?'Active':'Inactive',
       pw:'',prog:u.prog||'BSTM',lock:u.role=='Student',avatar:u.avatar??null}
-      :{id:0,name:pre?.name||'',middle_name:pre?.middle_name||'',email:pre?.email||'',role:pre?'Student':'Faculty',
+      :{id:0,first_name:pre?.first_name||'',middle_name:pre?.middle_name||'',last_name:pre?.last_name||'',
+        email:pre?.email||'',role:pre?'Student':'Faculty',
         status:'Active',pw:'',prog:pre?.prog||'BSTM',ref:pre?.ref,lock:!!pre,avatar:null}}
   async selectPicture(event:Event){
     const input=event.target as HTMLInputElement;
@@ -61,7 +62,9 @@ export class UsersRolesComponent{
   }
   removePicture(){if(this.m)this.m.avatar=null}
   async save(){if(this.saving||!this.m)return;const m=this.m,em=m.email.trim().toLowerCase(),old=m.id?this.d.users.find(x=>x.id==m.id)!:null;
-    this.e={n:m.name.trim().length<3?'Full name is required.':'',e:!/^\S+@\S+\.\S+$/.test(em)?'Enter a valid e-mail.':this.d.users.some(x=>x.email==em&&x.id!=m.id)?'E-mail already in use.':'',
+    this.e={first:m.first_name.trim().length<2?'First name is required.':'',
+      last:m.last_name.trim().length<2?'Last name is required.':'',
+      e:!/^\S+@\S+\.\S+$/.test(em)?'Enter a valid e-mail.':this.d.users.some(x=>x.email==em&&x.id!=m.id)?'E-mail already in use.':'',
       p:(!m.id||m.pw)&&m.pw.length<8?'Password must be at least 8 characters.':''};
     if(Object.values(this.e).some(x=>x))return;
     const act=m.id?m.status=='Active':true;
@@ -69,7 +72,8 @@ export class UsersRolesComponent{
     if(old&&(old.role!=m.role||(old.act&&!act))&&!await this.ui.confirm('Confirm important change',
       `${old.name}: ${old.role!=m.role?`role changes from ${old.role} to ${m.role}. `:''}${old.act&&!act?'Account will be deactivated.':''}`,
       'Apply Change')){this.saving=false;this.cdr.markForCheck();return}
-    const payload:Record<string,unknown>={name:m.name.trim(),middle_name:m.middle_name.trim(),email:em,role:m.role,
+    const payload:Record<string,unknown>={first_name:m.first_name.trim(),middle_name:m.middle_name.trim(),
+      last_name:m.last_name.trim(),email:em,role:m.role,
       phone:old?.phone||'',program:m.prog||'BSTM'};
     if(old)payload['active']=act;
     if(m.pw)payload['password']=m.pw;

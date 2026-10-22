@@ -41,4 +41,6 @@ Change the demo password before using these accounts outside local development.
 
 Each role has its own route file and role guard. Role-specific pages are lazy-loaded, and the shell navigation adapts to narrow screens with a slide-in menu.
 
+Registrar subject offerings can be filtered by session, semester, and academic year. Student subject lists can be filtered by term, and faculty grade entry can be filtered by student session. Missing historical offering details are shown as a dash. Administrators configure the current academic school year under Standing Rules; new enrollment applications save their own school year for historical review.
+
 Profiles are read-only for signed-in users. Administrators manage account pictures from Users & Roles; the browser validates/resizes the image and the backend stores it on the public disk. Frontend guards support navigation while backend middleware enforces authorization and record scope.

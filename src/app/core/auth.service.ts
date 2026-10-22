@@ -53,7 +53,8 @@ export class AuthService{
 
   private mapUser(value:Record<string,unknown>):User{
     const roleKey=value['role_key'];
-    return {id:Number(value['id']),name:String(value['name']),middle_name:String(value['middle_name']??''),email:String(value['email']),
+    return {id:Number(value['id']),name:String(value['name']),first_name:String(value['first_name']??''),
+      middle_name:String(value['middle_name']??''),last_name:String(value['last_name']??''),email:String(value['email']),
       role:String(value['role']),roleKey:this.isRole(roleKey)?roleKey:undefined,
       act:Boolean(value['active']),phone:String(value['phone']??''),
       sid:value['student_id']?Number(value['student_id']):undefined,

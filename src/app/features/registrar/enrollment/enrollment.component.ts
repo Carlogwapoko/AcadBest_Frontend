@@ -3,7 +3,6 @@ import { COMMON } from '../../../shared/common';
 import { DataService,Enr } from '../../../core/data.service';
 import { UiService } from '../../../core/ui.service';
 import { AssignLoadComponent } from '../components/assign-load/assign-load.component';
-import { fullName } from '../../../shared/full-name';
 
 // ------------------------------------------------------------ Enrollment applications
 @Component({selector:'app-enrollment',standalone:true,imports:[COMMON,AssignLoadComponent],
@@ -31,7 +30,6 @@ export class EnrollmentComponent{
   chip(s:string){return ({Pending:'wn',Enrolled:'ok',Rejected:'er'} as any)[s]||''}
   statusIcon(s:string){return s==='Rejected'?'alert':s==='Pending'||s==='Under Review'?'clock':'check'}
   get list(){return this.d.enrollments}
-  fullName(name:string,middleName?:string|null){return fullName(name,middleName)}
   async set(s:string,note?:string){if(this.busy||!this.sel)return;const e=this.sel;this.busy=true;
     if(!await this.ui.confirm(s=='Enrolled'?'Approve enrollment?':'Update application?',
       `${e.name} will be marked “${s}”.`+(s=='Enrolled'?' The administrator can then issue the portal account.':''),

@@ -30,29 +30,27 @@ export interface Subject {
   r: string;
   p: string;
   y: string | number;
-  w: number[];
-  cw: number[];
   f: number | null;
-}
-
-export interface GradeComponents {
-  written_works: number;
-  performance_tasks: number;
-  exams: number;
+  session?: string | null;
+  semester?: string | null;
+  academic_year?: string | null;
 }
 
 export interface Student {
   id: number;
   name: string;
+  first_name?: string;
   middle_name?: string;
+  last_name?: string;
+  session?: string | null;
+  academic_year?: string | null;
   school_id?: string | null;
   status?: string | null;
   prog: string;
   yr: number;
   sec: string;
   g: Record<string, (number | null)[]>;
-  gc?: Record<string, (GradeComponents | null)[]>;
-
+  subject_codes?: string[];
   // Values calculated by Laravel
   gwa?: number | null;
   st?: string;
@@ -62,7 +60,9 @@ export interface Student {
 export interface User {
   id: number;
   name: string;
+  first_name?: string;
   middle_name?: string;
+  last_name?: string;
   email: string;
   role: string;
   roleKey?: Role;
@@ -106,7 +106,9 @@ export interface Ann {
 export interface Enr {
   ref: string;
   name: string;
-  middle_name: string;
+  first_name?: string | null;
+  middle_name?: string | null;
+  last_name?: string | null;
   email: string;
   phone: string;
   dob: string;
@@ -115,6 +117,7 @@ export interface Enr {
   prog: string;
   yr: number;
   session?: string | null;
+  academic_year?: string | null;
   type: string;
   student_status: string;
   school: string;
@@ -128,6 +131,12 @@ export interface Enr {
   subs?: string[];
   log: string[][];
 }
+
+type EnrollmentApiRecord = Omit<Enr, 'first_name' | 'middle_name' | 'last_name'> & {
+  first_name?: unknown;
+  middle_name?: unknown;
+  last_name?: unknown;
+};
 
 export interface Notif {
   id: number;
@@ -152,6 +161,7 @@ export class DataService {
   today = new Date().toISOString().slice(0, 10);
 
   rules = { pass: 75, safe: 80 };
+  currentAcademicYear = '';
   reqTypes = [
     'Certificate of Enrollment',
     'Transcript of Records',
@@ -253,7 +263,6 @@ export class DataService {
         ).map(student => ({
           ...student,
           g: student.g ?? {},
-          gc: student.gc ?? {},
           gwa: student.gwa ?? null,
           declining: student.declining ?? [],
         }));
@@ -385,19 +394,28 @@ export class DataService {
     const version = this.enrollmentVersion;
     let request: Promise<Page<Enr>>;
     request = firstValueFrom(
-      this.http.get<Page<Enr>>(
+      this.http.get<Page<EnrollmentApiRecord>>(
         `${API_BASE_URL}/enrollments`,
         { params }
       )
     )
       .then(result => {
+        const mapped = {
+          ...result,
+          data: result.data.map(application => ({
+            ...application,
+            first_name: this.nameField(application.first_name),
+            middle_name: this.nameField(application.middle_name),
+            last_name: this.nameField(application.last_name),
+          })),
+        };
         if (version === this.enrollmentVersion) {
           this.enrollments = append
-            ? [...this.enrollments, ...result.data]
-            : result.data;
+            ? [...this.enrollments, ...mapped.data]
+            : mapped.data;
         }
 
-        return result;
+        return mapped;
       })
       .finally(() => {
         if (this.enrollmentLoads.get(key) === request) {
@@ -420,6 +438,26 @@ export class DataService {
     );
 
     return result.reference;
+  }
+
+  async loadAcademicYear(): Promise<string> {
+    const result = await firstValueFrom(
+      this.http.get<{ academic_year: string }>(
+        `${API_BASE_URL}/settings/academic-year`
+      )
+    );
+    this.currentAcademicYear = result.academic_year;
+    return this.currentAcademicYear;
+  }
+
+  async saveAcademicYear(academicYear: string): Promise<void> {
+    const result = await this.mutate(
+      this.http.put<{ academic_year: string }>(
+        `${API_BASE_URL}/settings/academic-year`,
+        { academic_year: academicYear }
+      )
+    );
+    this.currentAcademicYear = result.academic_year;
   }
 
   async trackEnrollment(
@@ -642,9 +680,7 @@ export class DataService {
     term: string,
     grades: Array<{
       student_id: number;
-      written_works: number;
-      performance_tasks: number;
-      exams: number;
+      score: number;
     }>
   ): Promise<void> {
     const termIndex = ['Prelim', 'Midterm', 'Final'].indexOf(term);
@@ -666,27 +702,10 @@ export class DataService {
       })
     );
 
-    const weights = this.subjects[code]?.cw || [30, 50, 20];
-
     const changed = new Map(
       grades.map(grade => [
         grade.student_id,
-        {
-          score: Number(
-            (
-              (
-                grade.written_works * weights[0] +
-                grade.performance_tasks * weights[1] +
-                grade.exams * weights[2]
-              ) / 100
-            ).toFixed(2)
-          ),
-          components: {
-            written_works: grade.written_works,
-            performance_tasks: grade.performance_tasks,
-            exams: grade.exams,
-          },
-        },
+        grade.score,
       ])
     );
 
@@ -699,22 +718,13 @@ export class DataService {
         ...(courseGrades[code] ?? [null, null, null]),
       ];
 
-      terms[termIndex] = grade.score;
+      terms[termIndex] = grade;
       courseGrades[code] = terms;
-
-      const components = { ...(student.gc || {}) };
-      const componentTerms = [
-        ...(components[code] ?? [null, null, null]),
-      ];
-
-      componentTerms[termIndex] = grade.components;
-      components[code] = componentTerms;
 
       const standing = result.students[String(student.id)];
       return {
         ...student,
         g: courseGrades,
-        gc: components,
         gwa: standing ? standing.gwa : student.gwa,
         st: standing?.status ?? student.st,
         declining: standing?.declining ?? student.declining,
@@ -780,18 +790,13 @@ export class DataService {
       room: data.r,
       program: data.p,
       year_level: String(data.y),
-      grade_weights: data.w,
-      component_weights: data.cw || [30, 50, 20],
+      session: data.session ?? 'All',
+      semester: data.semester ?? null,
+      academic_year: data.academic_year ?? null,
     };
 
-    const result = await this.mutate(
-      this.http.request<{
-        students?: Record<string, {
-          gwa: number | null;
-          status: string;
-          declining: string[];
-        }>;
-      }>(
+    await this.mutate(
+      this.http.request(
         isUpdate ? 'put' : 'post',
         `${API_BASE_URL}/subjects${
           isUpdate ? '/' + encodeURIComponent(code) : ''
@@ -805,39 +810,6 @@ export class DataService {
       [code]: data,
     };
 
-    if (isUpdate) {
-      this.students = this.students.map(student => {
-        const components = student.gc?.[code];
-        if (!components) return student;
-
-        const grades = [
-          ...(student.g[code] ?? [null, null, null]),
-        ];
-
-        components.forEach((value, index) => {
-          if (value) {
-            grades[index] = Number(
-              (
-                (
-                  value.written_works * payload.component_weights[0] +
-                  value.performance_tasks * payload.component_weights[1] +
-                  value.exams * payload.component_weights[2]
-                ) / 100
-              ).toFixed(2)
-            );
-          }
-        });
-
-        const standing = result.students?.[String(student.id)];
-        return {
-          ...student,
-          g: { ...student.g, [code]: grades },
-          gwa: standing ? standing.gwa : student.gwa,
-          st: standing?.status ?? student.st,
-          declining: standing?.declining ?? student.declining,
-        };
-      });
-    }
   }
 
   async deleteSubject(code: string): Promise<void> {
@@ -889,27 +861,9 @@ export class DataService {
       })
     );
 
-    const selected = new Set(codes);
-
-    this.students = this.students.map(student => {
-      if (student.id !== id) return student;
-
-      const g: Student['g'] = {};
-
-      for (const code of selected) {
-        g[code] = student.g[code] ?? [null, null, null];
-      }
-
-      const gc: Student['gc'] = {};
-
-      for (const code of selected) {
-        if (student.gc?.[code]) {
-          gc[code] = student.gc[code];
-        }
-      }
-
-      return { ...student, g, gc };
-    });
+    this.students = this.students.map(student =>
+      student.id === id ? { ...student, subject_codes: [...codes] } : student
+    );
   }
 
   // RULES AND MODULE SETTINGS
@@ -1037,7 +991,7 @@ export class DataService {
 
     // Fallback if the backend did not return a GWA.
     const values = Object.entries(s.g)
-      .map(([code, grades]) => this.avg(grades, code))
+      .map(([, grades]) => this.avg(grades))
       .filter((value): value is number => value != null);
 
     return values.length
@@ -1080,7 +1034,7 @@ export class DataService {
     if (average === null) return 'no_data';
 
     const hasFailingSubject = Object.entries(student.g).some(([code, grades]) => {
-      const subjectAverage = this.avg(grades, code);
+      const subjectAverage = this.avg(grades);
       return subjectAverage !== null && subjectAverage < this.rules.pass;
     });
 
@@ -1124,27 +1078,25 @@ export class DataService {
   }
 
   codes(s: Student): string[] {
-    return Object.keys(s.g);
+    return s.subject_codes ?? Object.keys(s.g);
   }
 
-  avg(
-    grades: (number | null)[],
-    code?: string
-  ): number | null {
-    const weights =
-      (code && this.subjects[code]?.w) || [30, 30, 40];
+  avg(grades: (number | null)[]): number | null {
+    const scores = grades.slice(0, 3);
+    if (scores.length < 3 || scores.some(value =>
+      value == null || !Number.isFinite(value) || value < 0 || value > 100
+    )) {
+      return null;
+    }
 
-    let total = 0;
-    let weight = 0;
+    return Number((scores.reduce<number>(
+      (total, value) => total + (value ?? 0),
+      0
+    ) / 3).toFixed(2));
+  }
 
-    grades.forEach((value, index) => {
-      if (value != null) {
-        total += value * (weights[index] ?? 0);
-        weight += weights[index] ?? 0;
-      }
-    });
-
-    return weight ? total / weight : null;
+  overallGrade(value: number | null | undefined): string {
+    return value == null ? 'Incomplete' : value.toFixed(2);
   }
 
   f1(value: number | null | undefined): string {
@@ -1222,7 +1174,9 @@ export class DataService {
     return {
       id: Number(x['id']),
       name: String(x['name']),
+      first_name: String(x['first_name'] ?? ''),
       middle_name: String(x['middle_name'] ?? ''),
+      last_name: String(x['last_name'] ?? ''),
       email: String(x['email']),
       role: String(x['role']),
       schoolId: typeof x['school_id'] === 'string' ? x['school_id'] : undefined,
@@ -1245,5 +1199,9 @@ export class DataService {
         ? Number(x['year_level'])
         : undefined,
     };
+  }
+
+  private nameField(value: unknown): string | null {
+    return typeof value === 'string' ? value : null;
   }
 }

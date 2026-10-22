@@ -7,14 +7,21 @@ import { UiService } from '../../../core/ui.service';
 // ---------------------------------------------------------------- Online enrollment application
 @Component({selector:'app-enroll',standalone:true,imports:[COMMON,RouterLink],styleUrl:'./enroll.component.css',templateUrl:'./enroll.component.html'})
 export class EnrollComponent{
-  f:any={fn:'',mn:'',ln:'',dob:'',sex:'Select…',em:'',ph:'',ad:'',pr:'Select…',yr:'Select…',
+  f:any={fn:'',mn:'',ln:'',dob:'',sex:'Select…',em:'',ph:'',ad:'',pr:'Select…',yr:'Select…',academic_year:'',
     session:'Select…',ty:'Select…',sc:'',gn:'',gp:'',ok:false};
-  e:any={};busy=false;done=false;ref='';
+  e:any={};busy=false;done=false;yearLoading=true;ref='';
   constructor(private d:DataService,private ui:UiService,private cdr:ChangeDetectorRef){}
-  blank(){return{fn:'',mn:'',ln:'',dob:'',sex:'Select…',em:'',ph:'',ad:'',pr:'Select…',yr:'Select…',
+  ngOnInit(){void this.loadAcademicYear()}
+  blank(){return{fn:'',mn:'',ln:'',dob:'',sex:'Select…',em:'',ph:'',ad:'',pr:'Select…',yr:'Select…',academic_year:this.d.currentAcademicYear,
     session:'Select…',ty:'Select…',sc:'',gn:'',gp:'',ok:false}}
-  async submit(){if(this.busy||this.done)return;const f=this.f,ph=/^[0-9 +]{10,15}$/,pk=(v:string)=>v=='Select…'?'Please select an option.':'';
+  private async loadAcademicYear(){
+    try{this.f.academic_year=await this.d.loadAcademicYear()}
+    catch(error){this.ui.toast(this.message(error),'er')}
+    finally{this.yearLoading=false;this.cdr.markForCheck()}
+  }
+  async submit(){if(this.busy||this.done||this.yearLoading)return;const f=this.f,ph=/^[0-9 +]{10,15}$/,pk=(v:string)=>v=='Select…'?'Please select an option.':'';
     this.e={fn:f.fn.trim().length<2?'First name is required.':'',ln:f.ln.trim().length<2?'Last name is required.':'',
+      academic_year:/^\d{4}-\d{4}$/.test(f.academic_year)&&Number(f.academic_year.slice(5))===Number(f.academic_year.slice(0,4))+1?'':'Enter a valid academic year, such as 2026-2027.',
       dob:!f.dob?'Date of birth is required.':f.dob>=this.d.today?'Enter a valid date of birth.':'',sex:pk(f.sex),
       em:/^\S+@\S+\.\S+$/.test(f.em)?'':'Enter a valid e-mail address.',ph:ph.test(f.ph)?'':'Enter a valid mobile number.',
         ad:f.ad.trim().length<5?'Home address is required.':'',pr:pk(f.pr),yr:pk(f.yr),
@@ -26,8 +33,8 @@ export class EnrollComponent{
     if(!await this.ui.confirm('Submit application?','Please make sure your details are correct. The registrar will review your application.',
       'Submit')){this.busy=false;this.cdr.markForCheck();return}
     try{
-      this.ref=await this.d.submitEnrollment({name:[f.fn,f.ln].map((name:string)=>name.trim()).filter(Boolean).join(' '),
-        middle_name:f.mn.trim(),
+      this.ref=await this.d.submitEnrollment({first_name:f.fn.trim(),last_name:f.ln.trim(),
+        middle_name:f.mn.trim()||null,academic_year:f.academic_year.trim(),
         email:f.em.trim().toLowerCase(),phone:f.ph,date_of_birth:f.dob,sex:f.sex,address:f.ad.trim(),
         program:f.pr,year_level:+f.yr,session:f.session,application_type:f.ty,previous_school:f.sc.trim(),
         guardian_name:f.gn.trim(),guardian_phone:f.gp,certified:f.ok});

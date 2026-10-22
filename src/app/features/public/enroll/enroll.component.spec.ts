@@ -26,6 +26,9 @@ describe('EnrollComponent',()=>{
     expect(element.querySelector('input[placeholder="Enter your first name"]')).toBeTruthy();
     expect(element.querySelector('input[placeholder="Enter your middle name"]')).toBeTruthy();
     expect(element.querySelector('input[placeholder="Enter your last name"]')).toBeTruthy();
+    const academicYear = element.querySelector('input[aria-label="Current Academic School Year"]') as HTMLInputElement;
+    expect(academicYear).toBeTruthy();
+    expect(academicYear.readOnly).toBe(true);
     expect(element.textContent).toContain('Gender');
     expect(element.textContent).toContain('Others');
     expect(element.textContent).toContain('BSTM');

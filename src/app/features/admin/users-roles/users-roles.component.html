@@ -1,8 +1,9 @@
 @if(pending.length){
-<div class="card" style="margin-bottom:20px;border-left:4px solid var(--blue)"><h3>Online enrollment applicants</h3>
-  <p class="sub" style="margin:-6px 0 12px">An account can be created only after the registrar approves the application. Student accounts only.</p>
-  <div class="tw"><table><tr><th>Reference</th><th>Name</th><th>Program</th><th>Registrar status</th><th>School ID</th><th></th></tr>
-  @for(p of pending;track p.ref){<tr><td>{{p.ref}}</td><td>{{fullName(p.name,p.middle_name)}}</td><td>{{p.prog}} · Year {{p.yr}}</td>
+<div class="card approval-card"><div class="approval-header"><div><h3>Online enrollment applicants</h3>
+  <p class="sub">Create a student account after registrar approval. Student accounts only.</p></div>
+  <span class="chip wn">{{pending.length}} awaiting account</span></div>
+  <div class="tw"><table><tr><th>Reference</th><th>First Name</th><th>Middle Name</th><th>Last Name</th><th>Program</th><th>School Year</th><th>Registrar status</th><th>School ID</th><th></th></tr>
+  @for(p of pending;track p.ref){<tr><td>{{p.ref}}</td><td>{{p.first_name||'—'}}</td><td>{{p.middle_name||'—'}}</td><td>{{p.last_name||'—'}}</td><td>{{p.prog}} · Year {{p.yr}}</td><td>{{p.academic_year||'—'}}</td>
     <td><span class="sb" [class]="'sb '+(p.st=='Enrolled'?'ok':(p.st=='Rejected'?'er':'wn'))"><app-icon [name]="p.st=='Rejected'?'alert':(p.st=='Pending'?'clock':'check')" [size]="14"/>{{p.st=='Enrolled'?'Approved':p.st}}</span></td>
     <td>{{p.school_id||'—'}}</td>
     <td>@if(p.st=='Enrolled'){<button class="btn sm" (click)="open(null,p)"><app-icon name="plus" [size]="14"/>Create Account</button>}@else{<span class="chip wn"><app-icon name="clock" [size]="12"/>Awaiting approval</span>}</td></tr>}</table></div>
@@ -10,13 +11,13 @@
 <div class="feature-content"><div class="row"><input placeholder="Search users" [(ngModel)]="q" (ngModelChange)="searchChanged()"><button class="btn" style="flex:0 0 auto" (click)="open()"><app-icon name="plus" [size]="16"/>Add Users</button></div>
 @if(loadError){<div class="empty" role="alert">{{loadError}} <button class="btn sec sm" (click)="loadUsers(page)">Retry</button></div>}
 @else if(!loading&&!list.length){<div class="empty"><div class="eic"><app-icon name="inbox" [size]="24"/></div>No records found.</div>}
-@else if(list.length){<div class="tw"><table><tr><th>Name</th><th>School ID</th><th>E-mail</th><th>Role</th><th>Status</th><th></th></tr>@for(u of list;track u.id){<tr><td><span class="user-name"><span class="user-avatar">@if(u.avatar){<img [src]="u.avatar" alt="">}@else{ {{avatarInitials(u.name)}} }</span>{{fullName(u.name,u.middle_name)}}</span></td><td>{{u.schoolId||'—'}}</td><td>{{u.email}}</td><td>{{u.role}}</td><td><span class="chip" [class]="u.act?'ok':'er'">{{u.act?'Active':'Inactive'}}</span></td><td><div class="table-actions user-actions"><button type="button" class="btn sm sec" [disabled]="saving||deletingId!==null" (click)="open(u)"><app-icon name="edit" [size]="14"/>Edit</button><button type="button" class="btn sm dg" [disabled]="deletingId!==null||saving" (click)="del(u)">@if(deletingId===u.id){<span class="sp"></span>}@else{<app-icon name="trash" [size]="14"/>}Delete</button></div></td></tr>}</table></div>
+@else if(list.length){<div class="tw"><table><tr><th>First Name</th><th>Middle Name</th><th>Last Name</th><th>School ID</th><th>E-mail</th><th>Role</th><th>Status</th><th></th></tr>@for(u of list;track u.id){<tr><td><span class="user-name"><span class="user-avatar">@if(u.avatar){<img [src]="u.avatar" alt="">}@else{ {{avatarInitials(u.name)}} }</span>{{u.first_name||'—'}}</span></td><td>{{u.middle_name||'—'}}</td><td>{{u.last_name||'—'}}</td><td>{{u.schoolId||'—'}}</td><td>{{u.email}}</td><td>{{u.role}}</td><td><span class="chip" [class]="u.act?'ok':'er'">{{u.act?'Active':'Inactive'}}</span></td><td><div class="table-actions user-actions"><button type="button" class="btn sm sec" [disabled]="saving||deletingId!==null" (click)="open(u)"><app-icon name="edit" [size]="14"/>Edit</button><button type="button" class="btn sm dg" [disabled]="deletingId!==null||saving" (click)="del(u)">@if(deletingId===u.id){<span class="sp"></span>}@else{<app-icon name="trash" [size]="14"/>}Delete</button></div></td></tr>}</table></div>
 <div class="row"><span>{{total}} users</span></div>}</div>
 
 <app-modal [open]="!!m" [maxWidth]="640" [title]="m?(m.ref?'Create student account':(m.id?'Edit':'Add')+' user'):''" [disableClose]="saving" (closed)="m=null">@if(m){
 @if(m.lock){<p class="sub" style="margin:-6px 0 4px">@if(m.ref){Approved online applicant {{m.ref}}. }Accounts from enrollment applications are Student accounts only.</p>}
 @if(m.id){<section class="account-picture-editor" aria-label="Manage user profile picture">
-  <div class="account-picture-preview">@if(m.avatar){<img [src]="m.avatar" alt="Selected user profile picture">}@else{<span>{{avatarInitials(m.name)}}</span>}</div>
+  <div class="account-picture-preview">@if(m.avatar){<img [src]="m.avatar" alt="Selected user profile picture">}@else{<span>{{avatarInitials(formName())}}</span>}</div>
   <div class="account-picture-controls">
     <strong>Profile picture</strong>
     <p class="sub">JPG, PNG, or WebP · up to 5 MB. This picture appears on the user’s profile and navigation.</p>
@@ -29,8 +30,8 @@
     </div>
   </div>
 </section>}
-<app-field label="Full name" [error]="e['n']"><input [(ngModel)]="m.name" [class.bad]="e['n']" placeholder="Enter full name"></app-field>
-<app-field label="Middle name"><input [(ngModel)]="m.middle_name" placeholder="Enter middle name (optional)"></app-field>
+<div class="r2"><app-field label="First Name" [error]="e['first']"><input [(ngModel)]="m.first_name" [readonly]="m.lock" [class.bad]="e['first']" placeholder="Enter first name"></app-field><app-field label="Middle Name"><input [(ngModel)]="m.middle_name" [readonly]="m.lock" placeholder="Enter middle name (optional)"></app-field></div>
+<app-field label="Last Name" [error]="e['last']"><input [(ngModel)]="m.last_name" [readonly]="m.lock" [class.bad]="e['last']" placeholder="Enter last name"></app-field>
 <app-field label="E-mail" [error]="e['e']"><input type="email" [(ngModel)]="m.email" [class.bad]="e['e']" placeholder="Enter your email address"></app-field>
 <app-field label="Role"><select [(ngModel)]="m.role" [disabled]="m.lock">@if(m.lock){<option>Student</option>}@else{<option>Faculty</option><option>Registrar Staff</option><option>Admin</option>}</select></app-field>
 @if(m.id){<app-field label="Status"><select [(ngModel)]="m.status"><option>Active</option><option>Inactive</option></select></app-field>}

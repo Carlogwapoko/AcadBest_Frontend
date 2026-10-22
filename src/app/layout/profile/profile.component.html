@@ -10,8 +10,9 @@
   </header>
 
   <dl class="profile-details">
-    <div><dt>Full name</dt><dd>{{u.name}}</dd></div>
-    <div><dt>Middle name</dt><dd>{{u.middle_name||'Not provided'}}</dd></div>
+    <div><dt>First Name</dt><dd>{{u.first_name||'—'}}</dd></div>
+    <div><dt>Middle Name</dt><dd>{{u.middle_name||'—'}}</dd></div>
+    <div><dt>Last Name</dt><dd>{{u.last_name||'—'}}</dd></div>
     <div><dt>E-mail</dt><dd>{{u.email}}</dd></div>
     <div><dt>Role</dt><dd>{{u.role}}</dd></div>
     @if(u.role==='Student'&&u.schoolId){<div><dt>School ID</dt><dd>{{u.schoolId}}</dd></div>}

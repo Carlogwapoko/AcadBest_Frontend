@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { AuthService } from '../../../core/auth.service';
+import { DataService } from '../../../core/data.service';
 import { SubjectsUnitsComponent } from './subjects-units.component';
 
 describe('SubjectsUnitsComponent',()=>{
@@ -27,5 +28,21 @@ describe('SubjectsUnitsComponent',()=>{
     expect(text).toContain('Start Time');
     expect(text).toContain('End Time');
     expect(text).not.toContain('Instructor');
+  });
+
+  it('filters subject offerings by session, semester, and academic year',()=>{
+    const data=TestBed.inject(DataService);
+    data.subjects={
+      IT101:{n:'Afternoon term',u:3,d:'Mon/Wed',tm:'8:00–9:30',start:'08:00',end:'09:30',
+        r:'Room 1',p:'All',y:'All',f:null,session:'Afternoon',semester:'1st Semester',academic_year:'2026-2027'},
+      IT202:{n:'Evening term',u:3,d:'Tue/Thu',tm:'8:00–9:30',start:'08:00',end:'09:30',
+        r:'Room 2',p:'All',y:'All',f:null,session:'Evening',semester:'2nd Semester',academic_year:'2026-2027'},
+    };
+    const component=TestBed.createComponent(SubjectsUnitsComponent).componentInstance;
+    component.sessionFilter='Afternoon';
+    component.semesterFilter='1st Semester';
+    component.academicYearFilter='2026-2027';
+
+    expect(component.visibleSubjects.map(subject=>subject.code)).toEqual(['IT101']);
   });
 });
