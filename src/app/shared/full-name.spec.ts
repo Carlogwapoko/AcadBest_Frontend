@@ -1,14 +1,16 @@
 import { fullName } from './full-name';
 
 describe('fullName',()=>{
-  it('preserves a stored multi-part given name without inserting a middle name',()=>{
-    expect(fullName('Asthon Lloyd Quisquisol','Barbante'))
+  it('joins the first, middle, and last names in order',()=>{
+    expect(fullName('Asthon','Lloyd','Quisquisol'))
       .toBe('Asthon Lloyd Quisquisol');
   });
 
-  it('preserves whitespace and gracefully handles missing names',()=>{
-    expect(fullName('  Juan   Dela Cruz  ','Carlos')).toBe('  Juan   Dela Cruz  ');
-    expect(fullName('Juan Dela Cruz',' ')).toBe('Juan Dela Cruz');
-    expect(fullName('',null)).toBe('');
+  it('trims names, skips a missing middle name, and uses the fallback when needed',()=>{
+    expect(fullName('  Juan  ',' ','Dela Cruz')).toBe('Juan Dela Cruz');
+    expect(fullName('Juan','Carlos','Dela Cruz')).toBe('Juan Carlos Dela Cruz');
+    expect(fullName('',null,'','Legacy Full Name')).toBe('Legacy Full Name');
+    expect(fullName('', 'Marie', '', 'Legacy Full Name')).toBe('Legacy Full Name');
+    expect(fullName('',null,'')).toBe('');
   });
 });

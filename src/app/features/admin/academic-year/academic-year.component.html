@@ -1,0 +1,4 @@
+<div class="feature-content setting-form"><h3>Current academic school year</h3>
+<p style="color:var(--mu)">This value is suggested on new online enrollment applications. Existing applications retain their recorded school year.</p>
+<app-field label="Current Academic School Year" [error]="error"><input [(ngModel)]="academicYear" [class.bad]="error" [disabled]="loading" placeholder="2026-2027"></app-field>
+<div class="acts"><button class="btn" [disabled]="busy||loading" (click)="save()">@if(busy||loading){<span class="sp"></span>}Save Academic Year</button></div></div>

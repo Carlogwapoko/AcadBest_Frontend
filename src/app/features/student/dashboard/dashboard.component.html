@@ -2,7 +2,8 @@
 <div class="card stat"><app-icon name="trend" [size]="20"/>Current Average<b>{{d.f1(avg)}}</b><span class="chip" [class]="sd[1]">{{sd[0]}}</span></div>
 <div class="card stat"><app-icon name="mail" [size]="20"/>Open Requests<b>{{open}}</b><a routerLink="../requests">Track requests →</a></div>
 <div class="card stat"><app-icon name="book" [size]="20"/>Enrolled Units<b>{{d.unitsOf(s?d.codes(s):[])}}</b>
-@if(s){<span>{{s.prog}} Year {{s.yr}} · Sec {{s.sec}}</span>}</div></div>
+@if(s){<span>{{s.prog}}@if(s.major){ · {{s.major}}} · {{d.yearLevelLabel(s.yr)}} · Sec {{s.sec}}</span>
+<span>{{s.semester||'—'}} · School ID {{s.school_id||'—'}}</span>}</div></div>
 <div class="card" style="margin-top:20px"><h3>Latest announcements</h3>@if(latest.length){<app-ann-list [items]="latest"/>}
 @else if(s&&!d.loading&&!d.loadError){<div class="empty announcement-empty"><div class="eic"><app-icon name="inbox" [size]="24"/></div><span>No records found. No announcements are available for your program, year, and section.</span></div>}</div>
 @if(!s&&!d.loading&&!d.loadError){<div class="card"><p class="sub">Your account does not have a linked student record. Contact the registrar for assistance.</p></div>}

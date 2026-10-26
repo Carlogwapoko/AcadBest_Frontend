@@ -2,13 +2,12 @@ import { ChangeDetectorRef,Component,HostListener } from '@angular/core';
 import { COMMON } from '../../../shared/common';
 import { DataService,Enr } from '../../../core/data.service';
 import { UiService } from '../../../core/ui.service';
-import { AssignLoadComponent } from '../components/assign-load/assign-load.component';
 
 // ------------------------------------------------------------ Enrollment applications
-@Component({selector:'app-enrollment',standalone:true,imports:[COMMON,AssignLoadComponent],
+@Component({selector:'app-enrollment',standalone:true,imports:[COMMON],
   styleUrl:'./enrollment.component.css',templateUrl:'./enrollment.component.html'})
 export class EnrollmentComponent{
-  q='';st='All';sel:Enr|null=null;loadFor:Enr|null=null;rejecting=false;reason='';err='';
+  q='';st='All';sel:Enr|null=null;rejecting=false;reason='';err='';
   page=1;lastPage=1;total=0;loading=false;loadError='';busy=false;private searchTimer?:ReturnType<typeof setTimeout>;
   constructor(public d:DataService,private ui:UiService,private cdr:ChangeDetectorRef){}
   ngOnInit(){void this.loadPage()}

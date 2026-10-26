@@ -7,6 +7,11 @@
 .assign-action-cell{text-align:center;vertical-align:middle}
 .subject-filters{gap:12px;margin:4px 0 16px}
 .filter-description{flex:1;min-width:220px}
+.load-search{margin:10px 0 14px}
+.load-search input{max-width:420px}
+.subject-group{margin:0 0 14px;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg2,#f7f9fc)}
+.subject-group h4{margin:0 0 8px;font-size:14px}
+.subject-group .ck{background:var(--bg,#fff)}
 .subject-filters app-field{flex:0 1 160px}
 .add-subject-button{flex:0 0 auto;align-self:flex-end}
 @media(max-width:720px){

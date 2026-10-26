@@ -15,4 +15,5 @@ export class FacultyDashboardComponent{
   }
   get uid(){return this.a.user!.id}
   get risk(){return this.d.atRisk(this.uid)}
+  get schedule(){return this.d.facultySchedule(this.uid)}
 }

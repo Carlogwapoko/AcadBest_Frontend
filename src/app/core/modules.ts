@@ -12,7 +12,8 @@ export const MODS:Mod[]=[
     key:'en',label:'Enrollment Applications'},{role:'registrar',key:'su',label:'Subjects & Units'},
     {role:'registrar',key:'pa',label:'Post Announcement'},
   {role:'admin',key:'ur',label:'Users & Roles',locked:true},{role:'admin',key:'sr2',
-    label:'Standing Rules'},{role:'admin',key:'ac',label:'Access Control',locked:true}];
+    label:'Standing Rules'},{role:'admin',key:'ay',label:'Current Academic School Year'},
+    {role:'admin',key:'ac',label:'Access Control',locked:true}];
 /** What records each role may see (enforced by the data queries; a real backend must enforce this server-side). */
 export const SCOPE:Record<Role,string>={student:'Own grades, schedule and requests only',
   faculty:'Assigned subjects and their students only',registrar:'All requests, applications and subjects',

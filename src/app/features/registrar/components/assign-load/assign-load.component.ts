@@ -10,16 +10,32 @@ export class AssignLoadComponent{
   @Input() kind:'s'|'e'='s';@Output() closed=new EventEmitter<void>();
   target:any=null;picked=new Set<string>();err='';busy=false;
   constructor(public d:DataService,private ui:UiService,private cdr:ChangeDetectorRef){}
-  @Input() set item(v:any){this.target=v;this.err='';if(v)this.picked=new Set(this.kind=='s'?(v.subject_codes||Object.keys(v.g)):(v.subs||[]))}
+  @Input() set item(v:any){this.target=v;this.err='';if(v){const assigned=this.kind=='s'?(v.subject_codes||Object.keys(v.g)):(v.subs||[]);
+    this.picked=new Set(assigned.filter((code:string)=>this.availableSubjects.some(subject=>subject.code===code)))}}
   get units(){return this.d.unitsOf([...this.picked])}
   get availableSubjects(){return this.d.subjectList.filter(s=>
-    !this.target?.session||s.session==='All'||s.session===this.target.session)}
-  fullName(name:string,middleName?:string|null){return fullName(name,middleName)}
+    (s.p==='All'||s.p===this.target?.prog)
+    &&(!s.major||s.major===this.target?.major)
+    &&(s.y==='All'||s.y===+this.target?.yr)
+    &&(!this.target?.session||s.session==='All'||s.session===this.target.session)
+    &&(!s.semester||s.semester===this.target?.semester)
+    &&(!s.academic_year||s.academic_year===this.target?.academic_year))}
+  get subjectGroups(){
+    const groups=new Map<string,typeof this.availableSubjects>();
+    for(const subject of this.availableSubjects){
+      const program=subject.p==='All'?'All programs':subject.p;
+      const label=subject.major?`${program} · ${subject.major}`:program;
+      groups.set(label,[...(groups.get(label)||[]),subject]);
+    }
+    return [...groups].map(([label,subjects])=>({label,subjects}));
+  }
+  fullName(firstName:string,middleName:string|null|undefined,lastName:string|null|undefined,fallback:string){
+    return fullName(firstName,middleName,lastName,fallback)
+  }
   toggle(c:string){this.picked.has(c)?this.picked.delete(c):this.picked.add(c)}
-  rec(s:any){return (s.p=='All'||s.p==this.target.prog)&&(s.y=='All'||s.y==+this.target.yr)
-    &&(!this.target?.session||s.session==='All'||s.session===this.target.session)}
+  rec(s:any){return this.availableSubjects.some(subject=>subject.code===s.code)}
   recommended(){this.picked=new Set(this.availableSubjects.filter(s=>this.rec(s)).map(s=>s.code))}
-  async save(){if(this.busy||!this.target)return;const c=[...this.picked],u=this.units;this.err=u==0?'Select at least one subject.':u>27?`Maximum load is 27 units (currently ${u}).`:this.d.clash(c);
+  async save(){if(this.busy||!this.target)return;const c=[...this.picked],u=this.units;this.err=u==0?'Select at least one subject.':this.kind==='s'&&u>27?`Maximum load is 27 units (currently ${u}).`:this.d.clash(c);
     if(this.err)return this.ui.toast('Subject load not saved.','er');const t=this.target;
     const rm=this.kind=='s'?this.d.codes(t).filter(x=>!c.includes(x)&&t.g[x]?.some((v:any)=>v!=null)):[];
     this.busy=true;

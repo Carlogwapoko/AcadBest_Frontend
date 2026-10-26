@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { AuthService } from '../../../core/auth.service';
+import { DataService } from '../../../core/data.service';
 import { UsersRolesComponent } from './users-roles.component';
 
 describe('UsersRolesComponent',()=>{
@@ -17,6 +18,43 @@ describe('UsersRolesComponent',()=>{
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
     expect(fixture.debugElement.componentInstance).toBe(fixture.componentInstance);
+  });
+
+  it('keeps user-name values in their separate columns when legacy parts are incomplete',()=>{
+    const data=TestBed.inject(DataService);
+    data.users=[{
+      id:2,name:'First Middle Last',first_name:'',middle_name:'Middle',last_name:'',
+      email:'legacy@example.com',role:'Faculty',act:true,phone:'',
+    }];
+    const fixture=TestBed.createComponent(UsersRolesComponent);
+    fixture.detectChanges();
+    const cells=fixture.nativeElement.querySelectorAll(
+      '.feature-content .tw tr:last-child td'
+    ) as NodeListOf<HTMLTableCellElement>;
+    cells[0].querySelector('.user-avatar')?.remove();
+
+    expect(Array.from(cells).slice(0,3).map(cell=>cell.textContent?.trim()))
+      .toEqual(['—','Middle','—']);
+    expect(fixture.nativeElement.querySelector('td[colspan="3"]')).toBeNull();
+  });
+
+  it('keeps applicant name values in their separate approval-table columns',()=>{
+    const data=TestBed.inject(DataService);
+    data.enrollments=[{
+      ref:'ENR-2026-ABC123',name:'First Middle Last',first_name:null,middle_name:'Middle',last_name:null,
+      email:'legacy@example.com',phone:'',dob:'2007-01-01',sex:'Female',addr:'Address',
+      prog:'BSIT',yr:1,type:'New Student',student_status:'Applicant',school:'School',
+      gname:'Guardian',gph:'',st:'Pending',date:'Oct 23',note:'',acct:false,log:[],
+    }];
+    const fixture=TestBed.createComponent(UsersRolesComponent);
+    fixture.detectChanges();
+    const cells=fixture.nativeElement.querySelectorAll(
+      '.approval-card .tw tr:last-child td'
+    ) as NodeListOf<HTMLTableCellElement>;
+
+    expect(Array.from(cells).slice(1,4).map(cell=>cell.textContent?.trim()))
+      .toEqual(['—','Middle','—']);
+    expect(fixture.nativeElement.querySelector('.approval-card td[colspan="3"]')).toBeNull();
   });
 
   it('opens the account form with the supported staff roles',()=>{

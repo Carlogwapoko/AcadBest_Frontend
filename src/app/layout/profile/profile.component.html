@@ -10,12 +10,17 @@
   </header>
 
   <dl class="profile-details">
-    <div><dt>First Name</dt><dd>{{u.first_name||'—'}}</dd></div>
-    <div><dt>Middle Name</dt><dd>{{u.middle_name||'—'}}</dd></div>
-    <div><dt>Last Name</dt><dd>{{u.last_name||'—'}}</dd></div>
+    @if(u.first_name&&u.last_name){
+      <div><dt>First Name</dt><dd>{{u.first_name}}</dd></div>
+      <div><dt>Middle Name</dt><dd>{{u.middle_name||'—'}}</dd></div>
+      <div><dt>Last Name</dt><dd>{{u.last_name}}</dd></div>
+    }@else{<div><dt>Full Name</dt><dd>{{u.name}}</dd></div>}
     <div><dt>E-mail</dt><dd>{{u.email}}</dd></div>
     <div><dt>Role</dt><dd>{{u.role}}</dd></div>
     @if(u.role==='Student'&&u.schoolId){<div><dt>School ID</dt><dd>{{u.schoolId}}</dd></div>}
+    @if(u.role==='Student'&&u.prog){<div><dt>Program</dt><dd>{{u.prog}}</dd></div>}
+    @if(u.role==='Student'&&u.major){<div><dt>Major</dt><dd>{{u.major}}</dd></div>}
+    @if(u.role==='Student'&&u.semester){<div><dt>Semester</dt><dd>{{u.semester}}</dd></div>}
     <div><dt>Mobile number</dt><dd>{{u.phone||'Not provided'}}</dd></div>
   </dl>
   <p class="sub profile-note"><app-icon name="shield" [size]="14"/> Profile information and pictures are managed by the school administrator.</p>

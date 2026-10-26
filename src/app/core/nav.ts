@@ -15,5 +15,6 @@ export const NAV:Record<Role,NavItem[]>={
     {path:'registrar/enrollment',label:'Enrollment Applications',icon:'clip',key:'en'},
     {path:'registrar/subjects',label:'Subjects & Units',icon:'book',key:'su'},{path:'registrar/announcements',
     label:'Post Announcement',icon:'mega',key:'pa'}],
-  admin:[{path:'admin/users',label:'Users & Roles',icon:'users',key:'ur'},{path:'admin/rules',
+  admin:[{path:'admin/users',label:'Users & Roles',icon:'users',key:'ur'},{path:'admin/academic-year',
+    label:'Current Academic School Year',icon:'cal',key:'ay'},{path:'admin/rules',
     label:'Standing Rules',icon:'sliders',key:'sr2'},{path:'admin/access',label:'Access Control',icon:'shield',key:'ac'}]};

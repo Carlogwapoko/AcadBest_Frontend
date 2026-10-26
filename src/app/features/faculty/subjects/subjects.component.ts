@@ -11,6 +11,7 @@ export class FacultySubjectsComponent{
   sel='';
   constructor(public d:DataService,private a:AuthService){}
   get mine(){return this.d.mySubjects(this.a.user!.id)}
-  count(c:string){return this.d.students.filter(s=>c in s.g).length}
-  has(s:any,c:string){return c in s.g}
+  get schedule(){return this.d.facultySchedule(this.a.user!.id)}
+  count(c:string){return this.d.students.filter(s=>this.d.codes(s).includes(c)).length}
+  has(s:any,c:string){return this.d.codes(s).includes(c)}
 }

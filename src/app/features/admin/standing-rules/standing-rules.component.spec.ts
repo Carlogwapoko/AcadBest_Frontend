@@ -17,5 +17,7 @@ describe('StandingRulesComponent',()=>{
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
     expect(fixture.debugElement.componentInstance).toBe(fixture.componentInstance);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Academic standing thresholds');
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Current Academic School Year');
   });
 });

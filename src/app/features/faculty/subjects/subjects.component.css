@@ -1,1 +1,7 @@
 :host{display:block;min-width:0}
+.schedule-wrap{margin:0 -4px}
+.schedule-table{min-width:760px}
+.schedule-table th,.schedule-table td{vertical-align:middle}
+.schedule-hint{margin:12px 0 0}
+.subject-code-link{padding:0;border:0;background:none;color:var(--blue);font:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.subject-code-link:focus-visible{outline:2px solid var(--blue);outline-offset:3px;border-radius:2px}

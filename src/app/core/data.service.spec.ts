@@ -27,6 +27,28 @@ describe('DataService list loading',()=>{
     expect(data.overallGrade(data.avg([85,90,95]))).toBe('90.00');
   });
 
+  it('creates an ordered weekly schedule with each subject day and assigned sections',()=>{
+    data.subjects={
+      IT101:{n:'Programming',u:3,d:'Mon/Wed',tm:'08:00–09:30',start:'08:00',end:'09:30',
+        r:'Room 1',p:'BSIT',y:1,f:7,session:'Afternoon'},
+      IT102:{n:'Databases',u:3,d:'Mon',tm:'10:00–11:30',start:'10:00',end:'11:30',
+        r:'Room 2',p:'BSIT',y:1,f:7,session:'Evening'},
+      IT103:{n:'Capstone',u:3,d:'Sun',tm:'13:00–14:30',start:'13:00',end:'14:30',
+        r:'Room 3',p:'BSIT',y:1,f:7,session:'Weekends'},
+    };
+    data.students=[
+      {id:1,name:'Student A',prog:'BSIT',yr:1,sec:'A',g:{},subject_codes:['IT101','IT102']},
+      {id:2,name:'Student B',prog:'BSIT',yr:1,sec:'B',g:{},subject_codes:['IT101']},
+    ];
+
+    expect(data.facultySchedule(7).map(item=>[item.day,item.code,item.section])).toEqual([
+      ['Monday','IT101','A, B'],
+      ['Monday','IT102','A'],
+      ['Wednesday','IT101','A, B'],
+      ['Sunday','IT103','—'],
+    ]);
+  });
+
   it('coalesces and caches portal loading until an explicit refresh',async()=>{
     const first=data.load();
     const concurrent=data.load();
@@ -99,6 +121,27 @@ describe('DataService list loading',()=>{
     const request=http.expectOne(`${API_BASE_URL}/enrollments?page=1&per_page=25&search=&status=All`);
     request.flush({data:[],current_page:1,last_page:1,per_page:25,total:0});
     await Promise.all([first,second]);
+  });
+
+  it('maps all populated user name fields from the API response',async()=>{
+    const load=data.usersList();
+    http.expectOne(`${API_BASE_URL}/users?page=1&per_page=25&search=`)
+      .flush({
+        data:[{
+          id:1,name:'First Middle Last',first_name:'First',middle_name:'Middle',last_name:'Last',
+          email:'user@example.com',role:'Faculty',active:true,phone:'',
+        }],
+        current_page:1,last_page:1,per_page:25,total:1,
+      });
+
+    const result=await load;
+    expect(result.data[0]).toMatchObject({
+      first_name:'First',
+      middle_name:'Middle',
+      last_name:'Last',
+    });
+    expect(data.users[0].first_name).toBe('First');
+    expect(data.users[0].last_name).toBe('Last');
   });
 
   it('maps enrollment API name columns without splitting or rearranging them',async()=>{

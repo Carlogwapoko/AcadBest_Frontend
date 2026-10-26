@@ -3,6 +3,7 @@ import { HttpClient,HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { DataService,ROLE_KEY,Role,User } from './data.service';
 import { API_BASE_URL } from './api-config';
+import { fullName } from '../shared/full-name';
 
 const TOKEN_KEY='acadbest.api_token';
 
@@ -53,14 +54,19 @@ export class AuthService{
 
   private mapUser(value:Record<string,unknown>):User{
     const roleKey=value['role_key'];
-    return {id:Number(value['id']),name:String(value['name']),first_name:String(value['first_name']??''),
-      middle_name:String(value['middle_name']??''),last_name:String(value['last_name']??''),email:String(value['email']),
+    const firstName=String(value['first_name']??'');
+    const middleName=String(value['middle_name']??'');
+    const lastName=String(value['last_name']??'');
+    return {id:Number(value['id']),name:fullName(firstName,middleName,lastName,String(value['name']??'')),
+      first_name:firstName,middle_name:middleName,last_name:lastName,email:String(value['email']),
       role:String(value['role']),roleKey:this.isRole(roleKey)?roleKey:undefined,
       act:Boolean(value['active']),phone:String(value['phone']??''),
       sid:value['student_id']?Number(value['student_id']):undefined,
       schoolId:typeof value['school_id']==='string'?value['school_id']:undefined,
       avatar:typeof value['avatar']==='string'?value['avatar']:undefined,
       prog:typeof value['program']==='string'?value['program']:undefined,
+      major:typeof value['major']==='string'?value['major']:undefined,
+      semester:typeof value['semester']==='string'?value['semester']:undefined,
       yr:value['year_level']?Number(value['year_level']):undefined};
   }
 

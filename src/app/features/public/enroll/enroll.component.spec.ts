@@ -39,8 +39,46 @@ describe('EnrollComponent',()=>{
     expect(element.textContent).toContain('BSHM');
     expect(element.textContent).toContain('BSIT');
     expect(element.textContent).toContain('BSBA');
+    expect(element.textContent).toContain('STEM');
+    expect(element.textContent).toContain('ABM');
+    expect(element.textContent).toContain('HUMSS');
+    expect(element.textContent).toContain('GAS');
+    expect(element.textContent).toContain('TVL');
+    expect(element.textContent).toContain('1st Year');
+    expect(element.textContent).toContain('4th Year');
+    expect(element.textContent).toContain('Grade 11');
+    expect(element.textContent).toContain('Grade 12');
     expect(element.textContent).toContain('Afternoon');
     expect(element.textContent).toContain('Evening');
     expect(element.textContent).toContain('Weekends');
+    expect(element.textContent).toContain('1st Semester');
+    expect(element.textContent).toContain('2nd Semester');
+    expect(element.textContent).not.toContain('Financial Management');
+
+    const program=Array.from(element.querySelectorAll('select'))
+      .find(select=>Array.from(select.options).some(option=>option.text==='BSTM'))!;
+    program.value='BSBA';
+    program.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(element.textContent).toContain('Financial Management');
+    expect(element.textContent).toContain('Human Resources Management');
+    expect(element.textContent).not.toContain('Mathematics');
+
+    program.value='BSED';
+    program.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(element.textContent).toContain('Filipino');
+    expect(element.textContent).toContain('English');
+    expect(element.textContent).toContain('Mathematics');
+    expect(element.textContent).not.toContain('Financial Management');
+
+    program.value='TVL';
+    program.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(element.textContent).toContain('ICT – Computer Servicing');
+    expect(element.textContent).toContain('Home Economics');
+    expect(element.textContent).toContain('Automotive Servicing');
+    expect(element.textContent).toContain('Electricity Servicing');
+    expect(element.textContent).not.toContain('Filipino');
   });
 });

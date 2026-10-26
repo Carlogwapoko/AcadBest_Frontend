@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { API_BASE_URL } from './api-config';
+import { fullName } from '../shared/full-name';
 
 export type Role = 'student' | 'faculty' | 'registrar' | 'admin';
 
@@ -29,11 +30,22 @@ export interface Subject {
   end: string | null;
   r: string;
   p: string;
+  major?: string | null;
   y: string | number;
   f: number | null;
   session?: string | null;
   semester?: string | null;
   academic_year?: string | null;
+}
+
+export interface FacultyScheduleItem {
+  day: string;
+  code: string;
+  subject: string;
+  session: string;
+  start: string;
+  end: string;
+  section: string;
 }
 
 export interface Student {
@@ -44,8 +56,11 @@ export interface Student {
   last_name?: string;
   session?: string | null;
   academic_year?: string | null;
+  major?: string | null;
+  semester?: string | null;
   school_id?: string | null;
   status?: string | null;
+  enrollment_status?: string | null;
   prog: string;
   yr: number;
   sec: string;
@@ -72,6 +87,8 @@ export interface User {
   schoolId?: string;
   avatar?: string;
   prog?: string;
+  major?: string;
+  semester?: string;
   yr?: number;
 }
 
@@ -79,6 +96,9 @@ export interface Req {
   id: string;
   sid: number;
   by: string;
+  first_name?: string | null;
+  middle_name?: string | null;
+  last_name?: string | null;
   type: string;
   purpose: string;
   copies: number;
@@ -118,6 +138,8 @@ export interface Enr {
   yr: number;
   session?: string | null;
   academic_year?: string | null;
+  major?: string | null;
+  semester?: string | null;
   type: string;
   student_status: string;
   school: string;
@@ -789,10 +811,13 @@ export class DataService {
       end_time: data.end,
       room: data.r,
       program: data.p,
+      major: data.major ?? null,
       year_level: String(data.y),
       session: data.session ?? 'All',
       semester: data.semester ?? null,
-      academic_year: data.academic_year ?? null,
+      ...(data.academic_year !== undefined
+        ? { academic_year: data.academic_year }
+        : {}),
     };
 
     await this.mutate(
@@ -855,14 +880,14 @@ export class DataService {
     id: number,
     codes: string[]
   ): Promise<void> {
-    await this.mutate(
-      this.http.put(`${API_BASE_URL}/students/${id}/subjects`, {
+    const result = await this.mutate<{ codes: string[] }>(
+      this.http.put<{ codes: string[] }>(`${API_BASE_URL}/students/${id}/subjects`, {
         codes,
       })
     );
 
     this.students = this.students.map(student =>
-      student.id === id ? { ...student, subject_codes: [...codes] } : student
+      student.id === id ? { ...student, subject_codes: [...result.codes] } : student
     );
   }
 
@@ -1103,6 +1128,17 @@ export class DataService {
     return value == null ? '—' : value.toFixed(1);
   }
 
+  yearLevelLabel(value: string | number): string {
+    return ({
+      '1': '1st Year',
+      '2': '2nd Year',
+      '3': '3rd Year',
+      '4': '4th Year',
+      '11': 'Grade 11',
+      '12': 'Grade 12',
+    } as Record<string, string>)[String(value)] ?? `Year ${value}`;
+  }
+
   unitsOf(codes: string[]): number {
     return codes.reduce(
       (total, code) => total + (this.subjects[code]?.u || 0),
@@ -1129,8 +1165,48 @@ export class DataService {
     const mine = this.mySubjects(uid);
 
     return this.students.filter(student =>
-      mine.some(code => code in student.g)
+      mine.some(code => code in student.g || this.codes(student).includes(code))
     );
+  }
+
+  facultySchedule(uid: number): FacultyScheduleItem[] {
+    const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const dayNames: Record<string, string> = {
+      mon: 'Monday', monday: 'Monday',
+      tue: 'Tuesday', tues: 'Tuesday', tuesday: 'Tuesday',
+      wed: 'Wednesday', wednesday: 'Wednesday',
+      thu: 'Thursday', thur: 'Thursday', thurs: 'Thursday', thursday: 'Thursday',
+      fri: 'Friday', friday: 'Friday',
+      sat: 'Saturday', saturday: 'Saturday',
+      sun: 'Sunday', sunday: 'Sunday',
+    };
+    const sectionsBySubject = new Map<string, Set<string>>();
+    for (const student of this.myStudents(uid)) {
+      for (const code of this.codes(student)) {
+        if (!sectionsBySubject.has(code)) sectionsBySubject.set(code, new Set());
+        if (student.sec) sectionsBySubject.get(code)!.add(student.sec);
+      }
+    }
+
+    return this.mySubjects(uid).flatMap(code => {
+      const subject = this.subjects[code];
+      if (!subject) return [];
+      const days = [...new Set(subject.d.split(/[\/,;|&]/)
+        .map(day => day.trim().toLowerCase().replace(/\.$/, ''))
+        .map(day => dayNames[day])
+        .filter((day): day is string => !!day))];
+      return days.map(day => ({
+        day,
+        code,
+        subject: subject.n,
+        session: subject.session || 'All',
+        start: subject.start || '—',
+        end: subject.end || '—',
+        section: [...(sectionsBySubject.get(code) || [])].sort().join(', ') || '—',
+      }));
+    }).sort((a, b) => weekdays.indexOf(a.day) - weekdays.indexOf(b.day)
+      || a.start.localeCompare(b.start)
+      || a.code.localeCompare(b.code));
   }
 
   annsFor(s: Student): Ann[] {
@@ -1171,12 +1247,15 @@ export class DataService {
   }
 
   private mapUser(x: Record<string, unknown>): User {
+    const firstName = String(x['first_name'] ?? '');
+    const middleName = String(x['middle_name'] ?? '');
+    const lastName = String(x['last_name'] ?? '');
     return {
       id: Number(x['id']),
-      name: String(x['name']),
-      first_name: String(x['first_name'] ?? ''),
-      middle_name: String(x['middle_name'] ?? ''),
-      last_name: String(x['last_name'] ?? ''),
+      name: fullName(firstName, middleName, lastName, String(x['name'] ?? '')),
+      first_name: firstName,
+      middle_name: middleName,
+      last_name: lastName,
       email: String(x['email']),
       role: String(x['role']),
       schoolId: typeof x['school_id'] === 'string' ? x['school_id'] : undefined,
@@ -1195,6 +1274,8 @@ export class DataService {
         typeof x['program'] === 'string'
           ? x['program']
           : undefined,
+      major: typeof x['major'] === 'string' ? x['major'] : undefined,
+      semester: typeof x['semester'] === 'string' ? x['semester'] : undefined,
       yr: x['year_level']
         ? Number(x['year_level'])
         : undefined,

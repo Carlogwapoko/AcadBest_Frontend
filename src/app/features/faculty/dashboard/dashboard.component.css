@@ -1,1 +1,4 @@
 :host{display:block;min-width:0}
+.schedule-wrap{margin:0 -4px}
+.schedule-table{min-width:760px}
+.schedule-table th,.schedule-table td{vertical-align:middle}

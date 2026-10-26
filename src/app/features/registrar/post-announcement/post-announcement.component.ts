@@ -22,7 +22,7 @@ export class PostAnnouncementComponent{
   build(){const f=this.f,p=f.prog.startsWith('All')?'All':f.prog,y=f.yr.startsWith('All')?'All':+f.yr,
     s=f.sec.startsWith('All')?'All':f.sec;
     return{t:f.t.trim(),m:f.m.trim(),aud:[p=='All'?'All programs':p,
-      y=='All'?'':'Year '+y,s=='All'?'':'Sec '+s].filter(Boolean).join(' · '),prog:p,
+      y=='All'?'':this.d.yearLevelLabel(y),s=='All'?'':'Sec '+s].filter(Boolean).join(' · '),prog:p,
       yr:y,sec:s,pr:'Normal',dt:f.dt,end:f.end,by:this.a.user!.name,d:new Date(f.dt+'T00:00').toLocaleDateString('en',
       {month:'short',day:'2-digit'})}}
   async publish(){if(this.busy||!this.valid())return this.ui.toast('Please fix the highlighted fields.','er');const a=this.build();

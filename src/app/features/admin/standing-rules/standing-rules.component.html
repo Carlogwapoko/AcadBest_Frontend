@@ -1,8 +1,4 @@
-<div class="feature-content setting-form"><h3>Current academic school year</h3>
-<p style="color:var(--mu)">This value is suggested on new online enrollment forms. Saved applications retain their own school year.</p>
-<app-field label="Current Academic School Year" [error]="e['academicYear']"><input [(ngModel)]="academicYear" [class.bad]="e['academicYear']" placeholder="2026-2027"></app-field>
-<div class="acts"><button class="btn" [disabled]="yearBusy" (click)="saveAcademicYear()">@if(yearBusy){<span class="sp"></span>}Save Academic Year</button></div>
-<h3>Academic standing thresholds</h3>
+<div class="feature-content setting-form"><h3>Academic standing thresholds</h3>
 <p style="color:var(--mu)">Average ≥ Good Standing → <span class="chip ok">Good</span> · between → <span class="chip wn">At Risk</span> · below passing → <span class="chip er">Failing</span></p>
 <app-field label="Passing grade (50–95)" [error]="e['p']"><input type="number" step="0.5" [(ngModel)]="pass" [class.bad]="e['p']" placeholder="Enter passing grade"></app-field>
 <app-field label="Good Standing minimum (must be above passing, max 100)" [error]="e['s']"><input type="number" step="0.5" [(ngModel)]="safe" [class.bad]="e['s']" placeholder="Enter minimum grade"></app-field>
