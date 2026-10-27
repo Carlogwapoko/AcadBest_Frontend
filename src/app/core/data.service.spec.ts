@@ -49,6 +49,31 @@ describe('DataService list loading',()=>{
     ]);
   });
 
+  it('keeps subject assignments independent for each instructor and idempotent',async()=>{
+    data.subjects={
+      IT301:{n:'Programming',u:3,d:'Mon/Wed',tm:'08:00–09:30',start:'08:00',end:'09:30',
+        r:'Room 1',p:'BSIT',y:1,f:7,session:'Afternoon'},
+    };
+
+    const assignFirst=data.assignFaculty(8,['IT301']);
+    http.expectOne(`${API_BASE_URL}/faculty/8/subjects`).flush(null);
+    await assignFirst;
+    expect(data.facultyIds(data.subjects['IT301'])).toEqual([7,8]);
+
+    const assignAgain=data.assignFaculty(8,['IT301']);
+    http.expectOne(`${API_BASE_URL}/faculty/8/subjects`).flush(null);
+    await assignAgain;
+    expect(data.facultyIds(data.subjects['IT301'])).toEqual([7,8]);
+    expect(data.mySubjects(7)).toEqual(['IT301']);
+    expect(data.mySubjects(8)).toEqual(['IT301']);
+
+    const editFirst=data.assignFaculty(7,[]);
+    http.expectOne(`${API_BASE_URL}/faculty/7/subjects`).flush(null);
+    await editFirst;
+    expect(data.facultyIds(data.subjects['IT301'])).toEqual([8]);
+    expect(data.mySubjects(8)).toEqual(['IT301']);
+  });
+
   it('coalesces and caches portal loading until an explicit refresh',async()=>{
     const first=data.load();
     const concurrent=data.load();

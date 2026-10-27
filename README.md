@@ -43,4 +43,6 @@ Each role has its own route file and role guard. Role-specific pages are lazy-lo
 
 Registrar subject offerings can be filtered by session, semester, and academic year. Student subject lists can be filtered by term, and faculty grade entry can be filtered by student session. Missing historical offering details are shown as a dash. Administrators manage the current academic school year and standing rules from separate admin pages; new enrollment applications save their own school year, semester, and applicable major for historical review.
 
+A subject can be assigned to multiple faculty members. Saving one faculty member's load changes only that faculty member's assignments.
+
 Profiles are read-only for signed-in users. Administrators manage account pictures from Users & Roles; the browser validates/resizes the image and the backend stores it on the public disk. Frontend guards support navigation while backend middleware enforces authorization and record scope.

@@ -14,6 +14,21 @@
 .subject-group .ck{background:var(--bg,#fff)}
 .subject-filters app-field{flex:0 1 160px}
 .add-subject-button{flex:0 0 auto;align-self:flex-end}
+.subject-form-section{margin:0 0 10px;padding:10px 12px;border:1px solid var(--bd);border-radius:12px;background:var(--bg2,#f7f9fc)}
+.subject-form-section h3{margin:0 0 4px;font-size:15px;color:var(--navy2)}
+.subject-form-section .r2{column-gap:12px}
+.subject-form-section .subject-field-wide{grid-column:1 / -1}
+.day-picker{margin:4px 0 8px}
+.day-picker-label{display:block;margin-bottom:6px;font-size:13px;font-weight:600}
+.day-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.day-option{display:flex;align-items:center;gap:8px;margin:0;padding:7px 9px;border:1px solid var(--bd);border-radius:9px;background:var(--card);font-size:13px;font-weight:500;cursor:pointer}
+.day-option input{width:16px;height:16px;margin:0;accent-color:var(--blue)}
+.day-picker.invalid .day-options{border-radius:10px;outline:1px solid var(--er)}
+.field-error{display:block;margin-top:5px;color:var(--er);font-size:12px}
+.subject-actions{justify-content:center;gap:8px;white-space:nowrap}
+.subject-actions .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:78px;padding:6px 9px}
+.subject-actions app-icon{margin:0}
+@media(max-width:600px){.day-options{grid-template-columns:repeat(2,minmax(0,1fr))}.subject-form-section{padding:12px}}
 @media(max-width:720px){
   .subject-filters{align-items:stretch!important}
   .filter-description{flex-basis:100%}

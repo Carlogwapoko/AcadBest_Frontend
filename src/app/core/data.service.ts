@@ -33,6 +33,7 @@ export interface Subject {
   major?: string | null;
   y: string | number;
   f: number | null;
+  faculty_ids?: number[];
   session?: string | null;
   semester?: string | null;
   academic_year?: string | null;
@@ -277,8 +278,16 @@ export class DataService {
           (data['disabled'] as string[] | undefined) ?? []
         );
 
-        this.subjects =
-          (data['subjects'] as Record<string, Subject>) ?? {};
+        const subjects = (data['subjects'] as Record<string, Subject>) ?? {};
+        this.subjects = Object.fromEntries(
+          Object.entries(subjects).map(([code, subject]) => [
+            code,
+            {
+              ...subject,
+              faculty_ids: this.facultyIds(subject),
+            },
+          ])
+        );
 
         this.students = (
           (data['students'] as Student[] | undefined) ?? []
@@ -813,7 +822,6 @@ export class DataService {
       program: data.p,
       major: data.major ?? null,
       year_level: String(data.y),
-      session: data.session ?? 'All',
       semester: data.semester ?? null,
       ...(data.academic_year !== undefined
         ? { academic_year: data.academic_year }
@@ -830,9 +838,16 @@ export class DataService {
       )
     );
 
+    const current = this.subjects[code];
+    const facultyIds = current ? this.facultyIds(current) : [];
     this.subjects = {
       ...this.subjects,
-      [code]: data,
+      [code]: {
+        ...data,
+        session: data.session ?? current?.session ?? 'All',
+        faculty_ids: facultyIds,
+        f: facultyIds[0] ?? null,
+      },
     };
 
   }
@@ -864,14 +879,17 @@ export class DataService {
     this.subjects = Object.fromEntries(
       Object.entries(this.subjects).map(([code, subject]) => [
         code,
-        {
-          ...subject,
-          f: selected.has(code)
-            ? id
-            : subject.f === id
-              ? null
-              : subject.f,
-        },
+        (() => {
+          const facultyIds = new Set(this.facultyIds(subject));
+          if (selected.has(code)) facultyIds.add(id);
+          else facultyIds.delete(id);
+          const assignments = [...facultyIds];
+          return {
+            ...subject,
+            faculty_ids: assignments,
+            f: assignments[0] ?? null,
+          };
+        })(),
       ])
     );
   }
@@ -1151,13 +1169,23 @@ export class DataService {
       'Unassigned';
   }
 
+  facultyIds(subject: Subject): number[] {
+    return subject.faculty_ids ?? (subject.f == null ? [] : [subject.f]);
+  }
+
+  facultyNames(ids: number[]): string {
+    return ids.map(id => this.users.find(user => user.id === id)?.name || '')
+      .filter(Boolean)
+      .join(', ');
+  }
+
   faculty(): User[] {
     return this.users.filter(user => user.role === 'Faculty');
   }
 
   mySubjects(uid: number): string[] {
     return Object.keys(this.subjects).filter(
-      code => this.subjects[code].f === uid
+      code => this.facultyIds(this.subjects[code]).includes(uid)
     );
   }
 
@@ -1231,10 +1259,18 @@ export class DataService {
           a?.start && a.end && b?.start && b.end
             ? a.start < b.end && b.start < a.end
             : a?.tm === b?.tm;
+        const sameAcademicYear =
+          !a?.academic_year ||
+          !b?.academic_year ||
+          a.academic_year === b.academic_year;
+        const sameSemester =
+          !a?.semester || !b?.semester || a.semester === b.semester;
 
         if (
           a &&
           b &&
+          sameAcademicYear &&
+          sameSemester &&
           overlaps &&
           a.d.split('/').some(day => b.d.split('/').includes(day))
         ) {

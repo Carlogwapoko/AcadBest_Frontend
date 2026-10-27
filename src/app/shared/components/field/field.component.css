@@ -1,1 +1,2 @@
 :host{display:block;min-width:0}
+:host-context(.subject-form-section) label{margin:4px 0 3px}
