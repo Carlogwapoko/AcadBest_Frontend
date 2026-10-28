@@ -30,48 +30,81 @@ describe('DataService list loading',()=>{
   it('creates an ordered weekly schedule with each subject day and assigned sections',()=>{
     data.subjects={
       IT101:{n:'Programming',u:3,d:'Mon/Wed',tm:'08:00–09:30',start:'08:00',end:'09:30',
-        r:'Room 1',p:'BSIT',y:1,f:7,session:'Afternoon'},
+        r:'Room 1',p:'BSIT',y:1,f:7,session:'Afternoon',faculty_assignments:[
+          {faculty_id:7,semester:'1st Semester',academic_year:'2026-2027',section:'A'},
+          {faculty_id:7,semester:'1st Semester',academic_year:'2026-2027',section:'B'},
+        ]},
       IT102:{n:'Databases',u:3,d:'Mon',tm:'10:00–11:30',start:'10:00',end:'11:30',
-        r:'Room 2',p:'BSIT',y:1,f:7,session:'Evening'},
+        r:'Room 2',p:'BSIT',y:1,f:7,session:'Evening',faculty_assignments:[
+          {faculty_id:7,semester:'1st Semester',academic_year:'2026-2027',section:'A'},
+        ]},
       IT103:{n:'Capstone',u:3,d:'Sun',tm:'13:00–14:30',start:'13:00',end:'14:30',
-        r:'Room 3',p:'BSIT',y:1,f:7,session:'Weekends'},
+        r:'Room 3',p:'BSIT',y:1,f:7,session:'Weekends',faculty_assignments:[
+          {faculty_id:7,semester:'1st Semester',academic_year:'2026-2027',section:'All'},
+        ]},
     };
-    data.students=[
-      {id:1,name:'Student A',prog:'BSIT',yr:1,sec:'A',g:{},subject_codes:['IT101','IT102']},
-      {id:2,name:'Student B',prog:'BSIT',yr:1,sec:'B',g:{},subject_codes:['IT101']},
-    ];
 
     expect(data.facultySchedule(7).map(item=>[item.day,item.code,item.section])).toEqual([
-      ['Monday','IT101','A, B'],
+      ['Monday','IT101','A'],
+      ['Monday','IT101','B'],
       ['Monday','IT102','A'],
-      ['Wednesday','IT101','A, B'],
-      ['Sunday','IT103','—'],
+      ['Wednesday','IT101','A'],
+      ['Wednesday','IT101','B'],
+      ['Sunday','IT103','All'],
     ]);
   });
 
   it('keeps subject assignments independent for each instructor and idempotent',async()=>{
     data.subjects={
       IT301:{n:'Programming',u:3,d:'Mon/Wed',tm:'08:00–09:30',start:'08:00',end:'09:30',
-        r:'Room 1',p:'BSIT',y:1,f:7,session:'Afternoon'},
+        r:'Room 1',p:'BSIT',y:1,f:7,session:'Afternoon',faculty_assignments:[
+          {faculty_id:7,semester:'1st Semester',academic_year:'2026-2027',section:'All'},
+        ]},
     };
+    const scope={semester:'1st Semester',academic_year:'2026-2027',section:'All'};
 
-    const assignFirst=data.assignFaculty(8,['IT301']);
+    const assignFirst=data.assignFaculty(8,['IT301'],scope);
     http.expectOne(`${API_BASE_URL}/faculty/8/subjects`).flush(null);
     await assignFirst;
     expect(data.facultyIds(data.subjects['IT301'])).toEqual([7,8]);
 
-    const assignAgain=data.assignFaculty(8,['IT301']);
+    const assignAgain=data.assignFaculty(8,['IT301'],scope);
     http.expectOne(`${API_BASE_URL}/faculty/8/subjects`).flush(null);
     await assignAgain;
     expect(data.facultyIds(data.subjects['IT301'])).toEqual([7,8]);
     expect(data.mySubjects(7)).toEqual(['IT301']);
     expect(data.mySubjects(8)).toEqual(['IT301']);
 
-    const editFirst=data.assignFaculty(7,[]);
+    const editFirst=data.assignFaculty(7,[],scope);
     http.expectOne(`${API_BASE_URL}/faculty/7/subjects`).flush(null);
     await editFirst;
     expect(data.facultyIds(data.subjects['IT301'])).toEqual([8]);
     expect(data.mySubjects(8)).toEqual(['IT301']);
+  });
+
+  it('updates student subject loads and unit totals when subjects are removed',async()=>{
+    data.subjects={
+      IT101:{n:'Programming',u:3,d:'',tm:'',start:null,end:null,r:'',p:'BSIT',y:1,f:null},
+      IT201:{n:'Databases',u:4,d:'',tm:'',start:null,end:null,r:'',p:'BSIT',y:2,f:null},
+    };
+    const student={
+      id:10,name:'Student Example',prog:'BSIT',yr:1,sec:'A',g:{},
+      enrollment_ref:'APP-10',subject_codes:['IT101','IT201'],
+    };
+    data.eligibleEnrollments=[student];
+    data.students=[student];
+
+    const removeOne=data.assignStudent(10,['IT201'],'APP-10');
+    http.expectOne(`${API_BASE_URL}/students/10/subjects`).flush({codes:['IT201']});
+    await removeOne;
+    expect(data.codes(data.eligibleEnrollments[0])).toEqual(['IT201']);
+    expect(data.unitsOf(data.codes(data.eligibleEnrollments[0]))).toBe(4);
+
+    const removeLast=data.assignStudent(10,[],'APP-10');
+    http.expectOne(`${API_BASE_URL}/students/10/subjects`).flush({codes:[]});
+    await removeLast;
+    expect(data.codes(data.eligibleEnrollments[0])).toEqual([]);
+    expect(data.unitsOf(data.codes(data.eligibleEnrollments[0]))).toBe(0);
   });
 
   it('coalesces and caches portal loading until an explicit refresh',async()=>{
@@ -191,6 +224,24 @@ describe('DataService list loading',()=>{
     });
   });
 
+  it('updates and caches all parent name fields from registrar edits',async()=>{
+    data.enrollments=[{
+      ref:'ENR-2026-ABC123',name:'Student',email:'student@example.com',phone:'',dob:'2007-01-01',
+      sex:'Female',addr:'Address',prog:'BSIT',yr:1,type:'New',student_status:'Applicant',
+      school:'School',gname:'Guardian',gph:'',st:'Pending',date:'Oct 19',note:'',acct:false,log:[],
+    }];
+    const fields={
+      mother_first_name:'Mother',mother_middle_name:'Marie',mother_last_name:'Parent',
+      father_first_name:'Father',father_middle_name:'James',father_last_name:'Parent',
+    };
+    const operation=data.updateEnrollmentParents('ENR-2026-ABC123',fields);
+    const request=http.expectOne(`${API_BASE_URL}/enrollments/ENR-2026-ABC123`);
+    expect(request.request.body).toEqual(fields);
+    request.flush({status:'Pending',...fields});
+    await operation;
+    expect(data.enrollments[0]).toMatchObject(fields);
+  });
+
   it('removes a school ID from an enrollment when the backend returns null',async()=>{
     data.enrollments=[{
       ref:'ENR-2026-ABC123',name:'Student',email:'student@example.com',phone:'',dob:'2007-01-01',
@@ -206,6 +257,27 @@ describe('DataService list loading',()=>{
 
     expect(data.enrollments[0].school_id).toBeNull();
     expect(data.enrollments[0].st).toBe('Rejected');
+  });
+
+  it('reloads eligible enrollments after an application is approved',async()=>{
+    const operation=data.updateEnrollment('ENR-2026-ABC123','Enrolled');
+    http.expectOne(`${API_BASE_URL}/enrollments/ENR-2026-ABC123`)
+      .flush({status:'Enrolled',school_id:'2026001460'});
+    await Promise.resolve();
+    await Promise.resolve();
+    const portal=http.expectOne(`${API_BASE_URL}/portal`);
+    portal.flush({
+      today:'2026-10-19',
+      eligible_enrollments:[{
+        id:1,name:'Student',prog:'BSIT',yr:1,sec:'A',g:{},
+        enrollment_status:'Enrolled',semester:'1st Semester',academic_year:'2026-2027',
+      }],
+    });
+
+    await operation;
+
+    expect(data.eligibleEnrollments).toHaveLength(1);
+    expect(data.eligibleEnrollments[0].enrollment_status).toBe('Enrolled');
   });
 
   it('marks notifications read only after the batch request succeeds',async()=>{
@@ -247,8 +319,8 @@ describe('DataService list loading',()=>{
       gwa:80,st:'for_monitoring',declining:[],
     }];
 
-    const operation=data.saveGrades('IT301','Midterm',[{
-      student_id:4,score:86,
+    const operation=data.saveGrades('IT301',[{
+      student_id:4,scores:{Midterm:86},
     }]);
     const request=http.expectOne(`${API_BASE_URL}/grades`);
     expect(request.request.method).toBe('PUT');
@@ -256,7 +328,7 @@ describe('DataService list loading',()=>{
     await operation;
 
     expect(data.students[0].g['IT301']).toEqual([80,86,null]);
-    expect(request.request.body.grades).toEqual([{student_id:4,score:86}]);
+    expect(request.request.body.grades).toEqual([{student_id:4,scores:{Midterm:86}}]);
     expect(data.students[0].gwa).toBe(84);
     expect(data.students[0].st).toBe('good_standing');
     http.expectNone(`${API_BASE_URL}/portal`);

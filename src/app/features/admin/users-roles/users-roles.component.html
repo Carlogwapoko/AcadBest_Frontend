@@ -1,13 +1,3 @@
-@if(pending.length){
-<div class="card approval-card"><div class="approval-header"><div><h3>Online enrollment applicants</h3>
-  <p class="sub">Create a student account after registrar approval. Student accounts only.</p></div>
-  <span class="chip wn">{{pending.length}} awaiting account</span></div>
-  <div class="tw"><table><tr><th>Reference</th><th class="name-part">First Name</th><th class="name-part">Middle Name</th><th class="name-part">Last Name</th><th>Program</th><th>School Year</th><th>Registrar status</th><th>School ID</th><th></th></tr>
-  @for(p of pending;track p.ref){<tr><td>{{p.ref}}</td><td class="name-part">{{p.first_name||'—'}}</td><td class="name-part">{{p.middle_name||'—'}}</td><td class="name-part">{{p.last_name||'—'}}</td><td>{{p.prog}} · {{d.yearLevelLabel(p.yr)}}</td><td>{{p.academic_year||'—'}}</td>
-    <td><span class="sb" [class]="'sb '+(p.st=='Enrolled'?'ok':(p.st=='Rejected'?'er':'wn'))"><app-icon [name]="p.st=='Rejected'?'alert':(p.st=='Pending'?'clock':'check')" [size]="14"/>{{p.st=='Enrolled'?'Approved':p.st}}</span></td>
-    <td>{{p.school_id||'—'}}</td>
-    <td>@if(p.st=='Enrolled'){<button type="button" class="btn sm account-create-button" (click)="open(null,p)"><app-icon name="plus" [size]="14"/>Create Account</button>}@else{<span class="chip wn"><app-icon name="clock" [size]="12"/>Awaiting approval</span>}</td></tr>}</table></div>
-</div>}
 <div class="feature-content"><div class="row"><input placeholder="Search users" [(ngModel)]="q" (ngModelChange)="searchChanged()"><button class="btn" style="flex:0 0 auto" (click)="open()"><app-icon name="plus" [size]="16"/>Add Users</button></div>
 @if(loadError){<div class="empty" role="alert">{{loadError}} <button class="btn sec sm" (click)="loadUsers(page)">Retry</button></div>}
 @else if(!loading&&!list.length){<div class="empty"><div class="eic"><app-icon name="inbox" [size]="24"/></div>No records found.</div>}
@@ -15,7 +5,7 @@
 <div class="row"><span>{{total}} users</span></div>}</div>
 
 <app-modal [open]="!!m" [maxWidth]="640" [title]="m?(m.ref?'Create student account':(m.id?'Edit':'Add')+' user'):''" [disableClose]="saving" (closed)="m=null">@if(m){
-@if(m.lock){<p class="sub" style="margin:-6px 0 4px">@if(m.ref){Approved online applicant {{m.ref}}. }Accounts from enrollment applications are Student accounts only.</p>}
+@if(m.lock){<p class="sub" style="margin:-6px 0 4px">Student accounts cannot be changed to another role.</p>}
 @if(m.id){<section class="account-picture-editor" aria-label="Manage user profile picture">
   <div class="account-picture-preview">@if(m.avatar){<img [src]="m.avatar" alt="Selected user profile picture">}@else{<span>{{avatarInitials(formName())}}</span>}</div>
   <div class="account-picture-controls">

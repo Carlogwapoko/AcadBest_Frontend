@@ -6,6 +6,7 @@ import { API_BASE_URL } from './api-config';
 import { fullName } from '../shared/full-name';
 
 export type Role = 'student' | 'faculty' | 'registrar' | 'admin';
+export type GradingTerm = 'Prelim' | 'Midterm' | 'Final';
 
 export const ROLE_NAME: Record<Role, string> = {
   student: 'Student',
@@ -37,31 +38,54 @@ export interface Subject {
   session?: string | null;
   semester?: string | null;
   academic_year?: string | null;
+  grade_weights?: Partial<Record<'Prelim' | 'Midterm' | 'Final', number>>;
+  faculty_assignments?: FacultyAssignment[];
+}
+
+export interface FacultyAssignment {
+  id?: number;
+  faculty_id: number;
+  semester: string;
+  academic_year: string;
+  section: string | null;
+  session?: string;
+  days?: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+  room?: string | null;
 }
 
 export interface FacultyScheduleItem {
+  assignment_id?: number;
   day: string;
+  days: string;
   code: string;
   subject: string;
   session: string;
   start: string;
   end: string;
+  room: string;
   section: string;
+  semester: string;
+  academic_year: string;
 }
 
 export interface Student {
   id: number;
   name: string;
   first_name?: string;
-  middle_name?: string;
+  middle_name?: string | null;
   last_name?: string;
   session?: string | null;
   academic_year?: string | null;
+  academic_years?: string[];
   major?: string | null;
   semester?: string | null;
   school_id?: string | null;
   status?: string | null;
   enrollment_status?: string | null;
+  enrollment_id?: number;
+  enrollment_ref?: string;
   prog: string;
   yr: number;
   sec: string;
@@ -146,6 +170,12 @@ export interface Enr {
   school: string;
   gname: string;
   gph: string;
+  mother_first_name?: string | null;
+  mother_middle_name?: string | null;
+  mother_last_name?: string | null;
+  father_first_name?: string | null;
+  father_middle_name?: string | null;
+  father_last_name?: string | null;
   st: string;
   date: string;
   note: string;
@@ -195,6 +225,7 @@ export class DataService {
 
   subjects: Record<string, Subject> = {};
   students: Student[] = [];
+  eligibleEnrollments: Student[] = [];
   users: User[] = [];
   requests: Req[] = [];
   anns: Ann[] = [];
@@ -297,6 +328,14 @@ export class DataService {
           gwa: student.gwa ?? null,
           declining: student.declining ?? [],
         }));
+        this.eligibleEnrollments = (
+          (data['eligible_enrollments'] as Student[] | undefined) ?? []
+        ).map(student => ({
+          ...student,
+          g: student.g ?? {},
+          subject_codes: student.subject_codes ?? [],
+        }));
+        this.currentAcademicYear = String(data['academic_year'] ?? this.currentAcademicYear);
 
         this.users = (
           (data['users'] as Array<Record<string, unknown>> | undefined) ?? []
@@ -348,6 +387,7 @@ export class DataService {
     this.rules = { pass: 75, safe: 80 };
     this.subjects = {};
     this.students = [];
+    this.eligibleEnrollments = [];
     this.users = [];
     this.requests = [];
     this.anns = [];
@@ -535,6 +575,9 @@ export class DataService {
           }
         : item
     );
+    if (result.status === 'Enrolled') {
+      await this.reload();
+    }
   }
 
   async saveApplicantSubjects(
@@ -560,6 +603,32 @@ export class DataService {
     this.enrollmentLoads.clear();
     this.enrollments = this.enrollments.map(item =>
       item.ref === ref ? { ...item, acct: true } : item
+    );
+  }
+
+  async updateEnrollmentParents(
+    ref: string,
+    parentFields: Pick<
+      Enr,
+      | 'mother_first_name'
+      | 'mother_middle_name'
+      | 'mother_last_name'
+      | 'father_first_name'
+      | 'father_middle_name'
+      | 'father_last_name'
+    >
+  ): Promise<void> {
+    const updated = await this.mutate(
+      this.http.put<Partial<Enr>>(
+        `${API_BASE_URL}/enrollments/${encodeURIComponent(ref)}`,
+        parentFields
+      )
+    );
+
+    this.enrollmentVersion++;
+    this.enrollmentLoads.clear();
+    this.enrollments = this.enrollments.map(item =>
+      item.ref === ref ? { ...item, ...updated } : item
     );
   }
 
@@ -708,17 +777,12 @@ export class DataService {
   // GRADES
   async saveGrades(
     code: string,
-    term: string,
     grades: Array<{
       student_id: number;
-      score: number;
+      enrollment_application_id?: number;
+      scores: Partial<Record<GradingTerm, number>>;
     }>
   ): Promise<void> {
-    const termIndex = ['Prelim', 'Midterm', 'Final'].indexOf(term);
-    if (termIndex < 0) {
-      throw new Error(`Invalid grading term: ${term}`);
-    }
-
     const result = await this.mutate(
       this.http.put<{
         students: Record<string, {
@@ -728,28 +792,30 @@ export class DataService {
         }>;
       }>(`${API_BASE_URL}/grades`, {
         subject_code: code,
-        term,
         grades,
       })
     );
 
     const changed = new Map(
       grades.map(grade => [
-        grade.student_id,
-        grade.score,
+        grade.enrollment_application_id ?? grade.student_id,
+        grade.scores,
       ])
     );
 
     this.students = this.students.map(student => {
-      const grade = changed.get(student.id);
-      if (grade === undefined) return student;
+      const scores = changed.get(student.enrollment_id ?? student.id);
+      if (scores === undefined) return student;
 
       const courseGrades = { ...student.g };
       const terms = [
         ...(courseGrades[code] ?? [null, null, null]),
       ];
 
-      terms[termIndex] = grade;
+      for (const [term, score] of Object.entries(scores) as [GradingTerm, number][]) {
+        const termIndex = ['Prelim', 'Midterm', 'Final'].indexOf(term);
+        terms[termIndex] = score;
+      }
       courseGrades[code] = terms;
 
       const standing = result.students[String(student.id)];
@@ -815,10 +881,6 @@ export class DataService {
       code,
       name: data.n,
       units: data.u,
-      days: data.d,
-      start_time: data.start,
-      end_time: data.end,
-      room: data.r,
       program: data.p,
       major: data.major ?? null,
       year_level: String(data.y),
@@ -846,6 +908,8 @@ export class DataService {
         ...data,
         session: data.session ?? current?.session ?? 'All',
         faculty_ids: facultyIds,
+        faculty_assignments: current?.faculty_assignments ?? [],
+        grade_weights: data.grade_weights ?? current?.grade_weights,
         f: facultyIds[0] ?? null,
       },
     };
@@ -866,11 +930,24 @@ export class DataService {
 
   async assignFaculty(
     id: number,
-    codes: string[]
+    codes: string[],
+    scope: Pick<FacultyAssignment, 'semester' | 'academic_year' | 'section'>,
+    schedules: Record<string, Array<Pick<FacultyAssignment, 'session' | 'days' | 'start_time' | 'end_time' | 'room'> & {section?: string | null}>> = {}
   ): Promise<void> {
+    const apiSchedules = Object.fromEntries(
+      Object.entries(schedules).map(([code, entries]) => [
+        code,
+        entries.map(schedule => ({
+          ...schedule,
+          section: schedule.section ?? scope.section,
+        })),
+      ])
+    );
     await this.mutate(
       this.http.put(`${API_BASE_URL}/faculty/${id}/subjects`, {
         codes,
+        ...scope,
+        schedules: apiSchedules,
       })
     );
 
@@ -879,34 +956,49 @@ export class DataService {
     this.subjects = Object.fromEntries(
       Object.entries(this.subjects).map(([code, subject]) => [
         code,
-        (() => {
-          const facultyIds = new Set(this.facultyIds(subject));
-          if (selected.has(code)) facultyIds.add(id);
-          else facultyIds.delete(id);
-          const assignments = [...facultyIds];
-          return {
-            ...subject,
-            faculty_ids: assignments,
-            f: assignments[0] ?? null,
-          };
-        })(),
+        this.withFacultyAssignment(subject, id, scope, selected.has(code), schedules[code]),
       ])
     );
   }
 
   async assignStudent(
     id: number,
-    codes: string[]
+    codes: string[],
+    enrollmentReference: string
   ): Promise<void> {
     const result = await this.mutate<{ codes: string[] }>(
       this.http.put<{ codes: string[] }>(`${API_BASE_URL}/students/${id}/subjects`, {
         codes,
+        enrollment_reference: enrollmentReference,
       })
     );
 
-    this.students = this.students.map(student =>
-      student.id === id ? { ...student, subject_codes: [...result.codes] } : student
+    const updated = this.eligibleEnrollments.map(student =>
+      student.enrollment_ref === enrollmentReference
+        ? { ...student, subject_codes: [...result.codes] }
+        : student
     );
+    this.eligibleEnrollments = updated;
+    this.students = this.students.map(student =>
+      student.enrollment_ref === enrollmentReference
+        ? { ...student, subject_codes: [...result.codes] }
+        : student
+    );
+  }
+
+  async saveSubjectGradeWeights(
+    code: string,
+    weights: Record<'Prelim' | 'Midterm' | 'Final', number>
+  ): Promise<void> {
+    await this.mutate(
+      this.http.put(`${API_BASE_URL}/subjects/${encodeURIComponent(code)}`, {
+        grade_weights: weights,
+      })
+    );
+    this.subjects = {
+      ...this.subjects,
+      [code]: { ...this.subjects[code], grade_weights: { ...weights } },
+    };
   }
 
   // RULES AND MODULE SETTINGS
@@ -1138,6 +1230,23 @@ export class DataService {
     ) / 3).toFixed(2));
   }
 
+  subjectAverage(code: string, grades: (number | null)[]): number | null {
+    const average = this.avg(grades);
+    if (average === null) return null;
+
+    const weights = this.subjects[code]?.grade_weights;
+    if (!weights) return average;
+    const periodWeights = [weights.Prelim, weights.Midterm, weights.Final];
+    if (periodWeights.some(weight => typeof weight !== 'number' || !Number.isFinite(weight))
+      || Math.abs(periodWeights.reduce<number>((total, weight) => total + (weight ?? 0), 0) - 100) > 0.001) {
+      return average;
+    }
+
+    const scores = grades.slice(0, 3) as number[];
+    return Number(scores.reduce((total, score, index) =>
+      total + score * (periodWeights[index] ?? 0) / 100, 0).toFixed(2));
+  }
+
   overallGrade(value: number | null | undefined): string {
     return value == null ? 'Incomplete' : value.toFixed(2);
   }
@@ -1170,7 +1279,8 @@ export class DataService {
   }
 
   facultyIds(subject: Subject): number[] {
-    return subject.faculty_ids ?? (subject.f == null ? [] : [subject.f]);
+    return subject.faculty_ids ?? subject.faculty_assignments?.map(item => item.faculty_id)
+      ?? (subject.f == null ? [] : [subject.f]);
   }
 
   facultyNames(ids: number[]): string {
@@ -1183,17 +1293,89 @@ export class DataService {
     return this.users.filter(user => user.role === 'Faculty');
   }
 
-  mySubjects(uid: number): string[] {
+  mySubjects(
+    uid: number,
+    scope?: Pick<FacultyAssignment, 'semester' | 'academic_year' | 'section'>
+  ): string[] {
     return Object.keys(this.subjects).filter(
-      code => this.facultyIds(this.subjects[code]).includes(uid)
+      code => this.facultyAssignments(this.subjects[code]).some(assignment =>
+        assignment.faculty_id === uid
+        && (!scope || (
+          assignment.semester === scope.semester
+          && assignment.academic_year === scope.academic_year
+          && assignment.section === scope.section
+        ))
+      )
     );
   }
 
-  myStudents(uid: number): Student[] {
-    const mine = this.mySubjects(uid);
+  facultyAssignments(subject: Subject): FacultyAssignment[] {
+    return subject.faculty_assignments ?? [];
+  }
 
+  private withFacultyAssignment(
+    subject: Subject,
+    facultyId: number,
+    scope: Pick<FacultyAssignment, 'semester' | 'academic_year' | 'section'>,
+    assigned: boolean,
+    schedules?: Array<Pick<FacultyAssignment, 'session' | 'days' | 'start_time' | 'end_time' | 'room'> & {section?: string | null}>
+  ): Subject {
+    const previous = this.facultyAssignments(subject).filter(item =>
+      item.faculty_id === facultyId
+      && item.semester === scope.semester
+      && item.academic_year === scope.academic_year
+      && item.section === scope.section
+    );
+    const assignments = this.facultyAssignments(subject).filter(item =>
+      item.faculty_id !== facultyId
+      || item.semester !== scope.semester
+      || item.academic_year !== scope.academic_year
+      || item.section !== scope.section
+    );
+    if (assigned) {
+      const selectedSchedules=schedules??(previous.length?previous:[{
+        session:subject.session||'All',
+        section:scope.section,
+        days:subject.d,
+        start_time:subject.start,
+        end_time:subject.end,
+        room:subject.r,
+      }]);
+      assignments.push(...selectedSchedules.map(schedule => ({
+        ...schedule,
+        faculty_id: facultyId,
+        ...scope,
+        section:schedule.section ?? scope.section,
+      })));
+    }
+    const facultyIds = [...new Set(assignments.map(item => item.faculty_id))];
+    return {
+      ...subject,
+      faculty_assignments: assignments,
+      faculty_ids: facultyIds,
+      f: facultyIds[0] ?? null,
+    };
+  }
+
+  myStudents(uid: number): Student[] {
+    return this.students.filter(student => Object.entries(this.subjects).some(([code, subject]) =>
+      this.codes(student).includes(code)
+      && this.facultyAssignments(subject).some(assignment =>
+        assignment.faculty_id === uid
+        && assignment.semester === student.semester
+        && assignment.academic_year === student.academic_year
+        && (assignment.section === 'All' || assignment.section === student.sec)
+      )
+    ));
+  }
+
+  studentsForAssignment(assignment: FacultyScheduleItem): Student[] {
     return this.students.filter(student =>
-      mine.some(code => code in student.g || this.codes(student).includes(code))
+      this.codes(student).includes(assignment.code)
+      && student.semester === assignment.semester
+      && student.academic_year === assignment.academic_year
+      && (!assignment.session || assignment.session === 'All' || student.session === assignment.session)
+      && (assignment.section === 'All' || student.sec === assignment.section)
     );
   }
 
@@ -1208,30 +1390,30 @@ export class DataService {
       sat: 'Saturday', saturday: 'Saturday',
       sun: 'Sunday', sunday: 'Sunday',
     };
-    const sectionsBySubject = new Map<string, Set<string>>();
-    for (const student of this.myStudents(uid)) {
-      for (const code of this.codes(student)) {
-        if (!sectionsBySubject.has(code)) sectionsBySubject.set(code, new Set());
-        if (student.sec) sectionsBySubject.get(code)!.add(student.sec);
-      }
-    }
-
-    return this.mySubjects(uid).flatMap(code => {
-      const subject = this.subjects[code];
+    const timeLabel = (value: string | null | undefined) => value ? value.slice(0, 5) : '—';
+    return Object.entries(this.subjects).flatMap(([code, subject]) => {
       if (!subject) return [];
-      const days = [...new Set(subject.d.split(/[\/,;|&]/)
+      const assignments = this.facultyAssignments(subject).filter(item => item.faculty_id === uid);
+      return assignments.flatMap(assignment => {
+        const days = [...new Set((assignment.days ?? subject.d ?? '').split(/[\/,;|&]/)
         .map(day => day.trim().toLowerCase().replace(/\.$/, ''))
         .map(day => dayNames[day])
         .filter((day): day is string => !!day))];
-      return days.map(day => ({
-        day,
-        code,
-        subject: subject.n,
-        session: subject.session || 'All',
-        start: subject.start || '—',
-        end: subject.end || '—',
-        section: [...(sectionsBySubject.get(code) || [])].sort().join(', ') || '—',
-      }));
+        return (days.length ? days : ['—']).map(day => ({
+          assignment_id: assignment.id,
+          day,
+          days: assignment.days ?? subject.d ?? '',
+          code,
+          subject: subject.n,
+          session: assignment.session || subject.session || 'All',
+          start: timeLabel(assignment.start_time || subject.start),
+          end: timeLabel(assignment.end_time || subject.end),
+          room: assignment.room || subject.r || '—',
+          semester: assignment.semester,
+          academic_year: assignment.academic_year,
+          section: assignment.section || 'Not Assigned',
+        }));
+      });
     }).sort((a, b) => weekdays.indexOf(a.day) - weekdays.indexOf(b.day)
       || a.start.localeCompare(b.start)
       || a.code.localeCompare(b.code));

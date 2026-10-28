@@ -26,12 +26,21 @@ describe('EnrollComponent',()=>{
     expect(element.querySelector('input[placeholder="Enter your first name"]')).toBeTruthy();
     expect(element.querySelector('input[placeholder="Enter your middle name"]')).toBeTruthy();
     expect(element.querySelector('input[placeholder="Enter your last name"]')).toBeTruthy();
+    expect(element.querySelector('input[placeholder="Mother\'s first name"]')).toBeTruthy();
+    expect(element.querySelector('input[placeholder="Mother\'s middle name"]')).toBeTruthy();
+    expect(element.querySelector('input[placeholder="Mother\'s last name"]')).toBeTruthy();
+    expect(element.querySelector('input[placeholder="Father\'s first name"]')).toBeTruthy();
+    expect(element.querySelector('input[placeholder="Father\'s middle name"]')).toBeTruthy();
+    expect(element.querySelector('input[placeholder="Father\'s last name"]')).toBeTruthy();
     const academicYear = element.querySelector('input[aria-label="Current Academic School Year"]') as HTMLInputElement;
     expect(academicYear).toBeTruthy();
     expect(academicYear.readOnly).toBe(true);
     expect(element.textContent).toContain('Gender');
     expect(element.textContent).toContain('Others');
     expect(element.textContent).toContain('BSTM');
+    expect(Array.from(element.querySelectorAll('select')).some(select=>
+      Array.from(select.options).some(option=>option.value==='ABSTM')
+    )).toBe(false);
     expect(element.textContent).toContain('BSED');
     expect(element.textContent).toContain('BEED');
     expect(element.textContent).toContain('BSE');

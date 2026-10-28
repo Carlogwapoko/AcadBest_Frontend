@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { AuthService } from '../../../core/auth.service';
 import { DataService } from '../../../core/data.service';
+import { UiService } from '../../../core/ui.service';
 import { SubjectsUnitsComponent } from './subjects-units.component';
 import { AssignLoadComponent } from '../components/assign-load/assign-load.component';
 
@@ -21,13 +22,14 @@ describe('SubjectsUnitsComponent',()=>{
     expect(fixture.debugElement.componentInstance).toBe(fixture.componentInstance);
   });
 
-  it('uses separate time fields and leaves faculty assignment out of subject forms',()=>{
+  it('removes class schedule fields from subject forms',()=>{
     const fixture=TestBed.createComponent(SubjectsUnitsComponent);
     fixture.componentInstance.openSub();
     fixture.detectChanges();
     const text=(fixture.nativeElement as HTMLElement).textContent||'';
-    expect(text).toContain('Start Time');
-    expect(text).toContain('End Time');
+    expect(text).not.toContain('Class Schedule');
+    expect(text).not.toContain('Start Time');
+    expect(text).not.toContain('End Time');
     expect(text).not.toContain('Instructor');
   });
 
@@ -71,13 +73,11 @@ describe('SubjectsUnitsComponent',()=>{
     component.openSub();
     component.sm.code='IT306';
     component.sm.n='New Subject';
-    component.sm.start='08:00';
-    component.sm.end='09:00';
-    component.sm.r='Room 2';
     await component.saveSub();
 
     expect(saveSubject.mock.calls[1][1].f).toBeNull();
     expect(saveSubject.mock.calls[1][1].faculty_ids).toEqual([]);
+    expect(saveSubject.mock.calls[1][1]).toEqual(expect.objectContaining({d:'',start:null,end:null,r:''}));
   });
 
   it('filters subject offerings by program, semester, and year level',()=>{
@@ -102,23 +102,78 @@ describe('SubjectsUnitsComponent',()=>{
     expect(component.visibleSubjects.map(subject=>subject.code)).toEqual(['AB101']);
   });
 
-  it('offers Sunday when adding a subject',()=>{
+  it('limits faculty load sections to All, A, and B',()=>{
     const component=TestBed.createComponent(SubjectsUnitsComponent).componentInstance;
-    expect(component.days.map(day=>day.value)).toContain('Sun');
-    expect(component.days.map(day=>day.value)).not.toContain('Mon/Wed/Fri');
+
+    expect(component.facultySections).toEqual(['All','A','B']);
+  });
+
+  it('keeps subject fields and year levels available without schedule controls',()=>{
+    const component=TestBed.createComponent(SubjectsUnitsComponent).componentInstance;
     expect(component.yearLevels.map(level=>level.label)).toEqual([
       'All','1st Year','2nd Year','3rd Year','4th Year','Grade 11','Grade 12',
     ]);
   });
 
-  it('loads legacy schedule days into the multi-select picker',()=>{
+  it('removes a student subject from the selected enrollment, including the last subject',async()=>{
+    const data=TestBed.inject(DataService);
+    const ui=TestBed.inject(UiService);
+    vi.spyOn(ui,'confirm').mockResolvedValue(true);
+    vi.spyOn(ui,'toast');
+    const assignStudent=vi.spyOn(data,'assignStudent').mockResolvedValue();
+    const component=TestBed.createComponent(SubjectsUnitsComponent).componentInstance;
+    const student={
+      id:10,name:'Student Example',prog:'BSIT',yr:1,sec:'A',g:{},semester:'1st Semester',
+      academic_year:'2026-2027',enrollment_ref:'APP-10',subject_codes:['IT101'],
+    };
+
+    await component.removeStudentSubject(student,'IT101');
+
+    expect(assignStudent).toHaveBeenCalledWith(10,[],'APP-10');
+  });
+
+  it('removes only the selected faculty subject while preserving remaining schedules',async()=>{
+    const data=TestBed.inject(DataService);
+    const ui=TestBed.inject(UiService);
+    vi.spyOn(ui,'confirm').mockResolvedValue(true);
+    vi.spyOn(ui,'toast');
+    data.currentAcademicYear='2026-2027';
+    data.subjects={
+      IT101:{n:'Programming',u:3,d:'Mon',tm:'08:00–09:00',start:'08:00',end:'09:00',
+        r:'Room 1',p:'BSIT',y:1,f:42,faculty_assignments:[
+          {faculty_id:42,semester:'1st Semester',academic_year:'2026-2027',section:'A',
+            days:'Mon',start_time:'08:00',end_time:'09:00',room:'Room 1'},
+        ]},
+      IT201:{n:'Databases',u:4,d:'Tue',tm:'10:00–11:00',start:'10:00',end:'11:00',
+        r:'Room 2',p:'BSIT',y:2,f:42,faculty_assignments:[
+          {faculty_id:42,semester:'1st Semester',academic_year:'2026-2027',section:'A',
+            days:'Tue',start_time:'10:00',end_time:'11:00',room:'Room 2'},
+        ]},
+    };
+    const assignFaculty=vi.spyOn(data,'assignFaculty').mockResolvedValue();
+    const component=TestBed.createComponent(SubjectsUnitsComponent).componentInstance;
+    component.facultySection='A';
+
+    await component.removeFacultySubject({id:42,name:'Faculty Example'},'IT101');
+
+    expect(assignFaculty).toHaveBeenCalledWith(42,['IT201'],{
+      semester:'1st Semester',academic_year:'2026-2027',section:'A',
+    },{
+      IT201:[{session:'Afternoon',days:'Tue',start_time:'10:00',end_time:'11:00',room:'Room 2'}],
+    });
+  });
+
+  it('preserves legacy schedule and room values when editing subject information',async()=>{
     const data=TestBed.inject(DataService);
     data.subjects['IT305']={n:'Legacy subject',u:3,d:'Mon/Wed/Fri',tm:'08:00–09:30',
       start:'08:00',end:'09:30',r:'Room 1',p:'BSIT',y:1,f:null};
+    const saveSubject=vi.spyOn(data,'saveSubject').mockResolvedValue();
     const component=TestBed.createComponent(SubjectsUnitsComponent).componentInstance;
     component.openSub('IT305');
-
-    expect(component.sm.days).toEqual(['Mon','Wed','Fri']);
+    await component.saveSub();
+    expect(saveSubject).toHaveBeenCalledWith('IT305',expect.objectContaining({
+      d:'Mon/Wed/Fri',start:'08:00',end:'09:30',r:'Room 1',
+    }));
   });
 
   it('omits session from subject forms and save data',async()=>{
@@ -154,10 +209,56 @@ describe('SubjectsUnitsComponent',()=>{
     ]);
   });
 
+  it('uses the offering program list in the subject selector and keeps legacy ABSTM editable',()=>{
+    const data=TestBed.inject(DataService);
+    data.subjects['AB902']={
+      n:'Historical ABSTM Subject',u:3,d:'',tm:'',start:null,end:null,r:'',
+      p:'ABSTM',y:1,f:null,
+    };
+    const fixture=TestBed.createComponent(SubjectsUnitsComponent);
+    const component=fixture.componentInstance;
+    component.openSub();
+    fixture.detectChanges();
+
+    const filter=fixture.nativeElement.querySelector(
+      '.subject-filters select'
+    ) as HTMLSelectElement;
+    const selects=Array.from(
+      fixture.nativeElement.querySelectorAll('select') as NodeListOf<HTMLSelectElement>
+    );
+    const subjectProgram=selects.find(select=>
+      Array.from(select.options).some(option=>option.value==='')
+    )!;
+    expect(Array.from(subjectProgram.options).slice(1).map(option=>option.value))
+      .toEqual(Array.from(filter.options).map(option=>option.value));
+    expect(Array.from(subjectProgram.options).some(option=>option.value==='ABSTM')).toBe(false);
+
+    subjectProgram.value='BSED';
+    subjectProgram.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(component.sm.p).toBe('BSED');
+    expect(component.majorsFor(component.sm.p)).toEqual(['Filipino','English','Mathematics']);
+    expect(Array.from(
+      fixture.nativeElement.querySelectorAll('#subject-major-options option') as NodeListOf<HTMLOptionElement>
+    ).map(option=>option.value)).toEqual(['Filipino','English','Mathematics']);
+
+    const legacyFixture=TestBed.createComponent(SubjectsUnitsComponent);
+    const legacyComponent=legacyFixture.componentInstance;
+    legacyComponent.openSub('AB902');
+    legacyFixture.detectChanges();
+    expect(legacyComponent.sm).toMatchObject({isNew:false,p:'ABSTM'});
+    const legacySelect=Array.from(
+      legacyFixture.nativeElement.querySelectorAll('select') as NodeListOf<HTMLSelectElement>
+    ).find(select=>Array.from(select.options).some(option=>option.value==='ABSTM'))!;
+    const legacyOption=legacySelect
+      .querySelector('option[value="ABSTM"]') as HTMLOptionElement;
+    expect(legacyOption.disabled).toBe(true);
+  });
+
   it('offers the requested programs and filters offerings without an academic-year filter',()=>{
     const component=TestBed.createComponent(SubjectsUnitsComponent).componentInstance;
     expect(component.programs).toEqual([
-      'All','BSIT','BSBA','ABSTM','BSED','BEED','BSMA','BSHM','TVL','BSE','STEM','ABM','HUMSS','GAS',
+      'All','BSTM','BSED','BEED','BSE','BSMA','BSHM','BSIT','BSBA','STEM','ABM','HUMSS','GAS','TVL',
     ]);
 
     const fixture=TestBed.createComponent(SubjectsUnitsComponent);
@@ -197,19 +298,27 @@ describe('SubjectsUnitsComponent',()=>{
     expect(cells.slice(1,8)).toEqual(['—','0','—','—','—','—','—']);
   });
 
-  it('detects a room clash only when the day, time, and offering term overlap',()=>{
+  it('uses assignment-specific schedule and room values in Faculty Loads',()=>{
     const data=TestBed.inject(DataService);
     data.subjects={
       IT101:{n:'Database',u:3,d:'Mon/Wed',tm:'08:00–09:00',start:'08:00',end:'09:00',
-        r:'Lab 1',p:'BSIT',y:1,f:null,semester:'1st Semester',academic_year:'2026-2027'},
-    };
+        r:'Lab 1',p:'BSIT',y:1,f:42,semester:'1st Semester',academic_year:'2026-2027',
+        faculty_assignments:[{id:7,faculty_id:42,semester:'1st Semester',academic_year:'2026-2027',
+          section:'A',session:'Evening',days:'Tue/Thu',start_time:'10:00',end_time:'11:00',room:'Lab 5'}]},
+      };
     const component=TestBed.createComponent(SubjectsUnitsComponent).componentInstance;
-    const offering={r:' lab 1 ',start:'08:30',end:'09:30',days:['Wed'],semester:'1st Semester',
-      academic_year:'2026-2027'};
-
-    expect(component.roomConflict(offering,'IT102')).toBe(true);
-    expect(component.roomConflict({...offering,days:['Thu']},'IT102')).toBe(false);
-    expect(component.roomConflict({...offering,semester:'2nd Semester'},'IT102')).toBe(false);
+    component.facultyAcademicYear='2026-2027';
+    component.facultySection='A';
+    const row=component.facultySchedules(42)[0];
+    expect(row).toEqual({code:'IT101',assignment_id:7,session:'Evening',
+      days:'Tue/Thu',start:'10:00',end:'11:00',room:'Lab 5'});
+    component.openFac({id:42,name:'Faculty',act:true});
+    expect(component.fm.schedules.IT101).toEqual([{
+      session:'Evening',days:'Tue/Thu',start_time:'10:00',end_time:'11:00',room:'Lab 5',
+    }]);
+    component.addFacultySchedule('IT101');
+    expect(component.fm.schedules.IT101.map((schedule:any)=>schedule.session))
+      .toEqual(['Evening','Afternoon']);
   });
 
   it('filters faculty and enrolled student loads by search text',()=>{
@@ -218,18 +327,35 @@ describe('SubjectsUnitsComponent',()=>{
       {id:2,name:'Ada Faculty',email:'ada@example.com',role:'Faculty',act:true,phone:''},
       {id:3,name:'Ben Faculty',email:'ben@example.com',role:'Faculty',act:true,phone:''},
     ];
-    data.students=[
-      {id:1,name:'Alex Student',first_name:'Alex',school_id:'2026000001',
-        enrollment_status:'Enrolled',prog:'BSIT',major:null,yr:1,sec:'A',g:{}},
+    data.eligibleEnrollments=[
+      {id:1,name:'Alex Taylor',first_name:'Alex',middle_name:null,last_name:'Taylor',school_id:'2026000001',
+        enrollment_status:'Enrolled',semester:'1st Semester',academic_year:'2026-2027',
+        prog:'BSIT',major:null,yr:1,sec:'A',g:{}},
       {id:2,name:'Pending Student',school_id:'2026000002',
-        enrollment_status:'Pending',prog:'BSIT',major:null,yr:1,sec:'A',g:{}},
+        enrollment_status:'Pending',semester:'1st Semester',academic_year:'2026-2027',
+        prog:'BSIT',major:null,yr:1,sec:'A',g:{}},
     ];
     const component=TestBed.createComponent(SubjectsUnitsComponent).componentInstance;
-    component.facultySearch='ada@example';
-    component.studentSearch='2026000001';
+    component.facultySearch='Ada Fac';
+    component.studentSearch='Alex Taylor';
 
     expect(component.faculty.map(user=>user.id)).toEqual([2]);
     expect(component.enrolledStudents.map(student=>student.id)).toEqual([1]);
+    component.studentSearch='Tay';
+    expect(component.enrolledStudents.map(student=>student.id)).toEqual([1]);
+    component.studentSearch='2026000001';
+    expect(component.enrolledStudents.map(student=>student.id)).toEqual([1]);
+    component.facultySearch='ada@example';
+    expect(component.faculty).toEqual([]);
+  });
+
+  it('labels the Student Loads search field and uses the requested placeholder',()=>{
+    const fixture=TestBed.createComponent(SubjectsUnitsComponent);
+    fixture.componentInstance.selectTab('l');
+    fixture.detectChanges();
+    const search=fixture.nativeElement.querySelector('input[aria-label="Search student loads"]') as HTMLInputElement;
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Search Student Name or ID');
+    expect(search.placeholder).toBe('Search student name or ID');
   });
 
   it('groups assigned subjects by program and major and filters to the enrollment term',()=>{

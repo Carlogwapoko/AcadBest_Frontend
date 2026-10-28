@@ -1,7 +1,4 @@
 :host{display:block;min-width:0}
-.subject-actions{gap:8px}
-.subject-actions .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:84px;padding:6px 10px}
-.subject-actions app-icon{margin:0}
 .assign-action{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:96px;padding:6px 10px}
 .assign-action app-icon{margin:0}
 .assign-action-cell{text-align:center;vertical-align:middle}
@@ -9,29 +6,50 @@
 .filter-description{flex:1;min-width:220px}
 .load-search{margin:10px 0 14px}
 .load-search input{max-width:420px}
+.faculty-filter-card{margin:14px 0 16px;padding:16px;border:1px solid var(--bd);border-radius:14px;background:linear-gradient(135deg,var(--bg2,#f7f9fc),var(--bg,#fff));box-shadow:0 4px 14px rgba(20,40,80,.05)}
+.faculty-filter-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
+.faculty-filter-heading h3{margin:0;color:var(--navy2);font-size:15px}
+.faculty-filter-heading p{margin:4px 0 0;color:var(--mu);font-size:12px}
+.clear-faculty-filters{flex:0 0 auto}
+.faculty-filter-grid{display:grid;grid-template-columns:minmax(220px,2fr) minmax(150px,1fr) minmax(150px,1fr);align-items:end;gap:12px}
+.faculty-search-field{display:flex;flex-direction:column;gap:6px;color:var(--mu);font-size:12px}
+.search-input-wrap{display:flex;align-items:center;gap:8px;min-height:38px;padding:0 10px;border:1px solid var(--bd);border-radius:9px;background:var(--bg,#fff);color:var(--mu);transition:border-color .15s,box-shadow .15s}
+.search-input-wrap:focus-within{border-color:var(--navy2);box-shadow:0 0 0 3px rgba(30,75,130,.12)}
+.search-input-wrap input{width:100%;max-width:none;border:0;outline:0;background:transparent;color:inherit;font:inherit}
+.search-clear{border:0;background:transparent;color:var(--mu);font-size:20px;line-height:1;cursor:pointer;padding:0 2px}
+.search-clear[hidden]{display:none}
 .subject-group{margin:0 0 14px;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg2,#f7f9fc)}
 .subject-group h4{margin:0 0 8px;font-size:14px}
 .subject-group .ck{background:var(--bg,#fff)}
+.assignment-schedules{min-width:220px;font-size:13px;line-height:1.55}
+.load-subject-list{display:flex;flex-wrap:wrap;gap:6px;min-width:120px}
+.load-subject-item{display:inline-flex;align-items:center;gap:5px;padding:3px 5px;border:1px solid var(--bd);border-radius:8px;background:var(--bg2,#f7f9fc);white-space:nowrap}
+.remove-load-button{padding:3px 6px;font-size:11px}
+.assignment-schedule-editor{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 8px 30px;padding:10px;border:1px solid var(--bd);border-radius:9px;background:var(--bg,#fff)}
+.remove-schedule-button{align-self:end;justify-self:start}
+.add-schedule-button{margin:0 0 12px 30px}
 .subject-filters app-field{flex:0 1 160px}
 .add-subject-button{flex:0 0 auto;align-self:flex-end}
 .subject-form-section{margin:0 0 10px;padding:10px 12px;border:1px solid var(--bd);border-radius:12px;background:var(--bg2,#f7f9fc)}
 .subject-form-section h3{margin:0 0 4px;font-size:15px;color:var(--navy2)}
 .subject-form-section .r2{column-gap:12px}
 .subject-form-section .subject-field-wide{grid-column:1 / -1}
-.day-picker{margin:4px 0 8px}
-.day-picker-label{display:block;margin-bottom:6px;font-size:13px;font-weight:600}
-.day-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-.day-option{display:flex;align-items:center;gap:8px;margin:0;padding:7px 9px;border:1px solid var(--bd);border-radius:9px;background:var(--card);font-size:13px;font-weight:500;cursor:pointer}
-.day-option input{width:16px;height:16px;margin:0;accent-color:var(--blue)}
-.day-picker.invalid .day-options{border-radius:10px;outline:1px solid var(--er)}
-.field-error{display:block;margin-top:5px;color:var(--er);font-size:12px}
 .subject-actions{justify-content:center;gap:8px;white-space:nowrap}
 .subject-actions .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:78px;padding:6px 9px}
 .subject-actions app-icon{margin:0}
-@media(max-width:600px){.day-options{grid-template-columns:repeat(2,minmax(0,1fr))}.subject-form-section{padding:12px}}
+@media(max-width:700px){.assignment-schedule-editor{grid-template-columns:repeat(2,minmax(0,1fr));margin-left:0}.add-schedule-button{margin-left:0}}
+@media(max-width:600px){.subject-form-section{padding:12px}}
 @media(max-width:720px){
   .subject-filters{align-items:stretch!important}
   .filter-description{flex-basis:100%}
   .subject-filters app-field{flex:1 1 140px}
   .add-subject-button{align-self:auto}
+  .faculty-filter-grid{grid-template-columns:1fr 1fr}
+  .faculty-search-field{grid-column:1 / -1}
+}
+@media(max-width:480px){
+  .faculty-filter-card{padding:12px}
+  .faculty-filter-heading{display:block}
+  .clear-faculty-filters{margin-top:10px}
+  .faculty-filter-grid{grid-template-columns:1fr}
 }

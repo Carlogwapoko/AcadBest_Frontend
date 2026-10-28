@@ -1,7 +1,7 @@
 import { ChangeDetectorRef,Component,HostListener } from '@angular/core';
 import { COMMON } from '../../../shared/common';
 import { AuthService } from '../../../core/auth.service';
-import { DataService,Enr,User } from '../../../core/data.service';
+import { DataService,User } from '../../../core/data.service';
 import { processProfilePicture } from '../../../core/profile-picture';
 import { UiService } from '../../../core/ui.service';
 
@@ -15,7 +15,7 @@ export class UsersRolesComponent{
   q='';m:any=null;e:any={};processingPicture=false;saving=false;deletingId:number|null=null;showPassword=false;
   page=1;lastPage=1;total=0;loading=true;loadError='';private searchTimer?:ReturnType<typeof setTimeout>;
   constructor(public d:DataService,private a:AuthService,private ui:UiService,private cdr:ChangeDetectorRef){}
-  ngOnInit(){void Promise.all([this.loadUsers(),this.loadApplicants()])}
+  ngOnInit(){void this.loadUsers()}
   ngOnDestroy(){if(this.searchTimer)clearTimeout(this.searchTimer)}
   async loadUsers(page=1){if(this.loading&&page>this.page)return;this.loading=true;this.loadError='';
     try{const result=await this.d.usersList(page,this.q,page>1);this.page=result.current_page;
@@ -28,25 +28,18 @@ export class UsersRolesComponent{
       &&window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-300)
       void this.loadUsers(this.page+1);
   }
-  async loadApplicants(){try{await this.d.loadEnrollments(1,'','All',50)}
-    catch(error){this.ui.toast(this.message(error),'er')}
-    finally{this.cdr.detectChanges()}}
   searchChanged(){if(this.searchTimer)clearTimeout(this.searchTimer);
     this.searchTimer=setTimeout(()=>void this.loadUsers(1),300)}
-  get pending(){return this.d.enrollments.filter(x=>x.st!='Rejected'&&!x.acct)}
   get list(){return this.d.users}
   avatarInitials(name:string){return name.replace(/^(Prof\.|Dr\.)\s*/,'').split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase()}
   formName(){return [this.m?.first_name,this.m?.middle_name,this.m?.last_name].filter(Boolean).join(' ')}
-  open(u?:User|null,pre?:Enr){
-    if(pre&&pre.st!='Enrolled'){this.ui.toast('This applicant must be approved by the registrar before an account can be created.',
-      'er');return}
+  open(u?:User|null){
     this.e={};this.showPassword=false;
     this.m=u?{id:u.id,first_name:u.first_name||'',middle_name:u.middle_name||'',last_name:u.last_name||'',
       email:u.email,role:u.role,status:u.act?'Active':'Inactive',
       pw:'',prog:u.prog||'BSTM',lock:u.role=='Student',avatar:u.avatar??null}
-      :{id:0,first_name:pre?.first_name||'',middle_name:pre?.middle_name||'',last_name:pre?.last_name||'',
-        email:pre?.email||'',role:pre?'Student':'Faculty',
-        status:'Active',pw:'',prog:pre?.prog||'BSTM',ref:pre?.ref,lock:!!pre,avatar:null}}
+      :{id:0,first_name:'',middle_name:'',last_name:'',
+        email:'',role:'Faculty',status:'Active',pw:'',prog:'BSTM',lock:false,avatar:null}}
   async selectPicture(event:Event){
     const input=event.target as HTMLInputElement;
     const file=input.files?.[0];
@@ -77,13 +70,11 @@ export class UsersRolesComponent{
       phone:old?.phone||'',program:m.prog||'BSTM'};
     if(old)payload['active']=act;
     if(m.pw)payload['password']=m.pw;
-    if(m.ref)payload['application_ref']=m.ref;
     if(old&&(old.avatar??null)!==m.avatar)payload['avatar_data']=m.avatar;
     try{
       const user=await this.d.saveUser(old?.id,payload);
       if(this.a.user?.id===user.id)Object.assign(this.a.user,user);
       if(!old)this.total++;
-      if(m.ref)this.d.markEnrollmentAccountIssued(m.ref);
       this.ui.toast(old?'Account updated.':`Account created for ${user.name}. Give the e-mail and temporary password to the user.`);
       this.m=null;
     }catch(error){this.ui.toast(this.message(error),'er')}

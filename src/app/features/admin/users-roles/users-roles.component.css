@@ -1,13 +1,4 @@
 :host{display:block;min-width:0}
-.approval-card{margin-bottom:20px;border-left:4px solid var(--blue);padding:22px 24px}
-.approval-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px}
-.approval-header h3{margin:0}
-.approval-header .sub{margin:6px 0 0}
-.approval-card .tw{margin:0 -4px}
-.approval-card th,.approval-card td{vertical-align:middle}
-.approval-card td:last-child{text-align:center}
-.account-create-button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:132px;white-space:nowrap}
-.approval-card td:last-child .chip{display:inline-flex;align-items:center;gap:5px}
 .user-name{display:inline-flex;align-items:center;gap:9px;min-width:0}
 .user-avatar,.account-picture-preview{display:grid;place-items:center;flex:0 0 auto;overflow:hidden;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--navy2));color:#fff;font-weight:700}
 .user-avatar{width:34px;height:34px;font-size:11px}
@@ -24,9 +15,6 @@
 .user-actions .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:84px;padding:6px 10px}
 .user-actions app-icon{margin:0}
 @media(max-width:600px){
-  .approval-card{padding:18px 16px}
-  .approval-header{flex-direction:column;gap:10px}
-  .account-create-button{min-width:124px}
   .account-picture-editor{align-items:flex-start}
   .account-picture-preview{width:56px;height:56px}
 }

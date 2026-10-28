@@ -1,4 +1,15 @@
 :host{display:block;min-width:0}
-.schedule-wrap{margin:0 -4px}
-.schedule-table{min-width:760px}
+.schedule-wrap{margin:0 -4px;min-width:0}
+.schedule-table{min-width:980px}
 .schedule-table th,.schedule-table td{vertical-align:middle}
+@media(max-width:760px){
+  .schedule-wrap{overflow:visible}
+  .schedule-table,.schedule-table tbody{display:block;min-width:0;width:100%}
+  .schedule-table thead{display:none}
+  .schedule-table tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 12px;padding:12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg,#fff)}
+  .schedule-table td{display:flex;min-width:0;flex-direction:column;gap:3px;padding:0;border:0;overflow-wrap:anywhere}
+  .schedule-table td::before{content:attr(data-label);font-size:11px;font-weight:600;color:var(--mu)}
+  .schedule-table td[data-label="Subject"]{grid-column:1/-1}
+  .schedule-table td[data-label="Academic Year"]{grid-column:1/-1}
+  .schedule-table td[data-label="Day"]{font-weight:600}
+}

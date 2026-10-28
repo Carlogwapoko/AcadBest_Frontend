@@ -3,22 +3,22 @@ import { RouterLink } from '@angular/router';
 import { COMMON } from '../../../shared/common';
 import { DataService } from '../../../core/data.service';
 import { UiService } from '../../../core/ui.service';
+import { ENROLLMENT_PROGRAMS, majorsForProgram } from '../../../shared/program-catalog';
 
 // ---------------------------------------------------------------- Online enrollment application
 @Component({selector:'app-enroll',standalone:true,imports:[COMMON,RouterLink],styleUrl:'./enroll.component.css',templateUrl:'./enroll.component.html'})
 export class EnrollComponent{
   f:any={fn:'',mn:'',ln:'',dob:'',sex:'Select…',em:'',ph:'',ad:'',pr:'Select…',yr:'Select…',academic_year:'',
-    major:'',semester:'Select…',session:'Select…',ty:'Select…',sc:'',gn:'',gp:'',ok:false};
+    major:'',semester:'Select…',session:'Select…',ty:'Select…',sc:'',mother_fn:'',mother_mn:'',mother_ln:'',
+    father_fn:'',father_mn:'',father_ln:'',gn:'',gp:'',ok:false};
   e:any={};busy=false;done=false;yearLoading=true;ref='';
   constructor(private d:DataService,private ui:UiService,private cdr:ChangeDetectorRef){}
   ngOnInit(){void this.loadAcademicYear()}
   blank(){return{fn:'',mn:'',ln:'',dob:'',sex:'Select…',em:'',ph:'',ad:'',pr:'Select…',yr:'Select…',academic_year:this.d.currentAcademicYear,
-    major:'',semester:'Select…',session:'Select…',ty:'Select…',sc:'',gn:'',gp:'',ok:false}}
-  get majors():string[]{return ({
-    BSBA:['Financial Management','Human Resources Management'],
-    BSED:['Filipino','English','Mathematics'],
-    TVL:['ICT – Computer Servicing','Home Economics','Automotive Servicing','Electricity Servicing'],
-  } as Record<string,string[]>)[this.f.pr]||[]}
+    major:'',semester:'Select…',session:'Select…',ty:'Select…',sc:'',mother_fn:'',mother_mn:'',mother_ln:'',
+    father_fn:'',father_mn:'',father_ln:'',gn:'',gp:'',ok:false}}
+  get programs():readonly string[]{return ENROLLMENT_PROGRAMS}
+  get majors():string[]{return majorsForProgram(this.f.pr)}
   programChanged(){this.f.major=''}
   private async loadAcademicYear(){
     try{this.f.academic_year=await this.d.loadAcademicYear()}
@@ -42,6 +42,9 @@ export class EnrollComponent{
     try{
       this.ref=await this.d.submitEnrollment({first_name:f.fn.trim(),last_name:f.ln.trim(),
         middle_name:f.mn.trim()||null,academic_year:f.academic_year.trim(),
+        mother_first_name:f.mother_fn.trim()||null,mother_middle_name:f.mother_mn.trim()||null,
+        mother_last_name:f.mother_ln.trim()||null,father_first_name:f.father_fn.trim()||null,
+        father_middle_name:f.father_mn.trim()||null,father_last_name:f.father_ln.trim()||null,
         email:f.em.trim().toLowerCase(),phone:f.ph,date_of_birth:f.dob,sex:f.sex,address:f.ad.trim(),
         program:f.pr,major:this.majors.length?f.major:null,year_level:+f.yr,semester:f.semester,session:f.session,
         application_type:f.ty,previous_school:f.sc.trim(),

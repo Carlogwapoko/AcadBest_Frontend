@@ -1,5 +1,6 @@
 :host{display:block;min-width:0}
-.grading-summary{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.grading-edit{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid var(--lb2);border-radius:8px;background:var(--lb);color:var(--navy2);font-weight:600;cursor:pointer}
-.grading-edit:hover{background:var(--lb2)}
+.grade-scope{max-width:1000px;margin-bottom:16px}
 .grade-table-frame{margin:14px 0 18px}
+.grade-table-frame table{min-width:760px}
+.grade-table-frame td input{width:96px;min-width:72px}
+@media(max-width:600px){.grade-scope{grid-template-columns:1fr}}

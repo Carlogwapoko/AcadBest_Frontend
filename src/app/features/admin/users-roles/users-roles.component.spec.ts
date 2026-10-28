@@ -38,23 +38,11 @@ describe('UsersRolesComponent',()=>{
     expect(fixture.nativeElement.querySelector('td[colspan="3"]')).toBeNull();
   });
 
-  it('keeps applicant name values in their separate approval-table columns',()=>{
-    const data=TestBed.inject(DataService);
-    data.enrollments=[{
-      ref:'ENR-2026-ABC123',name:'First Middle Last',first_name:null,middle_name:'Middle',last_name:null,
-      email:'legacy@example.com',phone:'',dob:'2007-01-01',sex:'Female',addr:'Address',
-      prog:'BSIT',yr:1,type:'New Student',student_status:'Applicant',school:'School',
-      gname:'Guardian',gph:'',st:'Pending',date:'Oct 23',note:'',acct:false,log:[],
-    }];
+  it('keeps online enrollment account provisioning out of Admin Users & Roles',()=>{
     const fixture=TestBed.createComponent(UsersRolesComponent);
     fixture.detectChanges();
-    const cells=fixture.nativeElement.querySelectorAll(
-      '.approval-card .tw tr:last-child td'
-    ) as NodeListOf<HTMLTableCellElement>;
-
-    expect(Array.from(cells).slice(1,4).map(cell=>cell.textContent?.trim()))
-      .toEqual(['—','Middle','—']);
-    expect(fixture.nativeElement.querySelector('.approval-card td[colspan="3"]')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Online enrollment applicants');
+    expect(fixture.nativeElement.textContent).toContain('Add Users');
   });
 
   it('opens the account form with the supported staff roles',()=>{
