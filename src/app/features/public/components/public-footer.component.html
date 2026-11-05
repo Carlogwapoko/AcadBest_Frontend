@@ -1,0 +1,24 @@
+<footer class="ftr">
+  <div class="fg">
+    <div>
+      <div class="logo" style="padding:0;border:0;margin:0 0 12px"><i class="lm">A</i><div>Acad<span>Best</span></div></div>
+      <p style="font-size:13px;max-width:280px;margin:0">The integrated student portal of ACES Tagum College for academic information and school services.</p>
+    </div>
+    <div><h4>Portal</h4><a routerLink="/login">Log In</a><a routerLink="/enroll">Enroll Online</a></div>
+    <div><h4>Explore</h4><a routerLink="/features">Features</a><a routerLink="/how-it-works">How It Works</a><a routerLink="/faq">FAQ</a><a routerLink="/contact">Contact</a></div>
+    <div>
+      <h4>Contact</h4>
+      <div class="ci"><app-icon name="pin" [size]="15"/> Tagum City, Davao del Norte</div>
+      <div class="ci"><app-icon name="mail" [size]="15"/> registrar&#64;aces.edu.ph</div>
+      <div class="ci"><app-icon name="phone" [size]="15"/> (084) 000-0000</div>
+      <div class="ci"><app-icon name="clock" [size]="15"/> Mon–Fri, 8:00 AM – 5:00 PM</div>
+    </div>
+  </div>
+  <div class="cp">
+    <span>© 2026 ACES Tagum College. All rights reserved.</span>
+    <span><button type="button" (click)="legal='Privacy Policy'">Privacy Policy</button><button type="button" (click)="legal='Terms of Use'">Terms of Use</button></span>
+  </div>
+</footer>
+<app-modal [open]="!!legal" [title]="legal" (closed)="legal=''">
+  <p>AcadBest is the student and academic services portal for ACES Tagum College. {{legal=='Privacy Policy'?'Personal and academic records are available only to authorized users according to their role.':'Use AcadBest only with your own account. Sharing credentials or trying to open other users’ records is not allowed.'}}</p>
+</app-modal>

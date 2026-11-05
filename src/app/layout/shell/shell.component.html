@@ -2,7 +2,20 @@
 @if(open){<button class="nav-scrim" type="button" aria-label="Close navigation menu" (click)="open=false"></button>}
 <aside id="sidebar" [class.open]="open"><div class="logo"><i class="lm">A</i><div>Acad<span>Best</span><small>ACES Tagum College</small></div></div>
 @for(n of nav;track n.path){<a class="nb" [routerLink]="n.path" routerLinkActive="on" (click)="open=false"><app-icon [name]="n.icon" [size]="19"/>{{n.label}}@if(n.key=='nt'&&unread){<span class="bd" style="display:inline-block">{{unread}}</span>}</a>}
-<button class="nb" (click)="logout()"><app-icon name="out" [size]="19"/>Log Out</button></aside>
-<main><div class="top"><button class="btn sec hb" (click)="open=!open" aria-label="Menu" aria-controls="sidebar" [attr.aria-expanded]="open"><app-icon name="menu"/></button><h2>{{title}}</h2><span class="chip" id="who">{{auth.user?.name||''}} · {{roleName}}</span><a class="av" routerLink="profile" title="My profile">@if(auth.user?.avatar;as avatar){<img [src]="avatar" alt="">}@else{ {{initials}} }</a></div>
+<button class="nb desktop-logout" type="button" (click)="logout()"><app-icon name="out" [size]="19"/>Log Out</button>
+ </aside>
+<main><div class="top"><button class="btn sec hb" (click)="open=!open" aria-label="Menu" aria-controls="sidebar" [attr.aria-expanded]="open"><app-icon name="menu"/></button><h2>{{title}}</h2><span class="chip" id="who">{{auth.user?.name||''}} · {{roleName}}</span>
+@if(auth.role==='student'&&d.moduleOn('student','nt')){<a class="notification-link" routerLink="/app/student/notifications" routerLinkActive="active" [attr.aria-label]="unread?'Notifications, '+unread+' unread':'Notifications'"><app-icon name="bell" [size]="20"/>@if(unread){<span class="notification-badge" aria-hidden="true">{{unread>99?'99+':unread}}</span>}</a>}
+<div class="profile-menu"><button #profileTrigger class="av" type="button" aria-label="Profile menu" aria-haspopup="menu" aria-controls="profile-actions" [attr.aria-expanded]="profileOpen" (click)="profileOpen=!profileOpen">@if(auth.user?.avatar;as avatar){<img [src]="avatar" alt="">}@else{ {{initials}} }</button>
+@if(profileOpen){<div id="profile-actions" class="profile-actions" role="menu"><div class="profile-user" role="group" aria-label="User information"><strong>{{auth.user?.name||''}}</strong><span>{{auth.user?.email||''}}</span><small>{{roleName}}</small></div><a routerLink="profile" role="menuitem" (click)="profileOpen=false"><app-icon name="user" [size]="18"/>My Profile</a><button class="profile-logout" type="button" role="menuitem" (click)="profileOpen=false;logout()"><app-icon name="out" [size]="18"/>Log Out</button></div>}</div></div>
 @if(d.loadError){<div class="card" role="alert">{{d.loadError}} <button class="btn sec sm" (click)="retry()">Retry</button></div>}
-<router-outlet/></main></div>
+<router-outlet/></main>
+<nav class="mobile-nav" aria-label="Primary navigation">
+@for(n of primaryNav;track n.path){<a class="mobile-nav-item" [routerLink]="n.path" routerLinkActive="active" ariaCurrentWhenActive="page" [attr.aria-label]="n.label"><app-icon [name]="n.icon" [size]="20"/><span>{{n.label}}</span></a>}
+@if(moreNav.length){<button class="mobile-nav-item" [class.active]="moreActive" type="button" aria-label="More navigation" aria-controls="more-navigation" [attr.aria-expanded]="moreOpen" [attr.aria-current]="moreActive?'page':null" (click)="moreOpen=!moreOpen"><app-icon name="more" [size]="20"/><span>More</span></button>}
+</nav>
+@if(moreOpen&&moreNav.length){<button class="more-scrim" type="button" aria-label="Close more navigation" (click)="moreOpen=false"></button>
+<nav id="more-navigation" class="more-sheet" aria-label="More navigation">
+@for(n of moreNav;track n.path){<a class="more-nav-item" [routerLink]="n.path" routerLinkActive="active" ariaCurrentWhenActive="page" (click)="moreOpen=false"><app-icon [name]="n.icon" [size]="20"/><span>{{n.label}}</span></a>}
+</nav>}
+</div>

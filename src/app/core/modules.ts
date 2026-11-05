@@ -7,7 +7,7 @@ export const MODS:Mod[]=[
     {role:'student',key:'ann',label:'Announcements'},{role:'student',key:'nt',label:'Notifications'},
   {role:'faculty',key:'dash',label:'Dashboard',locked:true},{role:'faculty',
     key:'subj',label:'Subjects'},{role:'faculty',key:'ge',label:'Grade Entry'},{role:'faculty',
-    key:'risk',label:'At-Risk Advisees'},
+    key:'risk',label:'At-Risk Advisees'},{role:'faculty',key:'ann',label:'Announcements'},
   {role:'registrar',key:'rq',label:'Request Queue',locked:true},{role:'registrar',
     key:'en',label:'Enrollment Applications'},{role:'registrar',key:'su',label:'Subjects & Units'},
     {role:'registrar',key:'pa',label:'Post Announcement'},

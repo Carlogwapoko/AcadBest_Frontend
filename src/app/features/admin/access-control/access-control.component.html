@@ -1,5 +1,6 @@
 <div class="feature-content">
   <p class="sub" style="margin:0 0 14px">Limit which modules each role can open. Disabled modules disappear from the sidebar and cannot be opened. Core modules are locked.</p>
+  <app-refresh-button [loading]="d.loading" (refreshed)="d.reload()"/>
   <div class="tw"><table>
     <tr><th>Role</th><th>Module</th><th>Record scope</th><th>Access</th></tr>
     @for(m of mods;track m.role+m.key){

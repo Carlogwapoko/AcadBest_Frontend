@@ -30,6 +30,7 @@ describe('LoginComponent',()=>{
     expect(fixture.nativeElement.querySelector('input[placeholder="Enter your email address"]')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('input[type=password]')).toBeTruthy();
     expect(fixture.nativeElement.textContent).not.toContain('Sign in as');
+    expect(fixture.nativeElement.querySelector('a[routerLink="/forgot-password"]')?.textContent).toContain('Forgot Password?');
   });
 
   it('toggles password visibility without changing the password value',()=>{

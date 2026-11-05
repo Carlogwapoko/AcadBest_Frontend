@@ -21,6 +21,18 @@ describe('UiHostComponent',()=>{
     expect(fixture.debugElement.componentInstance).toBe(fixture.componentInstance);
   });
 
+  it('renders toast messages in its live region',()=>{
+    const fixture=TestBed.createComponent(UiHostComponent);
+    TestBed.inject(UiService).toast('Saved successfully.');
+    fixture.detectChanges();
+
+    const toast:HTMLElement|null=fixture.nativeElement.querySelector('#toast');
+    expect(toast?.getAttribute('aria-live')).toBe('polite');
+    expect(toast?.textContent).toContain('Saved successfully.');
+    expect(toast?.querySelector('.t.ok')).not.toBeNull();
+    fixture.destroy();
+  });
+
   it('locks background scrolling while a confirmation overlay is open',async()=>{
     document.body.style.overflow='auto';
     const fixture=TestBed.createComponent(UiHostComponent);

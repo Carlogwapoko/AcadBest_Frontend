@@ -1,1 +1,1 @@
-<div class="ff"><label>{{label}}</label><ng-content></ng-content><div class="err">{{error}}</div></div>
+<div class="ff"><label class="field-label" [attr.for]="for" [id]="for ? for + '-label' : null">{{label}}</label><ng-content></ng-content><div class="err" [id]="for ? 'error-' + for : null" [attr.role]="error ? 'alert' : null">{{error}}</div></div>

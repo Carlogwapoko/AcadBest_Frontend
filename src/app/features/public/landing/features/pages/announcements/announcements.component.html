@@ -1,0 +1,4 @@
+<app-feature-page-shell [title]="feature.title" [icon]="feature.icon" [backToFeatures]="true" [showLoginButton]="true">
+  <p>{{feature.description}}</p>
+  <ul>@for(item of feature.bullets;track item){<li>{{item}}</li>}</ul>
+</app-feature-page-shell>

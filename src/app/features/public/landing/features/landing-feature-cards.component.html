@@ -1,0 +1,16 @@
+<section class="sec2 feature-section" id="ft" aria-labelledby="landing-features-title">
+  <h2 id="landing-features-title">What AcadBest offers</h2>
+  <p class="feature-intro">Explore the services available through the ACES Tagum College student portal.</p>
+  <div class="grid g2">
+    @for(feature of features;track feature.slug){
+      <a class="card feature-card" [routerLink]="['/features',feature.slug]">
+        <span class="fi"><app-icon [name]="feature.icon" [size]="22"/></span>
+        <span class="feature-copy">
+          <strong>{{feature.title}}</strong>
+          <span>{{feature.summary}}</span>
+          <span class="feature-link">View feature <span aria-hidden="true">→</span></span>
+        </span>
+      </a>
+    }
+  </div>
+</section>

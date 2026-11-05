@@ -1,0 +1,5 @@
+:host{display:block;min-width:0}
+.intro{margin:0 0 24px;color:var(--mu)}
+.questions details{margin:0 0 12px;padding:16px 18px;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
+.questions summary{color:var(--navy2);cursor:pointer;font-weight:600}
+.questions details p{margin:12px 0 0;color:var(--mu)}

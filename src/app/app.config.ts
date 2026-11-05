@@ -4,6 +4,6 @@ import { provideHttpClient,withInterceptors } from '@angular/common/http';
 import { apiInterceptor } from './core/api.interceptor';
 import { routes } from './app.routes';
 export const appConfig:ApplicationConfig={providers:[
-  provideRouter(routes,withInMemoryScrolling({scrollPositionRestoration:'top'})),
+  provideRouter(routes,withInMemoryScrolling({anchorScrolling:'enabled',scrollPositionRestoration:'enabled'})),
   provideHttpClient(withInterceptors([apiInterceptor]))
 ]};

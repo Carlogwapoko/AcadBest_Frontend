@@ -1,6 +1,6 @@
 <div class="feature-content"><div class="tabs"><button [class.on]="tab=='g'" (click)="tab='g'">Grades</button><button [class.on]="tab=='s'" (click)="tab='s'">Schedule</button><button [class.on]="tab=='e'" (click)="tab='e'">Enrollment</button></div>
-<div class="r2 semester-filters"><app-field label="Semester"><select [(ngModel)]="semesterFilter">@for(x of semesters;track x){<option>{{x}}</option>}</select></app-field>
-<app-field label="Academic year"><select [(ngModel)]="academicYearFilter">@for(x of academicYears;track x){<option>{{x}}</option>}</select></app-field></div>
+<div class="r2 semester-filters"><app-field label="Semester"><app-dropdown [(ngModel)]="semesterFilter">@for(x of semesters;track x){<option>{{x}}</option>}</app-dropdown></app-field>
+<app-field label="Academic year"><app-dropdown [(ngModel)]="academicYearFilter">@for(x of academicYears;track x){<option>{{x}}</option>}</app-dropdown></app-field></div>
 @if(!rows.length){@if(!d.loading&&!d.loadError){<div class="empty"><div class="eic"><app-icon name="inbox" [size]="24"/></div>No records found. No subjects assigned yet. Please wait for the registrar to set your subjects.</div>}}
 @else if(tab=='g'){<div class="tw"><table><tr><th>Code</th><th>Subject</th><th>Prelim</th><th>Midterm</th><th>Final</th><th>Overall Grade</th><th>Standing</th></tr>
 @for(r of rows;track r.code){<tr class="cl" (click)="sel=r"><td>{{r.code}}</td><td>{{r.n}}</td>@for(v of r.g;track $index){<td>{{d.f1(v)}}</td>}<td><b>{{d.overallGrade(r.avg)}}</b></td><td><span class="chip" [class]="r.sd[1]">{{r.sd[0]}}</span></td></tr>}</table></div>

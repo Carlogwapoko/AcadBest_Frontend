@@ -66,6 +66,40 @@ describe('GradeEntryComponent',()=>{
     expect(headings).toEqual(['School ID','Student Name','Prelim','Midterm','Final','Overall Grade']);
   });
 
+  it('preserves intermediate decimal input and validates corrected grades',()=>{
+    const data=TestBed.inject(DataService);
+    data.subjects['IT101']={n:'Information Technology',u:3,d:'Mon/Wed',tm:'8:00–9:30 AM',
+      start:'08:00',end:'09:30',r:'Lab 1',p:'All',y:'All',f:1,session:'Afternoon',
+      faculty_assignments:[{faculty_id:1,semester:'1st Semester',academic_year:'2026-2027',section:'A'}]};
+    data.students=[{
+      id:2,enrollment_id:20,name:'Student',prog:'BSIT',yr:1,sec:'A',session:'Afternoon',
+      semester:'1st Semester',academic_year:'2026-2027',subject_codes:['IT101'],
+      enrollment_status:'Enrolled',g:{IT101:[null,null,null]},
+    }];
+    const fixture=TestBed.createComponent(GradeEntryComponent);
+    fixture.detectChanges();
+    const component=fixture.componentInstance;
+    const input=fixture.nativeElement.querySelector('input[aria-label="Prelim grade for Student"]') as HTMLInputElement;
+
+    expect(input.type).toBe('text');
+    expect(input.inputMode).toBe('decimal');
+    input.value='87.';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(component.entries[20].Prelim).toBe('87.');
+
+    component.bad[20]={Prelim:true,Midterm:false,Final:false};
+    component.gradeChanged(20,'Prelim','87.5');
+    expect(component.bad[20].Prelim).toBe(false);
+    expect(component.periodGrade(data.students[0],'Prelim')).toBe(87.5);
+    component.gradeChanged(20,'Prelim','101');
+    expect(component.periodGrade(data.students[0],'Prelim')).toBeNull();
+    component.bad[20].Prelim=true;
+    component.gradeChanged(20,'Prelim','85,5');
+    expect(component.bad[20].Prelim).toBe(false);
+    expect(component.periodGrade(data.students[0],'Prelim')).toBe(85.5);
+  });
+
   it('uses the configured subject grading weights for the overall grade',()=>{
     const data=TestBed.inject(DataService);
     data.subjects['IT202']={n:'Weighted course',u:3,d:'Mon',tm:'08:00',start:'08:00',end:'09:00',

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef,Component,DestroyRef,HostListener } from '@angular/core';
+import { ChangeDetectorRef,Component,DestroyRef,ElementRef,HostListener,ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd,Router,RouterLink,RouterLinkActive,RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
@@ -11,7 +11,8 @@ import { UiService } from '../../core/ui.service';
 @Component({selector:'app-shell',standalone:true,imports:[RouterOutlet,RouterLink,
   RouterLinkActive,IconComponent],styleUrl:'./shell.component.css',templateUrl:'./shell.component.html'})
 export class ShellComponent{
-  open=false;title='';
+  open=false;moreOpen=false;profileOpen=false;title='';
+  @ViewChild('profileTrigger') profileTrigger?:ElementRef<HTMLButtonElement>;
   constructor(public auth:AuthService,public d:DataService,private router:Router,
     private ui:UiService,private destroyRef:DestroyRef,private cdr:ChangeDetectorRef){
     void this.d.load().catch(error=>{
@@ -30,13 +31,31 @@ export class ShellComponent{
     });
   }
   get nav(){const role=this.auth.role;return role?NAV[role].filter(n=>this.d.moduleOn(role,n.key)):[]}
+  get primaryNav(){return this.nav.slice(0,4)}
+  get moreNav(){return this.nav.slice(4)}
+  get moreActive(){
+    const url=this.router.url.replace(/[?#].*$/,'').replace(/\/$/,'');
+    return this.moreNav.some(({path})=>{
+      const target=`/app/${path}`;
+      return url===target||url.startsWith(`${target}/`);
+    });
+  }
   get unread(){const sid=this.auth.user?.sid;return this.auth.role==='student'&&sid?this.d.unread(sid):0}
   get roleName(){const role=this.auth.role;return role?ROLE_NAME[role]:''}
   retry(){void this.d.load().catch(error=>{console.error('Could not load AcadBest portal data.',error);
     this.ui.toast(this.d.loadError,'er')}).finally(()=>this.cdr.markForCheck())}
   get initials(){const name=this.auth.user?.name;if(!name)return '';
     return name.replace(/^(Prof\.|Dr\.)\s*/,'').split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase()}
-  @HostListener('document:keydown.escape') closeMenu(){this.open=false}
+  @HostListener('document:keydown.escape') closeMenu(){
+    const focusProfile=this.profileOpen;
+    this.open=false;this.moreOpen=false;this.profileOpen=false;
+    if(focusProfile)this.profileTrigger?.nativeElement.focus();
+  }
+  @HostListener('document:click',['$event']) closeProfileOnOutsideClick(event:MouseEvent){
+    if(this.profileOpen&&!this.profileTrigger?.nativeElement.parentElement?.contains(event.target as Node)){
+      this.profileOpen=false;
+    }
+  }
   async logout(){
     if(this.d.pendingOperations){
       this.ui.toast('A submission is still in progress. Wait for it to finish before logging out.','er');

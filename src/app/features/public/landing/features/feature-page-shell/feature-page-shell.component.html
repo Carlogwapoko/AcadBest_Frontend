@@ -1,0 +1,15 @@
+<app-public-nav/>
+
+<main class="feature-page">
+  <header class="feature-heading">
+    @if(icon){<div class="feature-icon"><app-icon [name]="icon" [size]="28"/></div>}
+    <div>
+      <h1>{{title}}</h1>
+      @if(backToFeatures){<a class="back-features" routerLink="/features">Back to Features</a>}
+    </div>
+  </header>
+  <section class="feature-content"><ng-content/></section>
+  @if(showLoginButton){<a class="btn login-button" routerLink="/login">Log In to Use</a>}
+</main>
+
+<app-public-footer/>

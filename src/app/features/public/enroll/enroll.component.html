@@ -1,25 +1,204 @@
-<div id="enr"><div class="ecard"><a class="lx" routerLink="/" aria-label="Close"><app-icon name="x" [size]="16"/></a>
-@if(!done){<div class="eh"><span class="fi"><app-icon name="cap" [size]="22"/></span><div><h3 style="margin:0">Online Enrollment Application</h3><p class="sub">The registrar will review your application and update its status.</p></div></div>
-<h4>Personal information</h4>
-<div class="r2"><app-field label="First name" [error]="e['fn']"><input [(ngModel)]="f.fn" [class.bad]="e['fn']" placeholder="Enter your first name"></app-field><app-field label="Middle name"><input [(ngModel)]="f.mn" placeholder="Enter your middle name"></app-field></div>
-<div class="r2"><app-field label="Last name" [error]="e['ln']"><input [(ngModel)]="f.ln" [class.bad]="e['ln']" placeholder="Enter your last name"></app-field><app-field label="Date of birth" [error]="e['dob']"><input type="date" [(ngModel)]="f.dob" [class.bad]="e['dob']"></app-field></div>
-<div class="r2"><app-field label="Gender" [error]="e['sex']"><select [(ngModel)]="f.sex" [class.bad]="e['sex']"><option value="Select…">Select gender</option><option>Male</option><option>Female</option><option>Others</option></select></app-field><app-field label="E-mail" [error]="e['em']"><input type="email" [(ngModel)]="f.em" [class.bad]="e['em']" placeholder="Enter your email address"></app-field></div>
-<div class="r2"><app-field label="Mobile number" [error]="e['ph']"><input [(ngModel)]="f.ph" [class.bad]="e['ph']" placeholder="09xx xxx xxxx"></app-field><app-field label="Home address" [error]="e['ad']"><input [(ngModel)]="f.ad" [class.bad]="e['ad']" placeholder="Enter your home address"></app-field></div>
-<h4>Academic information</h4>
-<div class="r2"><app-field label="Program" [error]="e['pr']"><select [(ngModel)]="f.pr" (ngModelChange)="programChanged()" [class.bad]="e['pr']"><option value="Select…">Select a program</option>@for(program of programs;track program){<option [value]="program">{{program}}</option>}</select></app-field><app-field label="Year level" [error]="e['yr']"><select [(ngModel)]="f.yr" [class.bad]="e['yr']"><option value="Select…">Select a year level</option><option value="1">1st Year</option><option value="2">2nd Year</option><option value="3">3rd Year</option><option value="4">4th Year</option><option value="11">Grade 11</option><option value="12">Grade 12</option></select></app-field></div>
-@if(majors.length){<div class="r2"><app-field label="Major" [error]="e['major']"><select [(ngModel)]="f.major" [class.bad]="e['major']"><option value="">Select a major</option>@for(major of majors;track major){<option [value]="major">{{major}}</option>}</select></app-field><div></div></div>}
-<div class="r2"><app-field label="Current Academic School Year" [error]="e['academic_year']"><input [(ngModel)]="f.academic_year" placeholder="Loading…" aria-label="Current Academic School Year" readonly></app-field><app-field label="Semester" [error]="e['semester']"><select [(ngModel)]="f.semester" [class.bad]="e['semester']"><option value="Select…">Select a semester</option><option>1st Semester</option><option>2nd Semester</option></select></app-field></div>
-<div class="r2"><app-field label="Session" [error]="e['session']"><select [(ngModel)]="f.session" [class.bad]="e['session']"><option value="Select…">Select a session</option><option>Afternoon</option><option>Evening</option><option>Weekends</option></select></app-field><div></div></div>
-<div class="r2"><app-field label="Student type" [error]="e['ty']"><select [(ngModel)]="f.ty" [class.bad]="e['ty']"><option value="Select…">Select a student type</option><option>New Student</option><option>Transferee</option><option>Returning</option></select></app-field><div></div></div>
-<div class="r2"><app-field label="Last school attended" [error]="e['sc']"><input [(ngModel)]="f.sc" [class.bad]="e['sc']" placeholder="Enter your last school attended"></app-field><div></div></div>
-<h4>Mother's information</h4>
-<div class="r2"><app-field label="First name"><input [(ngModel)]="f.mother_fn" maxlength="255" placeholder="Mother's first name"></app-field><app-field label="Middle name"><input [(ngModel)]="f.mother_mn" maxlength="255" placeholder="Mother's middle name"></app-field></div>
-<app-field label="Last name"><input [(ngModel)]="f.mother_ln" maxlength="255" placeholder="Mother's last name"></app-field>
-<h4>Father's information</h4>
-<div class="r2"><app-field label="First name"><input [(ngModel)]="f.father_fn" maxlength="255" placeholder="Father's first name"></app-field><app-field label="Middle name"><input [(ngModel)]="f.father_mn" maxlength="255" placeholder="Father's middle name"></app-field></div>
-<app-field label="Last name"><input [(ngModel)]="f.father_ln" maxlength="255" placeholder="Father's last name"></app-field>
-<h4>Parent / Guardian Contact</h4>
-<div class="r2"><app-field label="Full name" [error]="e['gn']"><input [(ngModel)]="f.gn" [class.bad]="e['gn']" placeholder="Enter your parent or guardian's name"></app-field><app-field label="Contact number" [error]="e['gp']"><input [(ngModel)]="f.gp" [class.bad]="e['gp']" placeholder="09xx xxx xxxx"></app-field></div>
-<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;color:var(--tx);margin-top:18px"><input type="checkbox" [(ngModel)]="f.ok" style="width:auto;margin-top:3px">I certify that the information provided is true and correct.</label><div class="err">{{e['ok']}}</div>
-<div class="acts"><button class="btn" [disabled]="busy||yearLoading" (click)="submit()">@if(busy||yearLoading){<span class="sp"></span>}Submit Application</button></div>}
-@else{<div style="text-align:center;padding:20px 0"><div class="fi" style="margin:0 auto 14px;width:64px;height:64px;border-radius:50%;background:var(--okb);color:var(--ok)"><app-icon name="check" [size]="32"/></div><h3>Application submitted</h3><p class="sub">Your application is now <b>Pending</b> registrar review.</p><div class="refbox">Reference number<b>{{ref}}</b></div><p class="sub">Keep this number for your records and follow-up with the registrar.</p><div class="acts" style="justify-content:center"><a class="btn" routerLink="/">Back to Home</a></div></div>}</div></div>
+<main class="enroll-page">
+  <section class="ecard" #card aria-labelledby="enroll-title" (keydown.enter)="handleEnter($event)">
+    <a class="lx close-link" routerLink="/" aria-label="Close enrollment application">
+      <app-icon name="x" [size]="16" />
+    </a>
+
+      <header class="eh">
+        <span class="fi"><app-icon name="cap" [size]="22" /></span>
+        <div>
+          <h1 id="enroll-title">Online Enrollment Application</h1>
+          <p class="sub">The registrar will review your application and update its status.</p>
+        </div>
+      </header>
+
+      @if (ref) {
+        <div class="submission-success" role="status">
+          <strong>Application submitted successfully.</strong>
+          <span>Reference / tracking number: <b>{{ ref }}</b></span>
+        </div>
+      }
+
+      <nav class="step-progress" aria-label="Enrollment progress">
+        @for (title of ['Personal Information', 'Academic Information', 'Parent/Guardian', 'Review & Submit']; track title; let i = $index) {
+          <div class="step-item" [class.current]="step === i + 1" [class.complete]="step > i + 1"
+            [attr.aria-current]="step === i + 1 ? 'step' : null">
+            <span class="step-number">{{ step > i + 1 ? '✓' : i + 1 }}</span>
+            <span class="step-label">{{ title }}</span>
+          </div>
+        }
+      </nav>
+      <div class="mobile-progress" role="progressbar" [attr.aria-valuenow]="step" aria-valuemin="1" aria-valuemax="4"
+        [attr.aria-label]="'Step ' + step + ' of 4: ' + stepTitle">
+        <span>Step {{ step }} of 4</span>
+        <div class="progress-track"><span [style.width.%]="step * 25"></span></div>
+      </div>
+
+      <h2 class="section-heading">{{ stepTitle }}</h2>
+      @if (step === 1) {
+        <div class="field-grid">
+          <app-field label="First name" for="first-name" [error]="e['fn']">
+            <input id="first-name" [(ngModel)]="f.fn" [class.invalid]="e['fn']" [attr.aria-invalid]="!!e['fn']"
+              [attr.aria-describedby]="e['fn'] ? 'error-first-name' : null" placeholder="Enter your first name">
+          </app-field>
+          <app-field label="Middle name" for="middle-name">
+            <input id="middle-name" [(ngModel)]="f.mn" placeholder="Enter your middle name">
+          </app-field>
+          <app-field label="Last name" for="last-name" [error]="e['ln']">
+            <input id="last-name" [(ngModel)]="f.ln" [class.invalid]="e['ln']" [attr.aria-invalid]="!!e['ln']"
+              [attr.aria-describedby]="e['ln'] ? 'error-last-name' : null" placeholder="Enter your last name">
+          </app-field>
+          <app-field label="Date of birth" for="date-of-birth" [error]="e['dob']">
+            <input id="date-of-birth" type="date" [(ngModel)]="f.dob" [class.invalid]="e['dob']"
+              [attr.aria-invalid]="!!e['dob']" [attr.aria-describedby]="e['dob'] ? 'error-date-of-birth' : null">
+          </app-field>
+          <app-field label="Gender" for="gender" [error]="e['sex']">
+            <app-enrollment-select controlId="gender" [(ngModel)]="f.sex" [options]="genderOptions"
+              [invalid]="!!e['sex']" placeholder="Select gender" />
+          </app-field>
+          <app-field label="E-mail" for="email" [error]="e['em']">
+            <input id="email" type="email" [(ngModel)]="f.em" [class.invalid]="e['em']" [attr.aria-invalid]="!!e['em']"
+              placeholder="Enter your email address">
+          </app-field>
+          <app-field label="Mobile number" for="mobile-number" [error]="e['ph']">
+            <input id="mobile-number" type="tel" inputmode="tel" [(ngModel)]="f.ph" [class.invalid]="e['ph']"
+              [attr.aria-invalid]="!!e['ph']" placeholder="09xx xxx xxxx">
+          </app-field>
+          <app-field class="full-width" label="Home address" for="home-address" [error]="e['ad']">
+            <input id="home-address" [(ngModel)]="f.ad" [class.invalid]="e['ad']" [attr.aria-invalid]="!!e['ad']"
+              placeholder="Enter your home address">
+          </app-field>
+        </div>
+      } @else if (step === 2) {
+        <div class="field-grid">
+          <app-field label="Program" for="program" [error]="e['pr']">
+            <app-enrollment-select controlId="program" [(ngModel)]="f.pr" (ngModelChange)="programChanged()"
+              [options]="programOptions" [invalid]="!!e['pr']" placeholder="Select a program" />
+          </app-field>
+          <app-field label="Year level" for="year-level" [error]="e['yr']">
+            <app-enrollment-select controlId="year-level" [(ngModel)]="f.yr" [options]="yearLevelOptions"
+              [invalid]="!!e['yr']" placeholder="Select a year level" />
+          </app-field>
+          @if (majors.length) {
+            <app-field label="Major" for="major" [error]="e['major']">
+              <app-enrollment-select controlId="major" [(ngModel)]="f.major" [options]="majorOptions"
+                [invalid]="!!e['major']" placeholder="Select a major" />
+            </app-field>
+          }
+          <app-field label="Current academic school year" for="academic-year" [error]="e['academic_year']">
+            <input id="academic-year" aria-label="Current Academic School Year" [(ngModel)]="f.academic_year" placeholder="Loading…" readonly>
+          </app-field>
+          <app-field label="Semester" for="semester" [error]="e['semester']">
+            <app-enrollment-select controlId="semester" [(ngModel)]="f.semester" [options]="semesterOptions"
+              [invalid]="!!e['semester']" placeholder="Select a semester" />
+          </app-field>
+          <app-field label="Session" for="session" [error]="e['session']">
+            <app-enrollment-select controlId="session" [(ngModel)]="f.session" [options]="sessionOptions"
+              [invalid]="!!e['session']" placeholder="Select a session" />
+          </app-field>
+          <app-field label="Student type" for="student-type" [error]="e['ty']">
+            <app-enrollment-select controlId="student-type" [(ngModel)]="f.ty" [options]="studentTypeOptions"
+              [invalid]="!!e['ty']" placeholder="Select a student type" />
+          </app-field>
+          <app-field class="full-width" label="Last school attended" for="last-school" [error]="e['sc']">
+            <input id="last-school" [(ngModel)]="f.sc" [class.invalid]="e['sc']" [attr.aria-invalid]="!!e['sc']"
+              placeholder="Enter your last school attended">
+          </app-field>
+        </div>
+      } @else if (step === 3) {
+        <p class="step-description">Parent information is optional. Please provide a parent or guardian contact for enrollment follow-up.</p>
+        <div class="field-grid">
+          <app-field label="Mother's first name" for="mother-first-name">
+            <input id="mother-first-name" [(ngModel)]="f.mother_fn" maxlength="255" placeholder="Mother's first name">
+          </app-field>
+          <app-field label="Mother's middle name" for="mother-middle-name">
+            <input id="mother-middle-name" [(ngModel)]="f.mother_mn" maxlength="255" placeholder="Mother's middle name">
+          </app-field>
+          <app-field label="Mother's last name" for="mother-last-name">
+            <input id="mother-last-name" [(ngModel)]="f.mother_ln" maxlength="255" placeholder="Mother's last name">
+          </app-field>
+          <span class="field-spacer" aria-hidden="true"></span>
+          <app-field label="Father's first name" for="father-first-name">
+            <input id="father-first-name" [(ngModel)]="f.father_fn" maxlength="255" placeholder="Father's first name">
+          </app-field>
+          <app-field label="Father's middle name" for="father-middle-name">
+            <input id="father-middle-name" [(ngModel)]="f.father_mn" maxlength="255" placeholder="Father's middle name">
+          </app-field>
+          <app-field label="Father's last name" for="father-last-name">
+            <input id="father-last-name" [(ngModel)]="f.father_ln" maxlength="255" placeholder="Father's last name">
+          </app-field>
+          <span class="field-spacer" aria-hidden="true"></span>
+          <h3 class="section-heading full-width">CONTACT INFORMATION</h3>
+          <app-field label="Parent / guardian full name" for="guardian-name" [error]="e['gn']">
+            <input id="guardian-name" [(ngModel)]="f.gn" [class.invalid]="e['gn']" [attr.aria-invalid]="!!e['gn']"
+              placeholder="Enter your parent or guardian's name">
+          </app-field>
+          <app-field label="Contact number" for="guardian-phone" [error]="e['gp']">
+            <input id="guardian-phone" type="tel" inputmode="tel" [(ngModel)]="f.gp" [class.invalid]="e['gp']"
+              [attr.aria-invalid]="!!e['gp']" placeholder="09xx xxx xxxx">
+          </app-field>
+        </div>
+        <label class="certify" for="certify">
+          <input id="certify" type="checkbox" [(ngModel)]="f.ok" [class.invalid]="e['ok']"
+            [attr.aria-invalid]="!!e['ok']" [attr.aria-describedby]="e['ok'] ? 'error-certify' : null">
+          <span>I certify that the information provided is true and correct.</span>
+        </label>
+        @if (e['ok']) { <p id="error-certify" class="check-error" role="alert">{{ e['ok'] }}</p> }
+      } @else {
+        <p class="step-description">Review your details before submitting your application.</p>
+        <section class="review-section" aria-labelledby="review-personal">
+          <h3 id="review-personal" class="section-heading">Personal Information</h3>
+          <dl>
+            <div><dt>Full name</dt><dd>{{ f.fn }} {{ f.mn }} {{ f.ln }}</dd></div>
+            <div><dt>Date of birth</dt><dd>{{ f.dob }}</dd></div>
+            <div><dt>Gender</dt><dd>{{ f.sex }}</dd></div>
+            <div><dt>E-mail</dt><dd>{{ f.em }}</dd></div>
+            <div><dt>Mobile number</dt><dd>{{ f.ph }}</dd></div>
+            <div class="review-wide"><dt>Home address</dt><dd>{{ f.ad }}</dd></div>
+          </dl>
+        </section>
+        <section class="review-section" aria-labelledby="review-academic">
+          <h3 id="review-academic" class="section-heading">Academic Information</h3>
+          <dl>
+            <div><dt>Program</dt><dd>{{ f.pr }}</dd></div>
+            @if (f.major) { <div><dt>Major</dt><dd>{{ f.major }}</dd></div> }
+            <div><dt>Year level</dt><dd>{{ f.yr }}</dd></div>
+            <div><dt>School year</dt><dd>{{ f.academic_year }}</dd></div>
+            <div><dt>Semester</dt><dd>{{ f.semester }}</dd></div>
+            <div><dt>Session</dt><dd>{{ f.session }}</dd></div>
+            <div><dt>Student type</dt><dd>{{ f.ty }}</dd></div>
+            <div><dt>Last school attended</dt><dd>{{ f.sc }}</dd></div>
+          </dl>
+        </section>
+        <section class="review-section" aria-labelledby="review-guardian">
+          <h3 id="review-guardian" class="section-heading">Parent/Guardian Information</h3>
+          <dl>
+            <div><dt>Mother</dt><dd>{{ f.mother_fn }} {{ f.mother_mn }} {{ f.mother_ln }}</dd></div>
+            <div><dt>Father</dt><dd>{{ f.father_fn }} {{ f.father_mn }} {{ f.father_ln }}</dd></div>
+            <div><dt>Parent/guardian</dt><dd>{{ f.gn }}</dd></div>
+            <div><dt>Contact number</dt><dd>{{ f.gp }}</dd></div>
+            <div class="review-wide"><dt>Certification</dt><dd>{{ f.ok ? 'Information certified as true and correct' : 'Not certified' }}</dd></div>
+          </dl>
+        </section>
+      }
+
+      @if (submitError) {
+        <p class="submit-error" role="alert">{{ submitError }}</p>
+      }
+      <nav class="actions" aria-label="Form navigation">
+        @if (step > 1) {
+          <button type="button" class="btn sec nav-button" (click)="previousStep()" [disabled]="busy">Previous</button>
+        }
+        @if (step < 4) {
+          <button type="button" class="btn nav-button next-button" (click)="nextStep()" [disabled]="busy || (yearLoading && step === 2)">
+            @if (yearLoading && step === 2) { <span class="sp"></span> } Next
+          </button>
+        } @else {
+          <button type="button" class="btn nav-button next-button" (click)="submit()" [disabled]="busy || yearLoading">
+            @if (busy) { <span class="sp"></span> Submitting... }
+            @else { Submit }
+          </button>
+        }
+      </nav>
+  </section>
+</main>

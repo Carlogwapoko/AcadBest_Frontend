@@ -1,4 +1,5 @@
-<div class="feature-content"><div class="row"><input placeholder="Search by reference, name or program" [(ngModel)]="q" (ngModelChange)="searchChanged()"><select [(ngModel)]="st" (ngModelChange)="filtersChanged()">@for(x of ['All','Pending','Under Review','Enrolled','Rejected'];track x){<option>{{x}}</option>}</select></div>
+<div class="feature-content"><div class="row"><input placeholder="Search by reference, name or program" [(ngModel)]="q" (ngModelChange)="searchChanged()"><app-dropdown ariaLabel="Filter by application status" [(ngModel)]="st" (ngModelChange)="filtersChanged()">@for(x of ['All','Pending','Under Review','Enrolled','Rejected'];track x){<option>{{x}}</option>}</app-dropdown></div>
+<app-refresh-button [loading]="loading" (refreshed)="loadPage(1)"/>
 @if(loadError){<div class="empty" role="alert">{{loadError}} <button class="btn sec sm" (click)="loadPage(page)">Retry</button></div>}
 @else if(loading&&!list.length){<div class="empty" role="status"><span class="sp"></span>Loading enrollment applications…</div>}
 @else if(!loading&&!list.length){<div class="empty"><div class="eic"><app-icon name="inbox" [size]="24"/></div>No records found. No enrollment applications match your search or filter.</div>}

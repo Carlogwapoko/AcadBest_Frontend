@@ -14,9 +14,10 @@ export const IC:Record<string,string>={grid:`<rect x='3' y='3' width='7' height=
   cap:`<path d='m22 10-10-5L2 10l10 5z'/><path d='M6 12v5c3 2 9 2 12 0v-5M22 10v6'/>`,
   shield:`<path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/><path d='m9 12 2 2 4-4'/>`,
   phone:`<path d='M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z'/>`,
+  more:`<circle cx='5' cy='12' r='1'/><circle cx='12' cy='12' r='1'/><circle cx='19' cy='12' r='1'/>`,
   pin:`<path d='M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z'/><circle cx='12' cy='10' r='3'/>`,
   plus:`<path d='M12 5v14M5 12h14'/>`,file:`<path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><path d='M14 2v6h6M16 13H8M16 17H8'/>`,
-  clock:`<circle cx='12' cy='12' r='10'/><path d='M12 6v6l4 2'/>`,menu:`<path d='M3 6h18M3 12h18M3 18h18'/>`};
+  clock:`<circle cx='12' cy='12' r='10'/><path d='M12 6v6l4 2'/>`,refresh:`<path d='M20 11a8 8 0 1 0 1 5'/><path d='M20 5v6h-6'/>`,menu:`<path d='M3 6h18M3 12h18M3 18h18'/>`};
 IC['eye-off']=`<path d='m3 3 18 18'/><path d='M10.6 10.6a2 2 0 0 0 2.8 2.8'/><path d='M9.9 5.2A10.9 10.9 0 0 1 12 5c6.5 0 10 7 10 7a16.7 16.7 0 0 1-3.1 3.8M6.2 6.2C3.5 8 2 12 2 12s3.5 7 10 7a10.6 10.6 0 0 0 4.1-.8'/>`;
 IC['trash']=`<path d='M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6'/><path d='M10 11v5M14 11v5'/>`;
 IC['bell']=`<path d='M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9'/><path d='M13.7 21a2 2 0 0 1-3.4 0'/>`;

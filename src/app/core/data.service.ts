@@ -125,6 +125,7 @@ export interface Req {
   middle_name?: string | null;
   last_name?: string | null;
   type: string;
+  other_type?: string | null;
   purpose: string;
   copies: number;
   need: string;
@@ -221,6 +222,7 @@ export class DataService {
     'Good Moral Certificate',
     'Clearance',
     'Copy of Grades',
+    'Others',
   ];
 
   subjects: Record<string, Subject> = {};
@@ -1139,7 +1141,7 @@ export class DataService {
     const map: Record<string, [string, string]> = {
       good_standing: ['Good Standing', 'ok'],
       for_monitoring: ['At Risk', 'wn'],
-      at_risk: ['Failing', 'er'],
+      at_risk: ['INC', 'er'],
       no_data: ['No Data', ''],
     };
 
@@ -1161,7 +1163,7 @@ export class DataService {
       return ['At Risk', 'wn'];
     }
 
-    return ['Failing', 'er'];
+    return ['INC', 'er'];
   }
 
   private calculatedStanding(student: Student): string {

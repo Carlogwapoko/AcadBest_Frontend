@@ -1,15 +1,15 @@
 @if(!mine.length){@if(!d.loading&&!d.loadError){<div class="card"><div class="empty"><div class="eic"><app-icon name="edit" [size]="24"/></div>No records found. No subjects are assigned to you yet.</div></div>}}
 @else{<div class="card">
 <div class="r2 grade-scope">
-<app-field label="Subject"><select [(ngModel)]="subj" (ngModelChange)="subjectChanged()">@for(c of mine;track c){<option [value]="c">{{c}} – {{d.subjects[c].n}}</option>}</select></app-field>
-<app-field label="Semester"><select [(ngModel)]="semester" (ngModelChange)="scopeChanged()">@for(value of semesters;track value){<option>{{value}}</option>}</select></app-field>
-<app-field label="Academic Year"><select [(ngModel)]="academicYear" (ngModelChange)="scopeChanged()">@for(value of academicYears;track value){<option>{{value}}</option>}</select></app-field>
-<app-field label="Section"><select [(ngModel)]="section" (ngModelChange)="scopeChanged()">@for(value of sections;track value){<option>{{value}}</option>}</select></app-field>
-<app-field label="Session"><select [(ngModel)]="session" (ngModelChange)="load()">@for(value of sessionOptions;track value){<option>{{value}}</option>}</select></app-field>
+<app-field label="Subject"><app-dropdown [(ngModel)]="subj" (ngModelChange)="subjectChanged()">@for(c of mine;track c){<option [value]="c">{{c}} – {{d.subjects[c].n}}</option>}</app-dropdown></app-field>
+<app-field label="Semester"><app-dropdown [(ngModel)]="semester" (ngModelChange)="scopeChanged()">@for(value of semesters;track value){<option>{{value}}</option>}</app-dropdown></app-field>
+<app-field label="Academic Year"><app-dropdown [(ngModel)]="academicYear" (ngModelChange)="scopeChanged()">@for(value of academicYears;track value){<option>{{value}}</option>}</app-dropdown></app-field>
+<app-field label="Section"><app-dropdown [(ngModel)]="section" (ngModelChange)="scopeChanged()">@for(value of sections;track value){<option>{{value}}</option>}</app-dropdown></app-field>
+<app-field label="Session"><app-dropdown [(ngModel)]="session" (ngModelChange)="load()">@for(value of sessionOptions;track value){<option>{{value}}</option>}</app-dropdown></app-field>
 </div>
 @if(!rows.length){@if(!d.loading&&!d.loadError){<div class="empty">No students are enrolled in this assigned subject, section, and term.</div>}}
 @else{<div class="grade-table-frame"><div class="tw"><table><thead><tr><th>School ID</th><th>Student Name</th><th>Prelim</th><th>Midterm</th><th>Final</th><th>Overall Grade</th></tr></thead><tbody>
-@for(s of rows;track s.enrollment_id){<tr><td>{{s.school_id||'—'}}</td><td>{{s.name}}</td>@for(t of terms;track t){<td><input type="number" min="0" max="100" step="0.01" [(ngModel)]="entries[rowKey(s)][t]" [class.bad]="bad[rowKey(s)]?.[t]" placeholder="0–100" [attr.aria-label]="t+' grade for '+s.name"></td>}<td><b>{{d.overallGrade(overall(s))}}</b></td></tr>}
+@for(s of rows;track s.enrollment_id){<tr><td>{{s.school_id||'—'}}</td><td>{{s.name}}</td>@for(t of terms;track t){<td><input type="text" inputmode="decimal" autocomplete="off" spellcheck="false" [ngModel]="entries[rowKey(s)][t]" (ngModelChange)="gradeChanged(rowKey(s),t,$event)" [class.bad]="bad[rowKey(s)]?.[t]" [attr.aria-invalid]="bad[rowKey(s)]?.[t]?'true':null" placeholder="0–100" [attr.aria-label]="t+' grade for '+s.name"></td>}<td><b>{{d.overallGrade(overall(s))}}</b></td></tr>}
 </tbody></table></div></div>
 <div class="err" style="margin-top:8px;font-size:13px">{{err}}</div>
 <div class="acts"><button class="btn" [disabled]="busy" (click)="save()">@if(busy){<span class="sp"></span>}Save Grades</button></div>}

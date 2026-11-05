@@ -1,1 +1,5 @@
 :host{display:block;min-width:0}
+.queue-toolbar{align-items:center}
+.request-pagination{align-items:center;justify-content:space-between;margin-top:12px}
+.pagination-actions{display:flex;gap:8px}
+.pagination-arrow{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0}

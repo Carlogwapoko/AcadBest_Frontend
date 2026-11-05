@@ -209,7 +209,7 @@ describe('SubjectsUnitsComponent',()=>{
     ]);
   });
 
-  it('uses the offering program list in the subject selector and keeps legacy ABSTM editable',()=>{
+  it('uses the offering program list in the subject selector and keeps legacy ABSTM editable',async()=>{
     const data=TestBed.inject(DataService);
     data.subjects['AB902']={
       n:'Historical ABSTM Subject',u:3,d:'',tm:'',start:null,end:null,r:'',
@@ -220,21 +220,30 @@ describe('SubjectsUnitsComponent',()=>{
     component.openSub();
     fixture.detectChanges();
 
-    const filter=fixture.nativeElement.querySelector(
-      '.subject-filters select'
-    ) as HTMLSelectElement;
-    const selects=Array.from(
-      fixture.nativeElement.querySelectorAll('select') as NodeListOf<HTMLSelectElement>
-    );
-    const subjectProgram=selects.find(select=>
-      Array.from(select.options).some(option=>option.value==='')
+    const filterOptions=Array.from(
+      fixture.nativeElement.querySelectorAll('.subject-filters app-field:first-of-type .dropdown-source option')
+    ) as HTMLOptionElement[];
+    const subjectProgram=Array.from(
+      fixture.nativeElement.querySelectorAll('app-dropdown') as NodeListOf<HTMLElement>
+    ).find(dropdown=>
+      dropdown.querySelector('.dropdown-source option[value=""]')
     )!;
-    expect(Array.from(subjectProgram.options).slice(1).map(option=>option.value))
-      .toEqual(Array.from(filter.options).map(option=>option.value));
-    expect(Array.from(subjectProgram.options).some(option=>option.value==='ABSTM')).toBe(false);
+    const subjectOptions=Array.from(
+      subjectProgram.querySelectorAll('.dropdown-source option')
+    ) as HTMLOptionElement[];
+    expect(subjectOptions.slice(1).map(option=>option.value))
+      .toEqual(filterOptions.map(option=>option.value));
+    expect(subjectOptions.some(option=>option.value==='ABSTM')).toBe(false);
 
-    subjectProgram.value='BSED';
-    subjectProgram.dispatchEvent(new Event('change'));
+    const subjectTrigger=subjectProgram.querySelector('button[role="combobox"]') as HTMLButtonElement;
+    subjectTrigger.click();
+    fixture.detectChanges();
+    const list=document.getElementById(subjectTrigger.getAttribute('aria-controls')!);
+    const selectedIndex=subjectOptions.findIndex(option=>option.value==='BSED');
+    list?.querySelector(`[data-option-index="${selectedIndex}"]`)
+      ?.dispatchEvent(new MouseEvent('click',{bubbles:true}));
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
     expect(component.sm.p).toBe('BSED');
     expect(component.majorsFor(component.sm.p)).toEqual(['Filipino','English','Mathematics']);
@@ -247,11 +256,9 @@ describe('SubjectsUnitsComponent',()=>{
     legacyComponent.openSub('AB902');
     legacyFixture.detectChanges();
     expect(legacyComponent.sm).toMatchObject({isNew:false,p:'ABSTM'});
-    const legacySelect=Array.from(
-      legacyFixture.nativeElement.querySelectorAll('select') as NodeListOf<HTMLSelectElement>
-    ).find(select=>Array.from(select.options).some(option=>option.value==='ABSTM'))!;
-    const legacyOption=legacySelect
-      .querySelector('option[value="ABSTM"]') as HTMLOptionElement;
+    const legacyOption=legacyFixture.nativeElement.querySelector(
+      '.subject-form-section app-dropdown .dropdown-source option[value="ABSTM"]'
+    ) as HTMLOptionElement;
     expect(legacyOption.disabled).toBe(true);
   });
 

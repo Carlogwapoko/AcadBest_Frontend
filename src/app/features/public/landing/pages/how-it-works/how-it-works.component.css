@@ -1,0 +1,7 @@
+:host{display:block;min-width:0}
+.intro{margin:0 0 24px;color:var(--mu)}
+.steps{display:grid;gap:16px;margin:0 0 28px;padding:0;list-style:none}
+.steps li{display:flex;align-items:flex-start;gap:16px;padding:18px;border:1px solid var(--bd);border-radius:14px;background:var(--card)}
+.step-number{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:50%;background:var(--blue);color:#fff;font-weight:700}
+.steps h2{margin:0 0 6px;color:var(--navy2);font-size:17px}
+.steps p{margin:0;color:var(--mu)}

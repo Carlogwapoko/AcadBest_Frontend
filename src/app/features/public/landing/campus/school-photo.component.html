@@ -1,0 +1,16 @@
+<div class="photo-box">
+  @if (!failed) {
+    <img [src]="src" [alt]="alt" (error)="failed = true">
+  } @else {
+    <div class="placeholder">
+      <strong>School picture here</strong>
+      <span>Place the image at public/images/school.jpg</span>
+    </div>
+  }
+  <div class="caption-bar">
+    <strong>{{caption}}</strong>
+    @if (subcaption) {
+      <span>{{subcaption}}</span>
+    }
+  </div>
+</div>

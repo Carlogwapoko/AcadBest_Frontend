@@ -98,11 +98,23 @@ export class GradeEntryComponent{
     if(!this.sessionOptions.includes(this.session))this.session='All';
     void this.rows;
   }
+  gradeChanged(key:number,term:GradeTerm,value:string){
+    this.entries[key][term]=value;
+    if(this.bad[key])this.bad[key][term]=value!==''&&!this.isValidGrade(value);
+    if(!Object.values(this.bad).some(grades=>Object.values(grades).some(invalid=>invalid)))this.err='';
+  }
+  private isValidGrade(value:number|string|null|undefined):boolean{
+    if(value===null||value===undefined||value==='')return true;
+    const normalized=String(value).replace(',','.');
+    if(!/^\d+(?:\.\d*)?$|^\.\d+$/.test(normalized))return false;
+    const score=Number(normalized);
+    return Number.isFinite(score)&&score>=0&&score<=100;
+  }
   periodGrade(student:Student,term:GradeTerm){
     const value=this.entries[this.rowKey(student)]?.[term];
     if(value===null||value===undefined||value==='')return null;
-    const score=Number(value);
-    return Number.isFinite(score)&&score>=0&&score<=100?score:null;
+    if(!this.isValidGrade(value))return null;
+    return Number(String(value).replace(',','.'));
   }
   overall(student:Student){
     return this.d.subjectAverage(this.subj,this.terms.map(term=>this.periodGrade(student,term)));
@@ -119,11 +131,11 @@ export class GradeEntryComponent{
       for(const term of this.terms){
         const value=entry[term];
         if(value===null||value===undefined||value==='')continue;
-        if(!Number.isFinite(Number(value))||Number(value)<0||Number(value)>100){
+        if(!this.isValidGrade(value)){
           this.bad[key]??={Prelim:false,Midterm:false,Final:false};
           this.bad[key][term]=true;invalid++;studentInvalid=true;continue;
         }
-        scores[term]=Number(value);
+        scores[term]=Number(String(value).replace(',','.'));
       }
       if(studentInvalid)continue;
       if(!Object.keys(scores).length)continue;

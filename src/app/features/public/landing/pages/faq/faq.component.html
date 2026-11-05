@@ -1,0 +1,8 @@
+<app-feature-page-shell title="Frequently Asked Questions">
+  <p class="intro">Answers to common questions about AcadBest and ACES Tagum College.</p>
+  <div class="questions">
+    @for(question of questions;track question[0]){
+      <details><summary>{{question[0]}}</summary><p>{{question[1]}}</p></details>
+    }
+  </div>
+</app-feature-page-shell>

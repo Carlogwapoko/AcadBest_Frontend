@@ -1,0 +1,15 @@
+<app-feature-page-shell title="AcadBest Features">
+  <p class="intro">Explore a school service to see how AcadBest supports students, faculty, and staff.</p>
+  <div class="feature-list">
+    @for(feature of features;track feature.slug){
+      <a class="feature-card" [routerLink]="['/features',feature.slug]">
+        <span class="feature-card-icon"><app-icon [name]="feature.icon" [size]="22"/></span>
+        <span class="feature-card-copy">
+          <strong>{{feature.title}}</strong>
+          <span>{{feature.summary}}</span>
+          <span class="feature-card-link">View feature <span aria-hidden="true">→</span></span>
+        </span>
+      </a>
+    }
+  </div>
+</app-feature-page-shell>

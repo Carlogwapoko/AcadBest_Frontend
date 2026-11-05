@@ -1,0 +1,23 @@
+<div class="select-control">
+  <button #trigger type="button" class="select-trigger" [id]="id" role="combobox"
+    [class.invalid]="invalid" [disabled]="disabled" [attr.aria-labelledby]="id + '-label'"
+    aria-haspopup="listbox" [attr.aria-expanded]="open" [attr.aria-controls]="listId"
+    [attr.aria-activedescendant]="open && activeIndex >= 0 ? id + '-option-' + activeIndex : null"
+    [attr.aria-invalid]="invalid" (click)="toggle()" (keydown)="onKeydown($event)">
+    <span [class.placeholder]="selectedLabel === placeholder">{{ selectedLabel }}</span>
+    <span class="select-arrow" aria-hidden="true"></span>
+  </button>
+  @if (open) {
+    <div #optionList class="select-list" [class.opens-up]="opensUp" role="listbox"
+      [id]="listId" [attr.aria-labelledby]="id + '-label'">
+      @for (option of options; track option.value; let i = $index) {
+        <div class="select-option" role="option" [id]="id + '-option-' + i"
+          [attr.data-option-index]="i" [attr.aria-selected]="option.value === value"
+          [class.selected]="option.value === value" [class.active]="i === activeIndex"
+          (mouseenter)="activeIndex = i" (click)="select(option)">
+          {{ option.label }}
+        </div>
+      }
+    </div>
+  }
+</div>

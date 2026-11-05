@@ -17,6 +17,7 @@ export class SubjectsUnitsComponent{
   studentSemesterFilter='All';studentAcademicYearFilter='All';
   constructor(public d:DataService,private ui:UiService,private cdr:ChangeDetectorRef){
   }
+  refresh(){void this.d.reload()}
   selectTab(tab:string){this.tab=tab}
   get visibleSubjects(){return this.d.subjectList.filter(s=>
     (this.programFilter==='All'||s.p===this.programFilter||s.p==='All')
