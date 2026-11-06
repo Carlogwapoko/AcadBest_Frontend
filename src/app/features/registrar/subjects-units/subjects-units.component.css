@@ -1,5 +1,5 @@
 :host{display:block;min-width:0}
-.assign-action{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:96px;padding:6px 10px}
+.assign-action{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:126px;padding:7px 10px;white-space:nowrap}
 .assign-action app-icon{margin:0}
 .assign-action-cell{text-align:center;vertical-align:middle}
 .subject-filters{gap:12px;margin:4px 0 16px}
@@ -11,25 +11,27 @@
 .faculty-filter-heading h3{margin:0;color:var(--navy2);font-size:15px}
 .faculty-filter-heading p{margin:4px 0 0;color:var(--mu);font-size:12px}
 .clear-faculty-filters{flex:0 0 auto}
-.faculty-filter-grid{display:grid;grid-template-columns:minmax(220px,2fr) minmax(150px,1fr) minmax(150px,1fr);align-items:end;gap:12px}
-.faculty-search-field{display:flex;flex-direction:column;gap:6px;color:var(--mu);font-size:12px}
-.search-input-wrap{display:flex;align-items:center;gap:8px;min-height:38px;padding:0 10px;border:1px solid var(--bd);border-radius:9px;background:var(--bg,#fff);color:var(--mu);transition:border-color .15s,box-shadow .15s}
-.search-input-wrap:focus-within{border-color:var(--navy2);box-shadow:0 0 0 3px rgba(30,75,130,.12)}
-.search-input-wrap input{width:100%;max-width:none;border:0;outline:0;background:transparent;color:inherit;font:inherit}
+.faculty-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start;gap:12px}
 .search-clear{border:0;background:transparent;color:var(--mu);font-size:20px;line-height:1;cursor:pointer;padding:0 2px}
+:host ::ng-deep .faculty-filter-grid .field-label{display:block;margin:0 0 6px}
+:host ::ng-deep .faculty-filter-grid .select-trigger{height:44px;padding:0 12px;border-radius:10px;background:var(--card);font-size:14px}
 .search-clear[hidden]{display:none}
 .subject-group{margin:0 0 14px;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg2,#f7f9fc)}
 .subject-group h4{margin:0 0 8px;font-size:14px}
 .subject-group .ck{background:var(--bg,#fff)}
 .assignment-schedules{min-width:220px;font-size:13px;line-height:1.55}
 .load-subject-list{display:flex;flex-wrap:wrap;gap:6px;min-width:120px}
+.compact-subjects{display:flex;flex-wrap:wrap;gap:5px;min-width:150px;max-width:280px}
+.subject-chip{display:inline-flex;min-width:0;max-width:130px;flex-direction:column;padding:4px 7px;border:1px solid var(--bd);border-radius:8px;background:var(--bg2,#f7f9fc);line-height:1.15}
+.subject-chip b{color:var(--navy2);font-size:11px}.subject-chip small{overflow:hidden;color:var(--mu);font-size:10px;text-overflow:ellipsis;white-space:nowrap}
+.subject-empty{color:var(--mu);font-size:12px}
 .load-subject-item{display:inline-flex;align-items:center;gap:5px;padding:3px 5px;border:1px solid var(--bd);border-radius:8px;background:var(--bg2,#f7f9fc);white-space:nowrap}
 .remove-load-button{padding:3px 6px;font-size:11px}
 .assignment-schedule-editor{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 8px 30px;padding:10px;border:1px solid var(--bd);border-radius:9px;background:var(--bg,#fff)}
 .remove-schedule-button{align-self:end;justify-self:start}
 .add-schedule-button{margin:0 0 12px 30px}
 .subject-filters app-field{flex:0 1 160px}
-.add-subject-button{flex:0 0 auto;align-self:flex-end}
+.add-subject-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;align-self:flex-end;min-height:40px;padding:0 15px;white-space:nowrap}
 .subject-form-section{margin:0 0 10px;padding:10px 12px;border:1px solid var(--bd);border-radius:12px;background:var(--bg2,#f7f9fc)}
 .subject-form-section h3{margin:0 0 4px;font-size:15px;color:var(--navy2)}
 .subject-form-section .r2{column-gap:12px}
@@ -43,13 +45,12 @@
   .subject-filters{align-items:stretch!important}
   .filter-description{flex-basis:100%}
   .subject-filters app-field{flex:1 1 140px}
-  .add-subject-button{align-self:auto}
-  .faculty-filter-grid{grid-template-columns:1fr 1fr}
-  .faculty-search-field{grid-column:1 / -1}
+  .add-subject-button{align-self:auto;width:100%;margin-top:2px}
 }
 @media(max-width:480px){
   .faculty-filter-card{padding:12px}
   .faculty-filter-heading{display:block}
   .clear-faculty-filters{margin-top:10px}
-  .faculty-filter-grid{grid-template-columns:1fr}
 }
+@media(max-width:767px){.faculty-filter-grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.compact-subjects{max-width:220px}.assign-action{min-width:0;width:100%;padding-inline:8px;font-size:12px}}

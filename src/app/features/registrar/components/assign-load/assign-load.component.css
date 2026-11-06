@@ -1,5 +1,9 @@
 :host{display:block;min-width:0}
 .load-subjects{margin-top:12px}
+.load-target{overflow-wrap:anywhere;line-height:1.5}
+.assign-subject-copy{display:flex;min-width:0;flex:1;flex-direction:column;gap:3px}
+.assign-subject-copy b,.assign-subject-copy small{overflow-wrap:anywhere}
+.assign-subject-copy small{color:var(--mu);line-height:1.4}
 .load-error{margin-top:8px;font-size:13px}
 .load-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:12px 14px;border:1px solid var(--bd);border-radius:10px;background:var(--bg2,#f7f9fc)}
 .load-summary .sub{margin:0}

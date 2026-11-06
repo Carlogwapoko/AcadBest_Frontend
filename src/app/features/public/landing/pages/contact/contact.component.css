@@ -1,10 +1,12 @@
 :host{display:block;min-width:0}
 .intro{margin:0 0 24px;color:var(--mu)}
 .contact-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.contact-card{display:flex;align-items:center;gap:14px;min-width:0;padding:18px;border:1px solid var(--bd);border-radius:14px;background:var(--card);color:inherit;text-decoration:none}
-a.contact-card:hover{border-color:var(--blue);box-shadow:0 8px 20px rgba(11,37,89,.1)}
+.contact-card{display:flex;align-items:center;gap:14px;min-width:0;padding:18px;border:1px solid var(--bd);border-radius:14px;background:var(--card);color:inherit;text-decoration:none;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.contact-card:hover{transform:translateY(-2px);border-color:var(--lb2);box-shadow:0 10px 28px rgba(11,37,89,.12)}
+a.contact-card:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-color:var(--blue)}
 .contact-card>span:last-child{display:grid;gap:4px;overflow-wrap:anywhere}
 .contact-card strong{color:var(--navy2)}
 .contact-card>span:last-child>span{color:var(--mu);font-size:14px}
-.contact-icon{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:12px;background:var(--lb);color:var(--blue)}
+.contact-icon{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:10px;background:var(--lb);color:var(--blue)}
+@media(prefers-reduced-motion:reduce){.contact-card{transition:none}}
 @media(max-width:600px){.contact-list{grid-template-columns:minmax(0,1fr)}}

@@ -1,3 +1,37 @@
-@for(a of items;track a.id){<div class="ann" (click)="sel=a"><b>{{a.t}}</b> @if(a.dt>d.today){<span class="chip">Scheduled</span>}<br><small style="color:var(--mu)">{{a.d}} · {{a.aud}}</small></div>}
+@for(a of items;track a.id){
+  <div class="ann announcement-item" role="button" tabindex="0" (click)="open(a)" (keydown.enter)="open(a)" (keydown.space)="$event.preventDefault();open(a)">
+    <b class="announcement-title">{{a.t}}</b>
+    <div class="announcement-badges">
+      @if(a.dt>d.today){<span class="chip">Scheduled</span>}
+      <span class="chip audience-chip">{{a.aud}}</span>
+      <span class="chip category-chip" [class.priority-important]="a.category==='Important'" [class.priority-urgent]="a.category==='Urgent'" [class.priority-meeting]="a.category==='Meeting'">{{a.category||'General'}}</span>
+    </div>
+    <small class="announcement-date" style="color:var(--mu)">{{a.d}}</small>
+  </div>
+}
 @empty{@if(!loading){<div class="empty"><div class="eic"><app-icon name="inbox" [size]="24"/></div>{{emptyMessage}}</div>}}
-<app-modal [open]="!!sel" [title]="sel?.t||''" (closed)="sel=null">@if(sel){<p><span class="chip">{{sel.aud}}</span></p><p>{{sel.m}}</p><small style="color:var(--mu)">Posted by {{sel.by}} · {{sel.d}}</small>}</app-modal>
+<app-modal [open]="!!sel" [title]="sel?.t||''" (closed)="sel=null">@if(sel){
+  <p class="announcement-badges"><span class="chip audience-chip">{{sel.aud}}</span><span class="chip category-chip" [class.priority-important]="sel.category==='Important'" [class.priority-urgent]="sel.category==='Urgent'" [class.priority-meeting]="sel.category==='Meeting'">{{sel.category||'General'}}</span>@if(sel.dt>d.today){<span class="chip">Scheduled</span>}</p>
+  <p>{{sel.m}}</p>
+  @if(sel.category==='Meeting'&&(sel.meeting_time||sel.meeting_venue||sel.meeting_agenda)){
+    <dl class="meeting-details">
+      <div><dt>Meeting Time</dt><dd>{{sel.meeting_time?.slice(0,5)}}</dd></div>
+      <div><dt>Venue</dt><dd>{{sel.meeting_venue}}</dd></div>
+      <div><dt>Agenda</dt><dd>{{sel.meeting_agenda}}</dd></div>
+    </dl>
+  }
+  @if(readError){<p class="announcement-error" role="alert">{{readError}}</p>}
+  <small style="color:var(--mu)">Posted by {{sel.by}} · {{sel.d}}</small>
+  @if(showReadReceipts){
+    <section class="read-confirmations" aria-label="Faculty and staff read confirmations">
+      <h4>Faculty &amp; Staff Read Confirmations</h4>
+      @if(readerLoading){<p role="status">Loading read confirmations…</p>}
+      @else if(readerError){<p class="announcement-error" role="alert">{{readerError}}</p>}
+      @else{
+        <p>{{readerCount}} of {{recipientCount}} recipients have read this announcement.</p>
+        @for(reader of readers;track reader.id){<div class="reader-row"><span>{{reader.name}}</span><span class="chip">{{reader.role}}</span></div>}
+        @empty{<p>No faculty or staff read confirmations yet.</p>}
+      }
+    </section>
+  }
+}</app-modal>

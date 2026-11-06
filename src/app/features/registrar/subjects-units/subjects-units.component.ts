@@ -64,10 +64,6 @@ export class SubjectsUnitsComponent{
     s.semester===this.fm?.semester&&s.academic_year===this.fm?.academic_year
     &&(this.fm?.section==='All'||s.sec===this.fm?.section)
     &&this.d.codes(s).includes(c)).length}
-  schedule(subject:Subject):string{
-    const time=subject.start&&subject.end?`${subject.start}–${subject.end}`:subject.tm;
-    return subject.d?`${subject.d}${time?` · ${time}`:''}`:time||'—'
-  }
   openSub(code?:string){this.e={};const x=code?this.d.subjects[code]:{n:'',u:3,
     d:'',tm:'',start:null,end:null,r:'',p:'All',major:null,y:'All',f:null,
     semester:'1st Semester'};

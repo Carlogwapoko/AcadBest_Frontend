@@ -22,6 +22,22 @@ describe('SubjectsUnitsComponent',()=>{
     expect(fixture.debugElement.componentInstance).toBe(fixture.componentInstance);
   });
 
+  it('renders faculty load filters as six consistently labeled fields',()=>{
+    const data=TestBed.inject(DataService);
+    data.subjects={};
+    const fixture=TestBed.createComponent(SubjectsUnitsComponent);
+    fixture.componentInstance.selectTab('f');
+    fixture.detectChanges();
+
+    const grid=(fixture.nativeElement as HTMLElement).querySelector('.faculty-filter-grid') as HTMLElement;
+    expect(Array.from(grid.querySelectorAll('.field-label')).map(label=>label.textContent?.trim())).toEqual([
+      'Faculty name','Program','Major','Semester','Academic Year','Section',
+    ]);
+    expect(grid.querySelector('#faculty-load-search')?.getAttribute('type')).toBe('search');
+    expect(grid.querySelectorAll('app-field')).toHaveLength(6);
+    expect(grid.querySelectorAll('app-field')[2].querySelector('.select-trigger')?.hasAttribute('disabled')).toBe(true);
+  });
+
   it('removes class schedule fields from subject forms',()=>{
     const fixture=TestBed.createComponent(SubjectsUnitsComponent);
     fixture.componentInstance.openSub();
@@ -275,7 +291,7 @@ describe('SubjectsUnitsComponent',()=>{
     expect('academicYearFilter' in component).toBe(false);
   });
 
-  it('shows separate catalog columns and keeps offering metadata out of the table',()=>{
+  it('omits schedule, room, and academic year from the subject catalog table',()=>{
     const data=TestBed.inject(DataService);
     data.subjects={
       IT305:{n:'Software Design',u:3,d:'Mon/Wed',tm:'08:00–09:30',start:'08:00',end:'09:30',
@@ -286,7 +302,7 @@ describe('SubjectsUnitsComponent',()=>{
     const table=fixture.nativeElement.querySelector('table') as HTMLTableElement;
     const headings=[...table.querySelectorAll('th')].map(cell=>cell.textContent?.trim());
     expect(headings).toEqual([
-      'Subject Code','Subject Name','Units','Schedule','Room','Program','Year Level','Semester','Actions',
+      'Subject Code','Subject Name','Units','Program','Year Level','Semester','Actions',
     ]);
     expect(table.textContent).not.toContain('2026-2027');
     expect(table.textContent).not.toContain('Students');
@@ -302,7 +318,7 @@ describe('SubjectsUnitsComponent',()=>{
     const row=fixture.nativeElement.querySelector('table tr:nth-child(2)') as HTMLTableRowElement;
     const cells=[...row.querySelectorAll('td')].map(cell=>cell.textContent?.trim());
 
-    expect(cells.slice(1,8)).toEqual(['—','0','—','—','—','—','—']);
+    expect(cells.slice(1,6)).toEqual(['—','0','—','—','—']);
   });
 
   it('uses assignment-specific schedule and room values in Faculty Loads',()=>{

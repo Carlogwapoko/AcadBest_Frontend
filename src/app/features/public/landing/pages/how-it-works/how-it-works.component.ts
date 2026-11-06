@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FeaturePageShellComponent } from '../../features/feature-page-shell/feature-page-shell.component';
+import { IconComponent } from '../../../../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-how-it-works',
   standalone: true,
-  imports: [FeaturePageShellComponent, RouterLink],
+  imports: [FeaturePageShellComponent, RouterLink, IconComponent],
   templateUrl: './how-it-works.component.html',
   styleUrl: './how-it-works.component.css',
 })

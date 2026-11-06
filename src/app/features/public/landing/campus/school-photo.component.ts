@@ -7,7 +7,7 @@ import { Component, Input } from '@angular/core';
   styleUrl: './school-photo.component.css',
 })
 export class SchoolPhotoComponent {
-  @Input() src = 'images/school.jpg';
+  @Input() src = 'images/aces.jpg';
   @Input() alt = 'ACES Tagum College campus';
   @Input() caption = 'ACES Tagum College';
   @Input() subcaption = 'Tagum City, Davao del Norte';

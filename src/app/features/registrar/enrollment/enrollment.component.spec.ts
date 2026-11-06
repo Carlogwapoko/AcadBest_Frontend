@@ -82,15 +82,16 @@ describe('EnrollmentComponent',()=>{
       last_name:'Last',email:'applicant@example.com',phone:'',dob:'2007-01-01',sex:'Female',
       addr:'Address',prog:'BSIT',yr:1,type:'New Student',student_status:'New Student',
       school:'School',gname:'Guardian',gph:'',st:'Enrolled',date:'Oct 23',note:'',
-      acct:false,school_id:'2026000001',log:[],
+      acct:false,school_id:'2026000001',sec:'B',semester:'1st Semester',
+      academic_year:'2026-2027',log:[],
     };
     component.openAccount(applicant);
     component.accountPassword='temporary-pass';
-    component.accountSection='B';
     await component.createStudentAccount();
     expect(save).toHaveBeenCalledWith(undefined,{
       first_name:'First',middle_name:'Middle',last_name:'Last',email:'applicant@example.com',
-      role:'Student',password:'temporary-pass',program:'BSIT',year_level:1,section:'B',
+      role:'Student',password:'temporary-pass',program:'BSIT',year_level:1,
+      section:'B',
       application_ref:'ENR-2026-ABC123',
     });
     expect(mark).toHaveBeenCalledWith('ENR-2026-ABC123');

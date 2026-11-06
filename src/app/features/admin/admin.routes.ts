@@ -11,5 +11,7 @@ export const ADMIN_ROUTES:Routes=[
     'ay')],loadComponent:()=>import('./academic-year/academic-year.component').then(m=>m.AcademicYearComponent)},
   {path:'access',data:{title:'Access Control'},canActivate:[moduleGuard('admin',
     'ac')],loadComponent:()=>import('./access-control/access-control.component').then(m=>m.AccessControlComponent)},
+  {path:'sections',data:{title:'Section Overview'},canActivate:[moduleGuard('admin',
+    'sec')],loadComponent:()=>import('../registrar/section-overview/section-overview.component').then(m=>m.SectionOverviewComponent)},
   {path:'',pathMatch:'full',redirectTo:'users'}
 ];

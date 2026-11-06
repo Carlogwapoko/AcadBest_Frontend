@@ -40,7 +40,12 @@ export class ShellComponent{
       return url===target||url.startsWith(`${target}/`);
     });
   }
-  get unread(){const sid=this.auth.user?.sid;return this.auth.role==='student'&&sid?this.d.unread(sid):0}
+  get unread(){
+    const user=this.auth.user;
+    if(this.auth.role==='student'&&user?.sid)return this.d.unread(user.sid);
+    return user?this.d.unreadForUser(user.id):0;
+  }
+  get notificationRoute(){return this.auth.role==='student'?'/app/student/notifications':'/app/notifications'}
   get roleName(){const role=this.auth.role;return role?ROLE_NAME[role]:''}
   retry(){void this.d.load().catch(error=>{console.error('Could not load AcadBest portal data.',error);
     this.ui.toast(this.d.loadError,'er')}).finally(()=>this.cdr.markForCheck())}

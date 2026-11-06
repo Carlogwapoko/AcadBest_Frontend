@@ -16,4 +16,6 @@ export class FeaturePageShellComponent {
   @Input() icon = '';
   @Input() backToFeatures = false;
   @Input() showLoginButton = false;
+  @Input() eyebrow = '';
+  @Input() wide = false;
 }

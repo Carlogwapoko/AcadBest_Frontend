@@ -11,6 +11,8 @@ export const FACULTY_ROUTES:Routes=[
     'ge')],loadComponent:()=>import('./grade-entry/grade-entry.component').then(m=>m.GradeEntryComponent)},
   {path:'at-risk',data:{title:'At-Risk Advisees'},canActivate:[moduleGuard('faculty',
     'risk')],loadComponent:()=>import('./at-risk/at-risk.component').then(m=>m.AtRiskComponent)},
+  {path:'sections',data:{title:'Section Overview'},canActivate:[moduleGuard('faculty',
+    'sec')],loadComponent:()=>import('../registrar/section-overview/section-overview.component').then(m=>m.SectionOverviewComponent)},
   {path:'announcements',data:{title:'Announcements'},canActivate:[moduleGuard('faculty',
     'ann')],loadComponent:()=>import('./announcements/announcements.component').then(m=>m.FacultyAnnouncementsComponent)},
   {path:'',pathMatch:'full',redirectTo:'dashboard'}

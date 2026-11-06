@@ -11,9 +11,10 @@ export class DropdownComponent implements ControlValueAccessor,AfterViewInit,DoC
   @ViewChild('optionList') optionList?:ElementRef<HTMLElement>;
   @HostBinding('class.bad') @Input() bad=false;
   @Input() disabled=false;
+  @Input() multiple=false;
   @Input() ariaLabel='';
   options:DropdownOption[]=[];
-  value='';
+  value:string|string[]='';
   open=false;
   opensUp=false;
   activeIndex=-1;
@@ -25,7 +26,7 @@ export class DropdownComponent implements ControlValueAccessor,AfterViewInit,DoC
   private optionSignature='';
   private labelId='';
   private readonly scrollHandler=()=>{if(this.open)this.positionList()};
-  private onChange:(value:string)=>void=()=>{};
+  private onChange:(value:string|string[])=>void=()=>{};
   private onTouched:()=>void=()=>{};
   private typeahead='';
   private typeaheadTimer?:ReturnType<typeof setTimeout>;
@@ -33,8 +34,12 @@ export class DropdownComponent implements ControlValueAccessor,AfterViewInit,DoC
   constructor(private element:ElementRef<HTMLElement>,private renderer:Renderer2){}
 
   get selectedLabel():string{
-    return this.options.find(option=>option.value===this.value)?.label??'';
+    const values=this.multiple?this.selectedValues:[this.value as string];
+    return values.map(value=>this.options.find(option=>option.value===value)?.label)
+      .filter((label):label is string=>!!label).join(', ');
   }
+
+  get selectedValues():string[]{return Array.isArray(this.value)?this.value:[]}
 
   ngAfterViewInit():void{
     const label=this.element.nativeElement.closest('app-field')?.querySelector<HTMLElement>('.field-label');
@@ -57,7 +62,7 @@ export class DropdownComponent implements ControlValueAccessor,AfterViewInit,DoC
     if(signature===this.optionSignature)return;
     this.optionSignature=signature;
     this.options=options;
-    const selected=this.options.findIndex(option=>option.value===this.value&&!option.disabled);
+    const selected=this.options.findIndex(option=>this.isSelected(option.value)&&!option.disabled);
     this.activeIndex=selected>=0?selected:this.options.findIndex(option=>!option.disabled);
     if(this.open)requestAnimationFrame(()=>this.positionList());
   }
@@ -70,13 +75,13 @@ export class DropdownComponent implements ControlValueAccessor,AfterViewInit,DoC
     if(list?.parentElement===document.body)this.renderer.appendChild(this.element.nativeElement,list);
   }
 
-  writeValue(value:string|null):void{
-    this.value=value??'';
-    const selected=this.options.findIndex(option=>option.value===this.value&&!option.disabled);
+  writeValue(value:string|string[]|null):void{
+    this.value=this.multiple?(Array.isArray(value)?value:[]):(Array.isArray(value)?value[0]??'':value??'');
+    const selected=this.options.findIndex(option=>this.isSelected(option.value)&&!option.disabled);
     if(selected>=0)this.activeIndex=selected;
   }
 
-  registerOnChange(fn:(value:string)=>void):void{this.onChange=fn}
+  registerOnChange(fn:(value:string|string[])=>void):void{this.onChange=fn}
   registerOnTouched(fn:()=>void):void{this.onTouched=fn}
   setDisabledState(disabled:boolean):void{this.disabled=disabled}
 
@@ -116,6 +121,21 @@ export class DropdownComponent implements ControlValueAccessor,AfterViewInit,DoC
 
   select(option:DropdownOption):void{
     if(option.disabled)return;
+    if(this.multiple){
+      const values=this.selectedValues;
+      const allOption=this.options[0]?.value;
+      if(option.value===allOption){
+        this.value=values.includes(option.value)?[]:[option.value];
+      }else{
+        const nextValues=values.filter(value=>value!==allOption);
+        this.value=nextValues.includes(option.value)
+          ? nextValues.filter(value=>value!==option.value)
+          : [...nextValues,option.value];
+      }
+      this.onChange(this.value);
+      this.activeIndex=this.options.findIndex(item=>item.value===option.value);
+      return;
+    }
     this.value=option.value;
     this.onChange(this.value);
     this.close();
@@ -133,7 +153,7 @@ export class DropdownComponent implements ControlValueAccessor,AfterViewInit,DoC
     this.open=true;
     const list=this.optionList?.nativeElement;
     if(list&&list.parentElement!==document.body)this.renderer.appendChild(document.body,list);
-    const selected=this.options.findIndex(option=>option.value===this.value&&!option.disabled);
+    const selected=this.options.findIndex(option=>this.isSelected(option.value)&&!option.disabled);
     this.activeIndex=selected>=0?selected:this.findEnabled(fromEnd?this.options.length-1:0,fromEnd?-1:1);
     requestAnimationFrame(()=>this.positionList());
   }
@@ -193,6 +213,10 @@ export class DropdownComponent implements ControlValueAccessor,AfterViewInit,DoC
   private selectActive():void{
     const option=this.options[this.activeIndex];
     if(option)this.select(option);
+  }
+
+  private isSelected(value:string):boolean{
+    return this.multiple?this.selectedValues.includes(value):this.value===value;
   }
 
   private scrollActiveOptionIntoView():void{

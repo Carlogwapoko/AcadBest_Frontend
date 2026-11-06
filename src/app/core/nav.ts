@@ -11,11 +11,13 @@ export const NAV:Record<Role,NavItem[]>={
   faculty:[{path:'faculty/dashboard',label:'Dashboard',icon:'grid',key:'dash'},
     {path:'faculty/subjects',label:'Subjects',icon:'book',key:'subj'},{path:'faculty/grade-entry',
     label:'Grade Entry',icon:'edit',key:'ge'},{path:'faculty/at-risk',label:'At-Risk Advisees',icon:'alert',key:'risk'},
+    {path:'faculty/sections',label:'Section Overview',icon:'users',key:'sec'},
     {path:'faculty/announcements',label:'Announcements',icon:'mega',key:'ann'}],
   registrar:[{path:'registrar/requests',label:'Request Queue',icon:'list',key:'rq'},
     {path:'registrar/enrollment',label:'Enrollment Applications',icon:'clip',key:'en'},
+    {path:'registrar/sections',label:'Section Overview',icon:'users',key:'sec'},
     {path:'registrar/subjects',label:'Subjects & Units',icon:'book',key:'su'},{path:'registrar/announcements',
     label:'Post Announcement',icon:'mega',key:'pa'}],
   admin:[{path:'admin/users',label:'Users & Roles',icon:'users',key:'ur'},{path:'admin/academic-year',
     label:'Current Academic School Year',icon:'cal',key:'ay'},{path:'admin/rules',
-    label:'Standing Rules',icon:'sliders',key:'sr2'},{path:'admin/access',label:'Access Control',icon:'shield',key:'ac'}]};
+    label:'Standing Rules',icon:'sliders',key:'sr2'},{path:'admin/sections',label:'Section Overview',icon:'users',key:'sec'},{path:'admin/access',label:'Access Control',icon:'shield',key:'ac'}]};

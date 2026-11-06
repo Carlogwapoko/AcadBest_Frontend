@@ -1,0 +1,6 @@
+:host{display:block;min-width:0}
+.notification-item{display:flex;width:100%;align-items:center;gap:12px;border:0;text-align:left;cursor:pointer}
+.notification-item:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.notification-copy{flex:1;min-width:0}
+.notification-message{color:var(--mu);font-size:13px}
+.notification-copy small{color:var(--mu)}

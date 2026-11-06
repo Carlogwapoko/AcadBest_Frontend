@@ -2,4 +2,9 @@
 .queue-toolbar{align-items:center}
 .request-pagination{align-items:center;justify-content:space-between;margin-top:12px}
 .pagination-actions{display:flex;gap:8px}
-.pagination-arrow{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0}
+.pagination-arrow{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:92px;height:36px;padding:0 11px}
+@media(max-width:520px){
+  .request-pagination{align-items:flex-start;flex-wrap:wrap;gap:10px}
+  .pagination-actions{width:100%;justify-content:space-between}
+  .pagination-arrow{flex:1}
+}

@@ -1,9 +1,10 @@
-import { ChangeDetectorRef,Component,HostListener } from '@angular/core';
+import { ChangeDetectorRef,Component } from '@angular/core';
 import { COMMON } from '../../../shared/common';
 import { AuthService } from '../../../core/auth.service';
 import { DataService,User } from '../../../core/data.service';
 import { processProfilePicture } from '../../../core/profile-picture';
 import { UiService } from '../../../core/ui.service';
+import { ENROLLMENT_PROGRAMS } from '../../../shared/program-catalog';
 
 /**
  * Admin-only account provisioning.
@@ -12,22 +13,17 @@ import { UiService } from '../../../core/ui.service';
  */
 @Component({selector:'app-users-roles',standalone:true,imports:[COMMON],styleUrl:'./users-roles.component.css',templateUrl:'./users-roles.component.html'})
 export class UsersRolesComponent{
+  readonly programs=ENROLLMENT_PROGRAMS;
   q='';m:any=null;e:any={};processingPicture=false;saving=false;deletingId:number|null=null;showPassword=false;
-  page=1;lastPage=1;total=0;loading=true;loadError='';private searchTimer?:ReturnType<typeof setTimeout>;
+  page=1;lastPage=1;total=0;loading=false;loadError='';private searchTimer?:ReturnType<typeof setTimeout>;
   constructor(public d:DataService,private a:AuthService,private ui:UiService,private cdr:ChangeDetectorRef){}
   ngOnInit(){void this.loadUsers()}
   ngOnDestroy(){if(this.searchTimer)clearTimeout(this.searchTimer)}
-  async loadUsers(page=1){if(this.loading&&page>this.page)return;this.loading=true;this.loadError='';
-    try{const result=await this.d.usersList(page,this.q,page>1);this.page=result.current_page;
+  async loadUsers(page=1){if(this.loading)return;this.loading=true;this.loadError='';
+    try{const result=await this.d.usersList(page,this.q,false,10);this.page=result.current_page;
       this.lastPage=result.last_page;this.total=result.total}
     catch(error){this.loadError=this.message(error)}
-    finally{this.loading=false;this.cdr.detectChanges();this.loadMoreIfNeeded()}}
-  @HostListener('window:scroll') onWindowScroll(){this.loadMoreIfNeeded()}
-  private loadMoreIfNeeded(){
-    if(!this.loading&&this.page<this.lastPage
-      &&window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-300)
-      void this.loadUsers(this.page+1);
-  }
+    finally{this.loading=false;this.cdr.detectChanges()}}
   searchChanged(){if(this.searchTimer)clearTimeout(this.searchTimer);
     this.searchTimer=setTimeout(()=>void this.loadUsers(1),300)}
   get list(){return this.d.users}
@@ -39,7 +35,9 @@ export class UsersRolesComponent{
       email:u.email,role:u.role,status:u.act?'Active':'Inactive',
       pw:'',prog:u.prog||'BSTM',lock:u.role=='Student',avatar:u.avatar??null}
       :{id:0,first_name:'',middle_name:'',last_name:'',
-        email:'',role:'Faculty',status:'Active',pw:'',prog:'BSTM',lock:false,avatar:null}}
+        email:'',role:'Faculty',status:'Active',pw:'',prog:'',lock:false,avatar:null};
+    this.cdr.detectChanges();
+  }
   async selectPicture(event:Event){
     const input=event.target as HTMLInputElement;
     const file=input.files?.[0];
@@ -58,6 +56,7 @@ export class UsersRolesComponent{
     this.e={first:m.first_name.trim().length<2?'First name is required.':'',
       last:m.last_name.trim().length<2?'Last name is required.':'',
       e:!/^\S+@\S+\.\S+$/.test(em)?'Enter a valid e-mail.':this.d.users.some(x=>x.email==em&&x.id!=m.id)?'E-mail already in use.':'',
+      pr:m.role==='Faculty'&&!this.programs.some(program=>program===m.prog)?'Select a program for this faculty account.':'',
       p:(!m.id||m.pw)&&m.pw.length<8?'Password must be at least 8 characters.':''};
     if(Object.values(this.e).some(x=>x))return;
     const act=m.id?m.status=='Active':true;
@@ -86,7 +85,7 @@ export class UsersRolesComponent{
     if(!await this.ui.confirm('Delete user?',`${u.name} will be permanently removed.`,
       'Delete',true)){this.deletingId=null;this.cdr.markForCheck();return}
     try{await this.d.deleteUser(u.id);this.total=Math.max(0,this.total-1);
-      this.lastPage=Math.max(1,Math.ceil(this.total/25));this.ui.toast('User deleted.');
+      this.lastPage=Math.max(1,Math.ceil(this.total/10));this.ui.toast('User deleted.');
       if(!this.d.users.length&&this.page>1)await this.loadUsers(this.page-1)}
     catch(error){this.ui.toast(this.message(error),'er')}
     finally{this.deletingId=null;this.cdr.detectChanges()}}

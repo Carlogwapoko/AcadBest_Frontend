@@ -1,8 +1,9 @@
-<app-feature-page-shell title="Frequently Asked Questions">
+<app-feature-page-shell title="Frequently Asked Questions" eyebrow="Support" [wide]="true">
   <p class="intro">Answers to common questions about AcadBest and ACES Tagum College.</p>
   <div class="questions">
     @for(question of questions;track question[0]){
       <details><summary>{{question[0]}}</summary><p>{{question[1]}}</p></details>
     }
   </div>
+  <div class="help-strip"><span>Didn't find your answer?</span><a routerLink="/contact">Contact the registrar <span aria-hidden="true">→</span></a></div>
 </app-feature-page-shell>

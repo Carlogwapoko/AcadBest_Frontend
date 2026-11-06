@@ -1,0 +1,50 @@
+<div class="section-overview">
+  @if(summary){<div class="grid g3 summary-cards">
+    <div class="card stat">Total sections<b>{{summary.total_sections}}</b></div>
+    <div class="card stat">Total enrolled<b>{{summary.total_enrolled}}</b></div>
+    <div class="card stat">Full sections<b>{{summary.full_sections}}</b></div>
+    <div class="card stat">Low enrollment<b>{{summary.low_enrollment_sections}}</b></div>
+  </div>}
+  <div class="card">
+    <div class="section-filters" role="search" aria-label="Section filters">
+      <div class="filter-search">
+        <input [(ngModel)]="search" (ngModelChange)="searchChanged()" placeholder="Search section or program" aria-label="Search sections">
+      </div>
+      <div class="filter-selects">
+        <label class="select-wrap">
+          <span class="sr-only">Filter by semester</span>
+          <select [(ngModel)]="semester" (change)="load()" aria-label="Filter by semester">
+            <option value="">All semesters</option>
+            @for(option of semesterOptions; track option){<option [value]="option">{{option}}</option>}
+          </select>
+          <span class="select-chevron" aria-hidden="true">▾</span>
+        </label>
+        <label class="select-wrap">
+          <span class="sr-only">Filter by academic year</span>
+          <select [(ngModel)]="academicYear" (change)="load()" aria-label="Filter by academic year">
+            <option value="">All academic years</option>
+            @for(option of academicYearOptions; track option){<option [value]="option">{{option}}</option>}
+          </select>
+          <span class="select-chevron" aria-hidden="true">▾</span>
+        </label>
+      </div>
+    </div>
+    @if(loading){<p class="sub">Loading sections…</p>}
+    @else if(error){<p class="error">{{error}}</p>}
+    @else if(!sections.length){<div class="empty">No sections found.</div>}
+    @else{<div class="tw"><table><thead><tr><th>Section</th><th>Program</th><th>Year</th><th>Semester</th><th>Academic Year</th><th>Enrolled / Capacity</th><th></th></tr></thead><tbody>
+      @for(section of sections; track section.section + section.program + section.year_level + section.semester + section.academic_year){
+        <tr class="clickable" tabindex="0" (click)="open(section)" (keydown.enter)="open(section)" (keydown.space)="$event.preventDefault();open(section)"><td><b>{{section.section}}</b></td><td>{{section.program}}</td><td>{{section.year_level}}</td><td>{{section.semester || '—'}}</td><td>{{section.academic_year || '—'}}</td><td [class.over-capacity]="section.is_full">{{section.enrolled_count}} / {{section.capacity}}</td><td><button class="btn sm sec" type="button" (click)="$event.stopPropagation();open(section)"><app-icon name="eye" [size]="14"/>View</button></td></tr>
+      }
+    </tbody></table></div>}
+  </div>
+</div>
+<app-modal [open]="!!selected" [title]="selected ? 'Section ' + selected.section + ' students' : ''" [maxWidth]="760" (closed)="selected=null">
+  @if(selected){<div class="section-modal-content">
+    <div class="section-modal-context"><span>{{selected.program}}</span><span>Year {{selected.year_level}}</span><span>{{selected.semester || '—'}}</span><span>{{selected.academic_year || '—'}}</span></div>
+    <div class="student-search" role="search" aria-label="Search enrolled students"><input [(ngModel)]="studentSearch" (ngModelChange)="studentSearchChanged()" placeholder="Search name or School ID" aria-label="Search enrolled students"></div>
+    @if(studentsLoading){<p class="sub modal-status">Loading students…</p>} @else if(studentsError){<p class="error modal-status">{{studentsError}}</p>} @else if(!students.length){<div class="empty modal-empty">No enrolled students found.</div>}
+    @else{<div class="tw modal-table"><table><thead><tr><th>School ID</th><th>Name</th><th>Program / Major</th><th>Year</th></tr></thead><tbody>@for(student of students;track student.school_id + student.name){<tr><td>{{student.school_id || '—'}}</td><td>{{student.name}}</td><td>{{student.program}}@if(student.major){ · {{student.major}}}</td><td>{{student.year_level}}</td></tr>}</tbody></table></div>}
+  </div>
+  }
+</app-modal>

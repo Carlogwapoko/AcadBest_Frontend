@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { FeaturePageShellComponent } from '../../features/feature-page-shell/feature-page-shell.component';
 
 @Component({
   selector: 'app-faq',
   standalone: true,
-  imports: [FeaturePageShellComponent],
+  imports: [FeaturePageShellComponent, RouterLink],
   templateUrl: './faq.component.html',
   styleUrl: './faq.component.css',
 })

@@ -3,7 +3,8 @@
 <div class="card stat"><app-icon name="mail" [size]="20"/>Open Requests<b>{{open}}</b><a routerLink="../requests">Track requests →</a></div>
 <div class="card stat"><app-icon name="book" [size]="20"/>Enrolled Units<b>{{d.unitsOf(s?d.codes(s):[])}}</b>
 @if(s){<span>{{s.prog}}@if(s.major){ · {{s.major}}} · {{d.yearLevelLabel(s.yr)}} · Sec {{s.sec}}</span>
-<span>{{s.semester||'—'}} · School ID {{s.school_id||'—'}}</span>}</div></div>
+<span>{{s.semester||'—'}} · {{s.academic_year||'School year —'}} · School ID {{s.school_id||'—'}}</span>}</div></div>@if(sectionTotal!==null){<p class="sub">Section total: {{sectionTotal}}</p>}
+@if(s){<div class="card student-enrollment-summary"><h3>Enrollment details</h3><div class="enrollment-meta"><span><small>Section</small><b>{{s.sec}}</b></span><span><small>Semester</small><b>{{s.semester||'—'}}</b></span><span><small>School year</small><b>{{s.academic_year||'—'}}</b></span></div><h4>Enrolled subjects</h4>@if(enrolledSubjects.length){<div class="subject-list">@for(row of enrolledSubjects;track row.code){<span class="chip">{{row.code}} · {{row.subject?.n}}</span>}</div>}@else{<p class="sub">No subjects assigned yet.</p>}</div>}
 <div class="card" style="margin-top:20px"><h3>Latest announcements</h3>@if(latest.length){<app-ann-list [items]="latest"/>}
 @else if(s&&!d.loading&&!d.loadError){<div class="empty announcement-empty"><div class="eic"><app-icon name="inbox" [size]="24"/></div><span>No records found. No announcements are available for your program, year, and section.</span></div>}</div>
 @if(!s&&!d.loading&&!d.loadError){<div class="card"><p class="sub">Your account does not have a linked student record. Contact the registrar for assistance.</p></div>}

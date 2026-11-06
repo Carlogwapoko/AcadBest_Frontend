@@ -2,12 +2,28 @@
   <a class="logo" style="padding:0;border:0;margin:0;text-decoration:none" routerLink="/" aria-label="AcadBest home">
     <i class="lm">A</i><div>Acad<span>Best</span></div>
   </a>
-  <nav class="nl" aria-label="Main navigation">
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page">Home</a>
-    <a routerLink="/features" routerLinkActive="active" ariaCurrentWhenActive="page">Features</a>
-    <a routerLink="/how-it-works" routerLinkActive="active" ariaCurrentWhenActive="page">How It Works</a>
-    <a routerLink="/faq" routerLinkActive="active" ariaCurrentWhenActive="page">FAQ</a>
-    <a routerLink="/contact" routerLinkActive="active" ariaCurrentWhenActive="page">Contact</a>
+  <button
+    #menuToggle
+    class="menu-toggle"
+    type="button"
+    [attr.aria-expanded]="menuOpen"
+    aria-controls="public-nav-links"
+    [attr.aria-label]="menuOpen ? 'Close navigation menu' : 'Open navigation menu'"
+    (click)="toggleMenu()">
+    <span class="hamburger-icon" [class.is-open]="menuOpen" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </span>
+  </button>
+  <nav id="public-nav-links" class="nl" [class.open]="menuOpen" aria-label="Main navigation">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" (click)="closeMenu()">Home</a>
+    <a routerLink="/features" routerLinkActive="active" ariaCurrentWhenActive="page" (click)="closeMenu()">Features</a>
+    <a routerLink="/how-it-works" routerLinkActive="active" ariaCurrentWhenActive="page" (click)="closeMenu()">How It Works</a>
+    <a routerLink="/faq" routerLinkActive="active" ariaCurrentWhenActive="page" (click)="closeMenu()">FAQ</a>
+    <a routerLink="/contact" routerLinkActive="active" ariaCurrentWhenActive="page" (click)="closeMenu()">Contact</a>
+    <div class="mobile-actions">
+      <a class="btn sec" routerLink="/enroll" (click)="closeMenu()">Enroll Now</a>
+      <a class="btn" routerLink="/login" (click)="closeMenu()">Log In</a>
+    </div>
   </nav>
   <div class="tb-wrap"><a class="btn sec" routerLink="/enroll">Enroll Now</a><a class="btn" routerLink="/login">Log In</a></div>
 </header>

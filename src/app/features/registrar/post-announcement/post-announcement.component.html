@@ -1,8 +1,17 @@
 <div class="grid g2"><div class="card"><h3>New announcement</h3>
 <app-field label="Title" [error]="e['t']"><input maxlength="80" [(ngModel)]="f.t" [class.bad]="e['t']" placeholder="Enter announcement title"></app-field>
 <app-field label="Message" [error]="e['m']"><textarea rows="5" maxlength="500" [(ngModel)]="f.m" [class.bad]="e['m']" placeholder="Enter announcement message"></textarea></app-field>
-<div class="r2"><app-field label="Program"><app-dropdown [(ngModel)]="f.prog"><option>All Programs</option><option>BSTM</option><option>ABSTM</option><option>BSED</option><option>BEED</option><option>BSE</option><option>BSMA</option><option>BSHM</option><option>BSIT</option><option>BSBA</option><option>STEM</option><option>ABM</option><option>HUMSS</option><option>GAS</option><option>TVL</option></app-dropdown></app-field><app-field label="Year level"><app-dropdown [(ngModel)]="f.yr"><option>All Years</option><option value="1">1st Year</option><option value="2">2nd Year</option><option value="3">3rd Year</option><option value="4">4th Year</option><option value="11">Grade 11</option><option value="12">Grade 12</option></app-dropdown></app-field></div>
-<div class="r2"><app-field label="Section"><app-dropdown [(ngModel)]="f.sec"><option>All Sections</option><option>A</option><option>B</option></app-dropdown></app-field><div></div></div>
+<div class="r2">
+  <app-field label="Audience"><app-dropdown [(ngModel)]="f.audience"><option value="all_users">All Users</option><option value="students">Students Only</option><option value="faculty">Faculty Only</option></app-dropdown></app-field>
+  <app-field label="Category"><app-dropdown [(ngModel)]="f.category"><option>General</option><option>Important</option><option>Urgent</option><option>Meeting</option></app-dropdown></app-field>
+</div>
+@if(showStudentTargeting){
+  <div class="r2">
+    <app-field label="Program"><app-dropdown [multiple]="true" [(ngModel)]="f.prog" (ngModelChange)="normalizeTarget('prog',$event)"><option>All Programs</option>@for(program of programs;track program){<option [value]="program">{{program}}</option>}</app-dropdown></app-field>
+    <app-field label="Year level"><app-dropdown [multiple]="true" [(ngModel)]="f.yr" (ngModelChange)="normalizeTarget('yr',$event)"><option>All Years</option><option value="1">1st Year</option><option value="2">2nd Year</option><option value="3">3rd Year</option><option value="4">4th Year</option><option value="11">Grade 11</option><option value="12">Grade 12</option></app-dropdown></app-field>
+  </div>
+  <div class="r2"><app-field label="Section"><app-dropdown [multiple]="true" [(ngModel)]="f.sec" (ngModelChange)="normalizeTarget('sec',$event)"><option>All Sections</option><option>A</option><option>B</option></app-dropdown></app-field><div></div></div>
+}
 <div class="r2"><app-field label="Publish date" [error]="e['dt']"><input type="date" [min]="d.today" [(ngModel)]="f.dt" [class.bad]="e['dt']"></app-field><app-field label="Valid until (optional)" [error]="e['end']"><input type="date" [min]="d.today" [(ngModel)]="f.end" [class.bad]="e['end']"></app-field></div>
 <div class="acts"><button class="btn" [disabled]="busy" (click)="publish()">@if(busy){<span class="sp"></span>}Publish</button></div></div>
-<div class="card"><h3>Recently posted</h3><app-ann-list [items]="d.anns.slice(0,5)" [loading]="d.loading||!!d.loadError"/></div></div>
+<div class="card"><h3>Recently posted</h3><app-ann-list [items]="d.anns.slice(0,5)" [loading]="d.loading||!!d.loadError" [showReadReceipts]="true"/></div></div>

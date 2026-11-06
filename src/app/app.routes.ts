@@ -19,6 +19,7 @@ export const routes:Routes=[
   {path:'app',canActivate:[authGuard],loadComponent:()=>import('./layout/shell/shell.component').then(m=>m.ShellComponent),
     children:[
     {path:'profile',data:{title:'My Profile'},loadComponent:()=>import('./layout/profile/profile.component').then(m=>m.ProfileComponent)},
+    {path:'notifications',data:{title:'Notifications'},loadComponent:()=>import('./shared/components/portal-notifications/portal-notifications.component').then(m=>m.PortalNotificationsComponent)},
 
     {path:'student',canActivate:[roleGuard('student')],loadChildren:()=>import('./features/student/student.routes').then(m=>m.STUDENT_ROUTES)},
 

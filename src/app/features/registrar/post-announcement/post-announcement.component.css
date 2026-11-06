@@ -1,1 +1,4 @@
 :host{display:block;min-width:0}
+:host ::ng-deep app-dropdown[multiple]{min-width:0}
+:host ::ng-deep app-dropdown[multiple] .select-trigger span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:host ::ng-deep app-dropdown[multiple] .select-list{min-width:220px}

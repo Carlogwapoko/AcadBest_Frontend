@@ -1,7 +1,31 @@
-<app-modal [open]="!!r" [title]="r?r.id+' · '+r.type:''" [disableClose]="busy" (closed)="close()">@if(r){
-<p><span class="sb" [class]="'sb '+chip(r.st)"><app-icon [name]="statusIcon(r.st)" [size]="14"/>{{statusLabel(r.st)}}</span></p>
-<p>Requested by <b>{{r.by}}</b><br>@if(r.other_type){Custom request: {{r.other_type}}<br>}Purpose: {{r.purpose}}<br>Copies: {{r.copies}} · Needed: {{r.need}}@if(r.rem){<br>Remarks: {{r.rem}}}</p>
-<b>Status trail</b><div class="tl" style="margin-top:8px">@for(l of r.log;track $index){@if(l[1]!=='Processing'){<div><b>{{trailLabel(l[1])}}</b><br><small style="color:var(--mu)">{{l[0]}}</small></div>}}</div>
-@if(canAct&&['Pending','Processing','Approved','Ready for pick-up'].includes(r.st)){@if(rejecting){<app-field label="Reason for No Release" [error]="err"><input [(ngModel)]="reason" [class.bad]="err" placeholder="Required – shown to the student"></app-field><div class="acts"><button class="btn sec" [disabled]="busy" (click)="rejecting=false">Back</button><button class="btn dg" [disabled]="busy" (click)="reject()">@if(busy){<span class="sp"></span>}No Release</button></div>}
-@else{<div class="acts">@if(r.st=='Pending'){<button class="btn dg" [disabled]="busy" (click)="rejecting=true">No Release</button><button class="btn" [disabled]="busy" (click)="approve()">@if(busy){<span class="sp"></span>}Approve</button>}@if(r.st=='Approved'){<button class="btn" [disabled]="busy" (click)="advance('Ready for pick-up')">@if(busy){<span class="sp"></span>}Pick Up</button>}@if(r.st=='Ready for pick-up'){<button class="btn" [disabled]="busy" (click)="advance('Completed')">@if(busy){<span class="sp"></span>}Complete Request</button>}</div>}}}
+<app-modal [open]="!!r" [title]="r?r.id+' · '+r.type:''" [maxWidth]="640" [disableClose]="busy" (closed)="close()">@if(r){
+<div class="request-detail">
+  <div class="detail-summary">
+    <div><span class="detail-eyebrow">Request status</span><span class="sb" [class]="'sb '+chip(r.st)"><app-icon [name]="statusIcon(r.st)" [size]="14"/>{{statusLabel(r.st)}}</span></div>
+    <span class="detail-reference">{{r.id}}</span>
+  </div>
+  <section class="detail-section" aria-labelledby="requester-heading">
+    <div class="section-heading"><span class="section-icon"><app-icon name="user" [size]="16"/></span><h4 id="requester-heading">Requester details</h4></div>
+    <div class="requester-card"><span class="requester-avatar">{{r.by.charAt(0).toUpperCase()}}</span><div><b>{{r.by}}</b><small>Student requester</small></div></div>
+  </section>
+  <section class="detail-section" aria-labelledby="request-heading">
+    <div class="section-heading"><span class="section-icon"><app-icon name="file" [size]="16"/></span><h4 id="request-heading">Request information</h4></div>
+    <dl class="detail-grid">
+      <div><dt>Request type</dt><dd>{{r.type}}</dd></div>
+      @if(r.other_type){<div><dt>Custom request</dt><dd>{{r.other_type}}</dd></div>}
+      <div class="detail-wide"><dt>Purpose</dt><dd>{{r.purpose}}</dd></div>
+      <div><dt>Copies</dt><dd>{{r.copies}}</dd></div><div><dt>Date needed</dt><dd>{{r.need}}</dd></div>
+      @if(r.rem){<div class="detail-wide"><dt>Remarks</dt><dd class="detail-long">{{r.rem}}</dd></div>}
+    </dl>
+  </section>
+  <section class="detail-section" aria-labelledby="trail-heading">
+    <div class="section-heading"><span class="section-icon"><app-icon name="clock" [size]="16"/></span><h4 id="trail-heading">Status trail</h4></div>
+    <div class="timeline">
+      @for(l of r.log;track $index){@if(l[1]!=='Processing'){
+        <div class="timeline-item" [class.current]="$last"><div class="timeline-marker"><app-icon name="check" [size]="12"/></div><div class="timeline-entry"><b>{{trailLabel(l[1])}}</b><time>{{l[0]}}</time></div></div>
+      }}@empty{<p class="timeline-empty">No status updates recorded yet.</p>}
+    </div>
+  </section>
+</div>
+@if(canAct&&['Pending','Processing','Approved','Ready for pick-up'].includes(r.st)){@if(rejecting){<app-field label="Reason for No Release" [error]="err"><input [(ngModel)]="reason" [class.bad]="err" placeholder="Required – shown to the student"></app-field><div class="acts"><button class="btn sec" [disabled]="busy" (click)="rejecting=false">Back</button><button class="btn dg" [disabled]="busy" (click)="reject()">@if(busy){<span class="sp"></span>}No Release</button></div>}@else{<div class="acts">@if(r.st=='Pending'){<button class="btn dg" [disabled]="busy" (click)="rejecting=true">No Release</button><button class="btn" [disabled]="busy" (click)="approve()">@if(busy){<span class="sp"></span>}Approve</button>}@if(r.st=='Approved'){<button class="btn" [disabled]="busy" (click)="advance('Ready for pick-up')">@if(busy){<span class="sp"></span>}Pick Up</button>}@if(r.st=='Ready for pick-up'){<button class="btn" [disabled]="busy" (click)="advance('Completed')">@if(busy){<span class="sp"></span>}Complete Request</button>}</div>}}}
 </app-modal>

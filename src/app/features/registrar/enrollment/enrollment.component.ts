@@ -9,7 +9,7 @@ import { UiService } from '../../../core/ui.service';
 export class EnrollmentComponent{
   q='';st='All';sel:Enr|null=null;rejecting=false;reason='';err='';
   page=1;lastPage=1;total=0;loading=false;loadError='';busy=false;
-  accountApplicant:Enr|null=null;accountPassword='';accountSection='A';accountBusy=false;accountError='';
+  accountApplicant:Enr|null=null;accountPassword='';accountSection='';accountBusy=false;accountError='';
   editingParents=false;parentBusy=false;parentError='';
   parentForm={
     mother_first_name:'',mother_middle_name:'',mother_last_name:'',
@@ -94,17 +94,20 @@ export class EnrollmentComponent{
     }
     this.accountApplicant=application;
     this.accountPassword='';
-    this.accountSection='A';
+    this.accountSection=application.sec||'';
     this.accountError='';
   }
   async createStudentAccount(){
     const application=this.accountApplicant;
     if(this.accountBusy||!application)return;
     this.accountError=this.accountPassword.length<8?'Temporary password must be at least 8 characters.':
-      !this.accountSection.trim()||this.accountSection.trim().length>10?'Enter a section of up to 10 characters.':'';
+      !this.accountSection?'Choose an available section.':'';
     if(this.accountError)return;
     this.accountBusy=true;
     try{
+      if(application.sec!==this.accountSection){
+        await this.d.assignEnrollmentSection(application.ref,this.accountSection);
+      }
       await this.d.saveUser(undefined,{
         first_name:application.first_name,
         middle_name:application.middle_name||null,
@@ -114,7 +117,7 @@ export class EnrollmentComponent{
         password:this.accountPassword,
         program:application.prog,
         year_level:application.yr,
-        section:this.accountSection.trim(),
+        section:this.accountSection,
         application_ref:application.ref,
       });
       this.d.markEnrollmentAccountIssued(application.ref);

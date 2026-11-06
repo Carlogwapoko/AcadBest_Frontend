@@ -1,6 +1,27 @@
 :host{display:block;min-width:0}
+.fm{width:100%;box-sizing:border-box}
+.fmh{min-width:0}.fmh>div{min-width:0}.fmh h3,.fmh .sub{overflow-wrap:anywhere}
+.request-list{width:100%;max-height:55vh;overflow:auto;-webkit-overflow-scrolling:touch}
+.request-list table{min-width:560px}
 .request-pagination{align-items:center;justify-content:space-between;margin-top:12px}
 .pagination-actions{display:flex;gap:8px}
-.pagination-arrow{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0}
-.request-list{max-height:55vh;overflow:auto}
+.pagination-arrow{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:92px;height:36px;padding:0 11px}
 .request-pagination{display:flex;align-items:center;gap:16px;margin:14px 4px 0;padding:4px 8px;color:var(--mu)}
+@media(max-width:600px){
+  .fm{margin-top:0;padding:20px 16px;border-radius:12px}
+  .fmh{align-items:flex-start;gap:10px;margin-bottom:18px}
+  .fmh .fi{width:36px;height:36px;border-radius:10px}
+  .fmh h3{font-size:18px;line-height:1.25}
+  .fmh .sub{margin-top:5px;font-size:12px;line-height:1.45}
+  .tabs{display:flex;width:100%;overflow-x:auto}
+  .tabs button{flex:1 0 50%;white-space:nowrap}
+  .request-list{max-height:none;overflow-x:auto}
+  .request-pagination{align-items:flex-start;flex-wrap:wrap;gap:10px;margin-inline:0;padding-inline:0;font-size:12px}
+  .pagination-actions{margin-left:auto}
+  .acts{display:flex;flex-direction:column-reverse;gap:8px}
+  .acts .btn{width:100%}
+}
+@media(max-width:420px){
+  .pagination-actions{width:100%;margin-left:0;justify-content:space-between}
+  .pagination-arrow{flex:1}
+}

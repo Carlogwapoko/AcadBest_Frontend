@@ -575,6 +575,51 @@ input:focus,select:focus,textarea:focus
   border-color:var(--blue);
   box-shadow:0 0 0 3px rgba(47,111,228,.2)
 }
+.search-input-wrap
+{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  height:44px;
+  padding:0 12px;
+  border:1px solid var(--bd);
+  border-radius:10px;
+  background:var(--card);
+  color:var(--mu);
+  transition:border-color .15s,box-shadow .15s
+}
+.search-input-wrap:focus-within
+{
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(47,111,228,.2)
+}
+.search-input-wrap input[type=search]
+{
+  width:100%;
+  min-width:0;
+  height:100%;
+  padding:0;
+  border:0;
+  outline:none;
+  box-shadow:none;
+  background:transparent;
+  color:var(--tx);
+  font:inherit;
+  font-weight:400
+}
+.search-input-wrap input[type=search]:focus
+{
+  border:0;
+  outline:none;
+  box-shadow:none;
+  background:transparent
+}
+.search-input-wrap input[type=search]::placeholder
+{
+  color:var(--mu);
+  font-weight:400;
+  opacity:1
+}
 input:disabled
 {
   background:var(--lb);

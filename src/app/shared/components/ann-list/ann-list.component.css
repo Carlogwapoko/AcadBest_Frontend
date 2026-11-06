@@ -1,1 +1,20 @@
 :host{display:block;min-width:0}
+.announcement-item{cursor:pointer}
+.announcement-item:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.announcement-title{display:block;margin:0 0 5px;overflow-wrap:anywhere}
+.announcement-badges{display:flex;flex-wrap:wrap;gap:8px}
+.announcement-item .chip{display:inline-flex;align-items:center;box-sizing:border-box;min-height:24px;padding:4px 10px;border-radius:99px;font-size:12px;line-height:16px;white-space:nowrap}
+.announcement-date{display:block;margin-top:8px}
+.audience-chip{background:var(--lb);color:var(--navy2)}
+.category-chip{background:var(--lb);color:var(--mu)}
+.category-chip.priority-important{background:var(--wnb);color:var(--wn)}
+.category-chip.priority-urgent{background:var(--erb);color:var(--er)}
+.category-chip.priority-meeting{background:var(--okb);color:var(--ok)}
+.meeting-details{display:grid;gap:10px;margin:16px 0;padding:12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg2,#f7f9fc)}
+.meeting-details div{display:grid;gap:3px}
+.meeting-details dt{color:var(--mu);font-size:12px;font-weight:600}
+.meeting-details dd{margin:0;white-space:pre-wrap}
+.read-confirmations{margin-top:20px;padding-top:14px;border-top:1px solid var(--bd)}
+.read-confirmations h4{margin:0 0 8px;font-size:14px;color:var(--navy2)}
+.reader-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--bd)}
+.announcement-error{color:var(--er)}

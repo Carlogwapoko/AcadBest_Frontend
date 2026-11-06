@@ -139,14 +139,26 @@ export interface Ann {
   t: string;
   m: string;
   aud: string;
+  audience?: string;
+  category?: string;
   pr: string;
   by: string;
   d: string;
   dt: string;
   end?: string;
-  prog: string;
-  yr: string | number;
-  sec: string;
+  prog: string | string[];
+  yr: string | number | number[];
+  sec: string | string[];
+  meeting_time?: string | null;
+  meeting_venue?: string | null;
+  meeting_agenda?: string | null;
+}
+
+export interface AnnouncementReader {
+  id: number;
+  name: string;
+  role: string;
+  read_at: string;
 }
 
 export interface Enr {
@@ -182,6 +194,8 @@ export interface Enr {
   note: string;
   acct: boolean;
   school_id?: string | null;
+  sec?: string | null;
+  available_sections?: string[];
   subs?: string[];
   log: string[][];
 }
@@ -195,6 +209,8 @@ type EnrollmentApiRecord = Omit<Enr, 'first_name' | 'middle_name' | 'last_name'>
 export interface Notif {
   id: number;
   sid: number;
+  user_id?: number | null;
+  announcement_id?: number | null;
   type: 'grade' | 'alert';
   t: string;
   m: string;
@@ -208,6 +224,32 @@ export interface Page<T> {
   last_page: number;
   per_page: number;
   total: number;
+}
+
+export interface SectionOverview {
+  section: string;
+  program: string;
+  year_level: number;
+  semester: string | null;
+  academic_year: string | null;
+  enrolled_count: number;
+  capacity: number;
+  is_full: boolean;
+}
+
+export interface SectionStudent {
+  name: string;
+  school_id: string | null;
+  program: string;
+  major: string | null;
+  year_level: number;
+}
+
+export interface SectionSummary {
+  total_sections: number;
+  total_enrolled: number;
+  full_sections: number;
+  low_enrollment_sections: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -265,6 +307,44 @@ export class DataService {
   private markAllPromise: Promise<void> | null = null;
 
   constructor(private http: HttpClient) {}
+
+  async loadSections(
+    role: 'staff' | 'faculty',
+    search = '',
+    semester = '',
+    academicYear = ''
+  ): Promise<{ data: SectionOverview[]; summary?: SectionSummary }> {
+    let params = new HttpParams().set('search', search).set('per_page', 50);
+    if (semester) params = params.set('semester', semester);
+    if (academicYear) params = params.set('academic_year', academicYear);
+    const endpoint = role === 'faculty' ? '/faculty/sections' : '/sections';
+    return firstValueFrom(this.http.get<{ data: SectionOverview[]; summary?: SectionSummary }>(
+      `${API_BASE_URL}${endpoint}`, { params }
+    ));
+  }
+
+  async loadSectionStudents(
+    role: 'staff' | 'faculty',
+    section: SectionOverview,
+    search = ''
+  ): Promise<Page<SectionStudent>> {
+    let params = new HttpParams()
+      .set('search', search)
+      .set('program', section.program)
+      .set('year_level', section.year_level)
+      .set('semester', section.semester || '')
+      .set('academic_year', section.academic_year || '');
+    const endpoint = role === 'faculty' ? '/faculty/sections' : '/sections';
+    return firstValueFrom(this.http.get<Page<SectionStudent>>(
+      `${API_BASE_URL}${endpoint}/${encodeURIComponent(section.section)}/students`, { params }
+    ));
+  }
+
+  async loadMySection(): Promise<{ section: string | null; total_count: number }> {
+    return firstValueFrom(this.http.get<{ section: string | null; total_count: number }>(
+      `${API_BASE_URL}/my-section`
+    ));
+  }
 
   private async mutate<T>(request: Observable<T>): Promise<T> {
     this.pendingOperations++;
@@ -410,14 +490,15 @@ export class DataService {
   async usersList(
     page = this.userPage,
     search = this.userSearch,
-    append = false
+    append = false,
+    perPage = 25
   ): Promise<Page<User>> {
     this.userPage = page;
     this.userSearch = search;
 
     const params = new HttpParams()
       .set('page', page)
-      .set('per_page', 25)
+      .set('per_page', perPage)
       .set('search', search);
 
     const result = await firstValueFrom(
@@ -575,10 +656,25 @@ export class DataService {
                 : result.school_id,
             log: [...item.log, [this.today, status]],
           }
+
         : item
     );
     if (result.status === 'Enrolled') {
       await this.reload();
+    }
+  }
+
+  async assignEnrollmentSection(ref: string, section: string): Promise<void> {
+      const result = await this.mutate(
+        this.http.put<{ section: string; subjects: string[] }>(
+          `${API_BASE_URL}/enrollments/${encodeURIComponent(ref)}`,
+          { section }
+        )
+      );
+      const application = this.enrollments.find(item => item.ref === ref);
+      if (application) {
+        application.sec = result.section;
+        application.subs = result.subjects;
     }
   }
 
@@ -844,15 +940,25 @@ export class DataService {
     );
 
     const publishDate = String(data['publish_date']);
-    const yearLevel = String(data['year_level'] ?? 'All');
-    const program = String(data['program'] ?? 'All');
+    const yearLevel = data['year_level'] ?? 'All';
+    const program = data['program'] ?? 'All';
+    const audience = String(data['audience'] ?? 'all_users');
+    const audienceLabels: Record<string, string> = {
+      all_users: 'All Users',
+      students: 'Students Only',
+      faculty: 'Faculty Only',
+      staff: 'Staff Only',
+      faculty_staff: 'Faculty & Staff Only',
+    };
 
     this.anns = [
       {
         id: result.id,
         t: String(data['title']),
         m: String(data['message']),
-        aud: program === 'All' ? 'All programs' : program,
+        aud: audienceLabels[audience] ?? 'All Users',
+        audience,
+        category: String(data['category'] ?? 'General'),
         pr: String(data['priority']),
         by: authorName,
         d: new Date(`${publishDate}T00:00:00`).toLocaleDateString(
@@ -864,12 +970,30 @@ export class DataService {
           typeof data['valid_until'] === 'string'
             ? data['valid_until']
             : undefined,
-        prog: program,
-        yr: yearLevel === 'All' ? 'All' : Number(yearLevel),
-        sec: String(data['section'] ?? 'All'),
+        prog: program as string | string[],
+        yr: Array.isArray(yearLevel)
+          ? yearLevel.map(value => value === 'All' ? value : Number(value))
+          : yearLevel === 'All' ? 'All' : Number(yearLevel),
+        sec: (data['section'] ?? 'All') as string | string[],
+        meeting_time: typeof data['meeting_time'] === 'string' ? data['meeting_time'] : null,
+        meeting_venue: typeof data['meeting_venue'] === 'string' ? data['meeting_venue'] : null,
+        meeting_agenda: typeof data['meeting_agenda'] === 'string' ? data['meeting_agenda'] : null,
       },
       ...this.anns,
     ];
+  }
+
+  async markAnnouncementRead(id: number): Promise<void> {
+    await this.mutate(this.http.put(`${API_BASE_URL}/announcements/${id}/read`, {}));
+    this.notifications = this.notifications.map(notification =>
+      notification.announcement_id === id ? { ...notification, read: true } : notification
+    );
+  }
+
+  async announcementReaders(id: number): Promise<{ recipients: number; read_count: number; readers: AnnouncementReader[] }> {
+    return this.mutate(this.http.get<{ recipients: number; read_count: number; readers: AnnouncementReader[] }>(
+      `${API_BASE_URL}/announcements/${id}/readers`
+    ));
   }
 
   // SUBJECTS
@@ -1203,6 +1327,24 @@ export class DataService {
     ).length;
   }
 
+  unreadForUser(userId: number): number {
+    return this.notifications.filter(
+      notification => notification.user_id === userId && !notification.read
+    ).length;
+  }
+
+  async markAllForUser(userId: number): Promise<void> {
+    const unreadIds = this.notifications
+      .filter(notification => notification.user_id === userId && !notification.read)
+      .map(notification => notification.id);
+    if (!unreadIds.length) return;
+    await this.mutate(this.http.put(`${API_BASE_URL}/notifications/read-all`, {}));
+    const unread = new Set(unreadIds);
+    this.notifications = this.notifications.map(notification =>
+      unread.has(notification.id) ? { ...notification, read: true } : notification
+    );
+  }
+
   moduleOn(role: string, key: string): boolean {
     return !this.disabled.has(`${role}:${key}`);
   }
@@ -1422,14 +1564,15 @@ export class DataService {
   }
 
   annsFor(s: Student): Ann[] {
+    const matches = (target: string | number | string[] | number[], value: string | number) =>
+      target === 'All' || (Array.isArray(target)
+        ? target.some(item => String(item) === String(value))
+        : String(target) === String(value));
     return this.anns.filter(
       announcement =>
-        (announcement.prog === 'All' ||
-          announcement.prog === s.prog) &&
-        (announcement.yr === 'All' ||
-          announcement.yr === s.yr) &&
-        (announcement.sec === 'All' ||
-          announcement.sec === s.sec)
+        matches(announcement.prog, s.prog) &&
+        matches(announcement.yr, s.yr) &&
+        matches(announcement.sec, s.sec)
     );
   }
 

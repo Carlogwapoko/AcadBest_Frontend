@@ -45,14 +45,74 @@ describe('UsersRolesComponent',()=>{
     expect(fixture.nativeElement.textContent).toContain('Add Users');
   });
 
-  it('opens the account form with the supported staff roles',()=>{
+  it('opens the account form with the supported staff roles',async()=>{
     const fixture=TestBed.createComponent(UsersRolesComponent);
     fixture.detectChanges();
     const component=fixture.componentInstance;
     component.open();
     fixture.detectChanges();
+    await fixture.whenStable();
     expect(component.m.role).toBe('Faculty');
-    expect(component.m).toMatchObject({id:0,role:'Faculty',status:'Active'});
+    expect(component.m).toMatchObject({id:0,role:'Faculty',status:'Active',prog:''});
+    expect(Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.field-label'))
+      .some(label=>label.textContent?.trim()==='Assigned Program')).toBe(true);
+  });
+
+  it('requires an assigned program for faculty and hides the field for other roles',async()=>{
+    const data=TestBed.inject(DataService);
+    const saveUser=vi.spyOn(data,'saveUser');
+    const fixture=TestBed.createComponent(UsersRolesComponent);
+    fixture.detectChanges();
+    const component=fixture.componentInstance;
+    component.open();
+    component.m.first_name='Ada';
+    component.m.last_name='Lovelace';
+    component.m.email='ada@example.com';
+    component.m.pw='temporary-password';
+    fixture.detectChanges();
+
+    await component.save();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(component.e.pr).toBe('Select a program for this faculty account.');
+    expect(saveUser).not.toHaveBeenCalled();
+
+    const roleLabel=Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.field-label'))
+      .find(label=>label.textContent?.trim()==='Role');
+    (roleLabel?.closest('app-field')?.querySelector('.select-trigger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    Array.from(document.querySelectorAll('.select-option'))
+      .find(option=>option.textContent?.trim()==='Registrar Staff')?.dispatchEvent(
+        new MouseEvent('click',{bubbles:true}),
+      );
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(component.m.role).toBe('Registrar Staff');
+    expect(Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.field-label'))
+      .some(label=>label.textContent?.trim()==='Assigned Program')).toBe(false);
+  });
+
+  it('saves the selected program for faculty accounts',async()=>{
+    const data=TestBed.inject(DataService);
+    const saveUser=vi.spyOn(data,'saveUser').mockResolvedValue({
+      id:2,name:'Ada Lovelace',first_name:'Ada',last_name:'Lovelace',
+      email:'ada@example.com',role:'Faculty',act:true,phone:'',prog:'BSIT',
+    });
+    const fixture=TestBed.createComponent(UsersRolesComponent);
+    fixture.detectChanges();
+    const component=fixture.componentInstance;
+    component.open();
+    Object.assign(component.m,{
+      first_name:'Ada',last_name:'Lovelace',email:'ada@example.com',
+      pw:'temporary-password',prog:'BSIT',
+    });
+
+    await component.save();
+
+    expect(saveUser).toHaveBeenCalledWith(undefined,expect.objectContaining({
+      role:'Faculty',program:'BSIT',
+    }));
   });
 
   it('toggles the password field accessibly and resets it when opening another account form',()=>{

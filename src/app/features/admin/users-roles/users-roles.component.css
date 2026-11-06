@@ -1,4 +1,7 @@
 :host{display:block;min-width:0}
+.users-toolbar{align-items:center}
+.users-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:4px 8px;color:var(--mu);font-size:13px}
+.pagination-actions{display:flex;gap:8px}.pagination-arrow{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;font-size:18px;line-height:1}
 .user-name{display:inline-flex;align-items:center;gap:9px;min-width:0}
 .user-avatar,.account-picture-preview{display:grid;place-items:center;flex:0 0 auto;overflow:hidden;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--navy2));color:#fff;font-weight:700}
 .user-avatar{width:34px;height:34px;font-size:11px}
@@ -15,6 +18,10 @@
 .user-actions .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:84px;padding:6px 10px}
 .user-actions app-icon{margin:0}
 @media(max-width:600px){
+  .users-toolbar{align-items:stretch;flex-direction:column}
+  .users-toolbar input,.users-toolbar .btn{width:100%;box-sizing:border-box}
+  .users-footer{align-items:flex-start;flex-wrap:wrap}
+  .users-footer .pagination-actions{margin-left:auto}
   .account-picture-editor{align-items:flex-start}
   .account-picture-preview{width:56px;height:56px}
 }

@@ -1,15 +1,19 @@
 :host{display:block;min-width:0}
 .feature-page{width:min(100% - 40px,920px);margin:0 auto;padding:52px 0 64px}
+.feature-page-wide{width:min(100% - 40px,1040px)}
 .feature-heading{display:flex;align-items:center;gap:18px;margin-bottom:28px}
 .feature-icon{display:grid;place-items:center;flex:0 0 64px;width:64px;height:64px;border-radius:18px;background:var(--lb);color:var(--blue)}
 .feature-heading h1{margin:0 0 8px;color:var(--navy2);font-size:clamp(28px,5vw,40px);line-height:1.15}
+.feature-eyebrow{display:inline-flex;margin-bottom:10px;padding:4px 10px;border-radius:999px;background:var(--lb);color:var(--blue);font-size:12px;font-weight:600;line-height:1.2}
 .back-features{color:var(--blue);font-size:14px}
 .back-features:hover{text-decoration:underline}
 .feature-content{max-width:760px;color:var(--mu);font-size:16px;line-height:1.7}
+.feature-content-wide{max-width:none}
 .feature-content p{margin:0 0 20px}
 .feature-content ul{margin:0;padding-left:22px}
 .feature-content li{padding-left:4px;margin:8px 0}
 .login-button{display:inline-flex;margin-top:32px}
+@media(prefers-reduced-motion:reduce){.feature-page *{scroll-behavior:auto!important;transition-duration:0.01ms!important;animation-duration:0.01ms!important;animation-iteration-count:1!important}}
 @media(max-width:600px){
   .feature-page{width:calc(100% - 32px);padding:36px 0 48px}
   .feature-heading{align-items:flex-start;gap:12px}
