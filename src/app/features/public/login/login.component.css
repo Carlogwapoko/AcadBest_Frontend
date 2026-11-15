@@ -1,4 +1,17 @@
-:host{display:block;min-width:0}
-.login-help{display:flex;justify-content:flex-end;margin-top:8px;font-size:13px}
-.login-help a{color:var(--blue);text-decoration:none}
-.login-help a:hover{text-decoration:underline}
+:host {
+  display: block;
+  min-width: 0;
+}
+.login-help {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+  font-size: 13px;
+}
+.login-help a {
+  color: var(--blue);
+  text-decoration: none;
+}
+.login-help a:hover {
+  text-decoration: underline;
+}

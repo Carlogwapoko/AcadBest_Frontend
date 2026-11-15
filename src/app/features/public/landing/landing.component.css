@@ -1,1 +1,37 @@
-:host{display:block;min-width:0}
+:host {
+  display: block;
+  min-width: 0;
+}
+.landing-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.hero .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  max-width: calc(100% - 24px);
+}
+.online-indicator {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.16);
+  animation: online-pulse 2.4s ease-in-out infinite;
+}
+@keyframes online-pulse {
+  50% {
+    opacity: 0.65;
+    box-shadow: 0 0 0 6px rgba(74, 222, 128, 0.08);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .online-indicator {
+    animation: none;
+  }
+}

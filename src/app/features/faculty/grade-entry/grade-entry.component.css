@@ -1,6 +1,23 @@
-:host{display:block;min-width:0}
-.grade-scope{max-width:1000px;margin-bottom:16px}
-.grade-table-frame{margin:14px 0 18px}
-.grade-table-frame table{min-width:760px}
-.grade-table-frame td input{width:96px;min-width:72px}
-@media(max-width:600px){.grade-scope{grid-template-columns:1fr}}
+:host {
+  display: block;
+  min-width: 0;
+}
+.grade-scope {
+  max-width: 1000px;
+  margin-bottom: 16px;
+}
+.grade-table-frame {
+  margin: 14px 0 18px;
+}
+.grade-table-frame table {
+  min-width: 760px;
+}
+.grade-table-frame td input {
+  width: 96px;
+  min-width: 72px;
+}
+@media (max-width: 600px) {
+  .grade-scope {
+    grid-template-columns: 1fr;
+  }
+}

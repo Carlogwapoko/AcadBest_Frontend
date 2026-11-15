@@ -17,10 +17,31 @@ export class EnrollComponent {
   @ViewChild('card') card?: ElementRef<HTMLElement>;
 
   f: any = {
-    fn: '', mn: '', ln: '', dob: '', sex: 'Select…', em: '', ph: '', ad: '',
-    pr: 'Select…', yr: 'Select…', academic_year: '', major: '', semester: 'Select…',
-    session: 'Select…', ty: 'Select…', sc: '', mother_fn: '', mother_mn: '',
-    mother_ln: '', father_fn: '', father_mn: '', father_ln: '', gn: '', gp: '', ok: false,
+    fn: '',
+    mn: '',
+    ln: '',
+    dob: '',
+    sex: 'Select…',
+    em: '',
+    ph: '',
+    ad: '',
+    pr: 'Select…',
+    yr: 'Select…',
+    academic_year: '',
+    major: '',
+    semester: 'Select…',
+    session: 'Select…',
+    ty: 'Select…',
+    sc: '',
+    mother_fn: '',
+    mother_mn: '',
+    mother_ln: '',
+    father_fn: '',
+    father_mn: '',
+    father_ln: '',
+    gn: '',
+    gp: '',
+    ok: false,
   };
   e: Record<string, string> = {};
   step = 1;
@@ -35,7 +56,11 @@ export class EnrollComponent {
     3: ['gn', 'gp', 'ok'],
   };
 
-  constructor(private d: DataService, private ui: UiService, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private d: DataService,
+    private ui: UiService,
+    private cdr: ChangeDetectorRef,
+  ) {}
 
   ngOnInit(): void {
     void this.loadAcademicYear();
@@ -43,11 +68,31 @@ export class EnrollComponent {
 
   blank() {
     return {
-      fn: '', mn: '', ln: '', dob: '', sex: 'Select…', em: '', ph: '', ad: '',
-      pr: 'Select…', yr: 'Select…', academic_year: this.d.currentAcademicYear, major: '',
-      semester: 'Select…', session: 'Select…', ty: 'Select…', sc: '', mother_fn: '',
-      mother_mn: '', mother_ln: '', father_fn: '', father_mn: '', father_ln: '',
-      gn: '', gp: '', ok: false,
+      fn: '',
+      mn: '',
+      ln: '',
+      dob: '',
+      sex: 'Select…',
+      em: '',
+      ph: '',
+      ad: '',
+      pr: 'Select…',
+      yr: 'Select…',
+      academic_year: this.d.currentAcademicYear,
+      major: '',
+      semester: 'Select…',
+      session: 'Select…',
+      ty: 'Select…',
+      sc: '',
+      mother_fn: '',
+      mother_mn: '',
+      mother_ln: '',
+      father_fn: '',
+      father_mn: '',
+      father_ln: '',
+      gn: '',
+      gp: '',
+      ok: false,
     };
   }
 
@@ -67,7 +112,7 @@ export class EnrollComponent {
   get programOptions(): EnrollmentSelectOption[] {
     return [
       { label: 'Select a program', value: 'Select…' },
-      ...this.programs.map(program => ({ label: program, value: program })),
+      ...this.programs.map((program) => ({ label: program, value: program })),
     ];
   }
 
@@ -84,7 +129,10 @@ export class EnrollComponent {
   }
 
   get majorOptions(): EnrollmentSelectOption[] {
-    return [{ label: 'Select a major', value: '' }, ...this.majors.map(major => ({ label: major, value: major }))];
+    return [
+      { label: 'Select a major', value: '' },
+      ...this.majors.map((major) => ({ label: major, value: major })),
+    ];
   }
 
   get semesterOptions(): EnrollmentSelectOption[] {
@@ -118,7 +166,12 @@ export class EnrollComponent {
   }
 
   get stepTitle(): string {
-    return ['Personal Information', 'Academic Information', 'Parent/Guardian Information', 'Review & Submit'][this.step - 1];
+    return [
+      'Personal Information',
+      'Academic Information',
+      'Parent/Guardian Information',
+      'Review & Submit',
+    ][this.step - 1];
   }
 
   programChanged(): void {
@@ -126,7 +179,8 @@ export class EnrollComponent {
   }
 
   nextStep(): void {
-    if (this.step >= 4 || (this.step === 2 && this.yearLoading) || !this.validateStep(this.step)) return;
+    if (this.step >= 4 || (this.step === 2 && this.yearLoading) || !this.validateStep(this.step))
+      return;
     this.step++;
     this.cdr.markForCheck();
     this.scrollToCard();
@@ -152,8 +206,8 @@ export class EnrollComponent {
     if (this.busy || this.yearLoading) return;
     const errors = this.validationErrors();
     this.e = errors;
-    const firstInvalidStep = [1, 2, 3].find(step =>
-      this.stepFields[step].some(field => errors[field]),
+    const firstInvalidStep = [1, 2, 3].find((step) =>
+      this.stepFields[step].some((field) => errors[field]),
     );
     if (firstInvalidStep) {
       this.step = firstInvalidStep;
@@ -213,8 +267,8 @@ export class EnrollComponent {
   private validateStep(step: number): boolean {
     const errors = this.validationErrors();
     const fields = this.stepFields[step];
-    this.e = Object.fromEntries(fields.map(field => [field, errors[field] ?? '']));
-    if (fields.some(field => errors[field])) {
+    this.e = Object.fromEntries(fields.map((field) => [field, errors[field] ?? '']));
+    if (fields.some((field) => errors[field])) {
       this.ui.toast('Please fix the highlighted fields.', 'er');
       return false;
     }
@@ -224,22 +278,30 @@ export class EnrollComponent {
   private validationErrors(): Record<string, string> {
     const f = this.f;
     const phonePattern = /^[0-9 +]{10,15}$/;
-    const selectError = (value: string) => value === 'Select…' ? 'Please select an option.' : '';
+    const selectError = (value: string) => (value === 'Select…' ? 'Please select an option.' : '');
     return {
       fn: f.fn.trim().length < 2 ? 'First name is required.' : '',
       ln: f.ln.trim().length < 2 ? 'Last name is required.' : '',
-      academic_year: /^\d{4}-\d{4}$/.test(f.academic_year)
-        && Number(f.academic_year.slice(5)) === Number(f.academic_year.slice(0, 4)) + 1
-        ? '' : 'Enter a valid academic year, such as 2026-2027.',
-      dob: !f.dob ? 'Date of birth is required.' : f.dob >= this.d.today ? 'Enter a valid date of birth.' : '',
+      academic_year:
+        /^\d{4}-\d{4}$/.test(f.academic_year) &&
+        Number(f.academic_year.slice(5)) === Number(f.academic_year.slice(0, 4)) + 1
+          ? ''
+          : 'Enter a valid academic year, such as 2026-2027.',
+      dob: !f.dob
+        ? 'Date of birth is required.'
+        : f.dob >= this.d.today
+          ? 'Enter a valid date of birth.'
+          : '',
       sex: selectError(f.sex),
       em: /^\S+@\S+\.\S+$/.test(f.em) ? '' : 'Enter a valid e-mail address.',
       ph: phonePattern.test(f.ph) ? '' : 'Enter a valid mobile number.',
       ad: f.ad.trim().length < 5 ? 'Home address is required.' : '',
       pr: selectError(f.pr),
       yr: selectError(f.yr),
-      major: this.majors.length && !this.majors.includes(f.major)
-        ? 'Please select a major for the selected program.' : '',
+      major:
+        this.majors.length && !this.majors.includes(f.major)
+          ? 'Please select a major for the selected program.'
+          : '',
       semester: selectError(f.semester),
       session: selectError(f.session),
       ty: selectError(f.ty),
@@ -272,6 +334,8 @@ export class EnrollComponent {
 
   private message(error: unknown): string {
     const value = (error as { error?: { message?: string } })?.error?.message;
-    return value || (error instanceof Error ? error.message : 'The application could not be submitted.');
+    return (
+      value || (error instanceof Error ? error.message : 'The application could not be submitted.')
+    );
   }
 }

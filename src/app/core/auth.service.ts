@@ -1,76 +1,125 @@
 import { Injectable } from '@angular/core';
-import { HttpClient,HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { DataService,ROLE_KEY,Role,User } from './data.service';
+import { DataService, ROLE_KEY, Role, User } from './data.service';
 import { API_BASE_URL } from './api-config';
 import { fullName } from '../shared/full-name';
 
-const TOKEN_KEY='acadbest.api_token';
+const TOKEN_KEY = 'acadbest.api_token';
 
-@Injectable({providedIn:'root'})
-export class AuthService{
-  user:User|null=null;
-  restoreError='';
-  private restorePromise:Promise<void>|null=null;
-  constructor(private http:HttpClient,private data:DataService){}
-  get role():Role|null{return this.user?this.user.roleKey??ROLE_KEY[this.user.role]??null:null}
-  get student(){return this.data.students.find(s=>s.id===this.user?.sid)}
-
-  async login(email:string,password:string):Promise<void>{
-    const result=await firstValueFrom(this.http.post<{token:string;user:Record<string,unknown>}>(
-      `${API_BASE_URL}/auth/login`,{email:email.trim().toLowerCase(),password}));
-    localStorage.setItem(TOKEN_KEY,result.token);
-    this.data.reset();
-    this.user=this.mapUser(result.user);
-    this.restoreError='';
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  user: User | null = null;
+  restoreError = '';
+  private restorePromise: Promise<void> | null = null;
+  constructor(
+    private http: HttpClient,
+    private data: DataService,
+  ) {}
+  get role(): Role | null {
+    return this.user ? (this.user.roleKey ?? ROLE_KEY[this.user.role] ?? null) : null;
+  }
+  get student() {
+    return this.data.students.find((s) => s.id === this.user?.sid);
   }
 
-  async restore():Promise<void>{
-    if(this.user)return;
-    if(this.restorePromise)return this.restorePromise;
-    if(!localStorage.getItem(TOKEN_KEY))return;
-    this.restorePromise=(async()=>{
-      try{
-        const result=await firstValueFrom(this.http.get<{user:Record<string,unknown>}>(`${API_BASE_URL}/auth/me`));
-        this.user=this.mapUser(result.user);
-        this.restoreError='';
-      }catch(error){
-        this.user=null;
-        if(error instanceof HttpErrorResponse&&(error.status===401||error.status===403)){
+  async login(email: string, password: string): Promise<void> {
+    const result = await firstValueFrom(
+      this.http.post<{ token: string; user: Record<string, unknown> }>(
+        `${API_BASE_URL}/auth/login`,
+        { email: email.trim().toLowerCase(), password },
+      ),
+    );
+    localStorage.setItem(TOKEN_KEY, result.token);
+    this.data.reset();
+    this.user = this.mapUser(result.user);
+    this.restoreError = '';
+  }
+
+  async restore(): Promise<void> {
+    if (this.user) return;
+    if (this.restorePromise) return this.restorePromise;
+    if (!localStorage.getItem(TOKEN_KEY)) return;
+    this.restorePromise = (async () => {
+      try {
+        const result = await firstValueFrom(
+          this.http.get<{ user: Record<string, unknown> }>(`${API_BASE_URL}/auth/me`),
+        );
+        this.user = this.mapUser(result.user);
+        this.restoreError = '';
+      } catch (error) {
+        this.user = null;
+        if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
           localStorage.removeItem(TOKEN_KEY);
-        }else{
-          this.restoreError='AcadBest could not restore your session because the server is unavailable. Please try again.';
+        } else {
+          this.restoreError =
+            'AcadBest could not restore your session because the server is unavailable. Please try again.';
         }
-        console.error('The saved AcadBest session could not be restored.',error);
-      }finally{this.restorePromise=null}
+        console.error('The saved AcadBest session could not be restored.', error);
+      } finally {
+        this.restorePromise = null;
+      }
     })();
     return this.restorePromise;
   }
 
-  async logout():Promise<void>{
-    try{if(localStorage.getItem(TOKEN_KEY))await firstValueFrom(this.http.post(`${API_BASE_URL}/auth/logout`,{}))}
-    finally{this.user=null;this.restoreError='';this.data.reset();localStorage.removeItem(TOKEN_KEY)}
+  async logout(): Promise<void> {
+    try {
+      if (localStorage.getItem(TOKEN_KEY))
+        await firstValueFrom(this.http.post(`${API_BASE_URL}/auth/logout`, {}));
+    } finally {
+      this.user = null;
+      this.restoreError = '';
+      this.data.reset();
+      localStorage.removeItem(TOKEN_KEY);
+    }
   }
 
-  private mapUser(value:Record<string,unknown>):User{
-    const roleKey=value['role_key'];
-    const firstName=String(value['first_name']??'');
-    const middleName=String(value['middle_name']??'');
-    const lastName=String(value['last_name']??'');
-    return {id:Number(value['id']),name:fullName(firstName,middleName,lastName,String(value['name']??'')),
-      first_name:firstName,middle_name:middleName,last_name:lastName,email:String(value['email']),
-      role:String(value['role']),roleKey:this.isRole(roleKey)?roleKey:undefined,
-      act:Boolean(value['active']),phone:String(value['phone']??''),
-      sid:value['student_id']?Number(value['student_id']):undefined,
-      schoolId:typeof value['school_id']==='string'?value['school_id']:undefined,
-      avatar:typeof value['avatar']==='string'?value['avatar']:undefined,
-      prog:typeof value['program']==='string'?value['program']:undefined,
-      major:typeof value['major']==='string'?value['major']:undefined,
-      semester:typeof value['semester']==='string'?value['semester']:undefined,
-      yr:value['year_level']?Number(value['year_level']):undefined};
+  async changePassword(
+    currentPassword: string,
+    password: string,
+    passwordConfirmation: string,
+  ): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${API_BASE_URL}/auth/change-password`, {
+        current_password: currentPassword,
+        password,
+        password_confirmation: passwordConfirmation,
+      }),
+    );
+    if (this.user) this.user.mustChangePassword = false;
   }
 
-  private isRole(value:unknown):value is Role{
-    return value==='student'||value==='faculty'||value==='registrar'||value==='admin';
+  private mapUser(value: Record<string, unknown>): User {
+    const roleKey = value['role_key'];
+    const firstName = String(value['first_name'] ?? '');
+    const middleName = String(value['middle_name'] ?? '');
+    const lastName = String(value['last_name'] ?? '');
+    return {
+      id: Number(value['id']),
+      name: fullName(firstName, middleName, lastName, String(value['name'] ?? '')),
+      first_name: firstName,
+      middle_name: middleName,
+      last_name: lastName,
+      email: String(value['email']),
+      role: String(value['role']),
+      roleKey: this.isRole(roleKey) ? roleKey : undefined,
+      act: Boolean(value['active']),
+      phone: String(value['phone'] ?? ''),
+      sid: value['student_id'] ? Number(value['student_id']) : undefined,
+      schoolId: typeof value['school_id'] === 'string' ? value['school_id'] : undefined,
+      avatar: typeof value['avatar'] === 'string' ? value['avatar'] : undefined,
+      prog: typeof value['program'] === 'string' ? value['program'] : undefined,
+      major: typeof value['major'] === 'string' ? value['major'] : undefined,
+      semester: typeof value['semester'] === 'string' ? value['semester'] : undefined,
+      yr: value['year_level'] ? Number(value['year_level']) : undefined,
+      academicYear: typeof value['academic_year'] === 'string' ? value['academic_year'] : undefined,
+      createdAt: typeof value['created_at'] === 'string' ? value['created_at'] : undefined,
+      mustChangePassword: Boolean(value['must_change_password']),
+    };
+  }
+
+  private isRole(value: unknown): value is Role {
+    return value === 'student' || value === 'faculty' || value === 'registrar' || value === 'admin';
   }
 }

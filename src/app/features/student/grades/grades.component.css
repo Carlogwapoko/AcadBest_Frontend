@@ -1,2 +1,244 @@
-:host{display:block;min-width:0}
-.semester-filters{max-width:520px;margin:12px 0 16px}
+:host {
+  display: block;
+  min-width: 0;
+}
+.student-subject-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 4px 4px 8px;
+}
+.subject-modal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.subject-modal-section h4 {
+  margin: 0;
+  color: var(--navy2);
+  font-size: 14px;
+}
+.subject-modal-section small,
+.subject-schedule {
+  color: var(--mu);
+  font-size: 12px;
+}
+.subject-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--bd);
+}
+.subject-info-grid div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.subject-info-grid b {
+  font-size: 14px;
+}
+.subject-schedule {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: -2px;
+}
+.subject-schedule span {
+  padding: 4px 8px;
+  border: 1px solid var(--bd);
+  border-radius: 6px;
+  background: var(--bg);
+}
+.grade-boxes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.grade-boxes div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 6px;
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  background: var(--bg);
+}
+.grade-boxes b {
+  font-size: 16px;
+  color: var(--tx);
+}
+.overall-grade {
+  padding-top: 16px;
+  border-top: 1px solid var(--bd);
+}
+.overall-grade > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.overall-grade b {
+  font-size: 24px;
+  line-height: 1.1;
+}
+.overall-grade .chip {
+  font-size: 12px;
+}
+.student-academic-filters,
+.student-record-section {
+  min-width: 0;
+}
+.student-academic-filters {
+  margin: 14px 0 20px;
+  padding: 16px;
+  border: 1px solid var(--bd);
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--bg2, #f7f9fc), var(--bg, #fff));
+}
+.student-academic-filters-heading,
+.student-record-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.student-academic-filters-heading {
+  margin-bottom: 14px;
+}
+.student-academic-filters-heading h3,
+.student-record-heading h3,
+.student-record-heading h4 {
+  margin: 0;
+  color: var(--navy2);
+}
+.student-academic-filters-heading h3,
+.student-record-heading h3 {
+  font-size: 15px;
+}
+.student-academic-filters-heading p,
+.student-record-heading p {
+  margin: 4px 0 0;
+  color: var(--mu);
+  font-size: 12px;
+}
+.student-filter-count,
+.enrollment-units-badge {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border: 1px solid var(--bd);
+  border-radius: 999px;
+  background: var(--card, #fff);
+  color: var(--navy2);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.student-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 12px;
+}
+.student-filter-grid app-field {
+  min-width: 0;
+}
+.student-record-section {
+  margin-top: 18px;
+}
+.student-record-heading {
+  align-items: center;
+  margin-bottom: 12px;
+}
+.student-record-table {
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+}
+.student-record-table table {
+  width: 100%;
+}
+.grade-explanation {
+  margin: 12px 0 0;
+  color: var(--mu);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.enrollment-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.enrollment-summary-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  background: var(--card, #fff);
+}
+.enrollment-summary-label {
+  color: var(--mu);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.enrollment-summary-card strong {
+  color: var(--navy2);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.enrollment-summary-card > span:last-child:not(.enrollment-summary-label) {
+  color: var(--mu);
+  font-size: 12px;
+}
+.enrollment-summary-detail {
+  color: var(--navy2);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.enrollment-status-card {
+  justify-content: center;
+  gap: 10px;
+}
+.enrollment-subject-heading {
+  margin-bottom: 12px;
+}
+.enrollment-subject-heading h4 {
+  font-size: 14px;
+}
+.enrollment-units-badge {
+  border-color: transparent;
+  background: var(--lb);
+}
+@media (max-width: 800px) {
+  .enrollment-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .student-filter-grid,
+  .enrollment-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .student-academic-filters {
+    padding: 12px;
+  }
+  .student-academic-filters-heading,
+  .student-record-heading {
+    align-items: flex-start;
+  }
+  .student-record-heading {
+    flex-direction: column;
+  }
+  .enrollment-subject-heading {
+    flex-direction: row;
+  }
+  .enrollment-summary-card {
+    padding: 12px;
+  }
+}

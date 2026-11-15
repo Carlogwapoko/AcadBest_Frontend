@@ -1,5 +1,178 @@
-:host{display:block;min-width:0}
-.risk-summary{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:0 0 14px}
-.risk-action{text-align:center;vertical-align:middle}
-.risk-view{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:112px;padding:7px 12px;white-space:nowrap}
-.risk-view app-icon{margin:0}
+:host {
+  display: block;
+  min-width: 0;
+}
+.risk-detail {
+  display: grid;
+  gap: 18px;
+}
+.risk-summary {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.8fr) minmax(200px, 1.5fr) minmax(140px, 0.8fr);
+  gap: 10px;
+  margin: 0;
+}
+.risk-summary-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--bd);
+  border-radius: 12px;
+  background: var(--bg2, #f7f9fc);
+}
+.risk-summary-label {
+  color: var(--mu);
+  font-size: 11px;
+}
+.risk-summary-card > strong {
+  color: var(--navy2);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.risk-major {
+  color: var(--mu);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.risk-program-card .student-academic-tags {
+  margin-top: 2px;
+}
+.risk-average-card > strong {
+  font-size: 22px;
+}
+.risk-grades {
+  min-width: 0;
+}
+.risk-grades-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.risk-grades-heading h4 {
+  margin: 0;
+  color: var(--navy2);
+  font-size: 14px;
+}
+.risk-grades-heading p {
+  margin: 4px 0 0;
+  color: var(--mu);
+  font-size: 12px;
+}
+.risk-grade-count {
+  flex: 0 0 auto;
+  padding: 5px 10px;
+  border: 1px solid var(--bd);
+  border-radius: 999px;
+  background: var(--bg2, #f7f9fc);
+  color: var(--mu);
+  font-size: 12px;
+}
+.risk-grade-table {
+  margin: 0;
+}
+.risk-grade-table table {
+  min-width: 520px;
+}
+.risk-grade-table th {
+  background: var(--bg2, #f7f9fc);
+  white-space: nowrap;
+}
+.risk-grade-table td,
+.risk-grade-table th {
+  vertical-align: middle;
+}
+.risk-empty-grades {
+  margin-top: 10px;
+}
+.risk-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 14px;
+  border-top: 1px solid var(--bd);
+}
+.risk-action {
+  text-align: center;
+  vertical-align: middle;
+}
+.risk-view {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 112px;
+  padding: 7px 12px;
+  white-space: nowrap;
+}
+.risk-view app-icon {
+  margin: 0;
+}
+.student-academic-cell {
+  min-width: 190px;
+}
+.student-academic-program {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  line-height: 1.35;
+}
+.student-academic-program strong {
+  color: var(--navy2);
+  font-size: 13px;
+}
+.student-academic-program span {
+  color: var(--mu);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.student-academic-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.student-academic-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 23px;
+  padding: 3px 8px;
+  border: 1px solid var(--bd);
+  border-radius: 999px;
+  background: var(--bg2, #f7f9fc);
+  color: var(--navy2);
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.risk-academic-info {
+  display: grid;
+  gap: 6px;
+}
+.risk-academic-info .student-academic-tags {
+  margin-top: 0;
+}
+@media (max-width: 600px) {
+  .risk-detail {
+    gap: 14px;
+  }
+  .risk-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .risk-program-card {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .risk-summary-card {
+    padding: 12px;
+  }
+  .risk-grade-table {
+    overflow-x: auto;
+  }
+  .risk-modal-actions .btn {
+    width: 100%;
+  }
+}

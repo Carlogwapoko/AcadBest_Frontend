@@ -1,4 +1,3 @@
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
@@ -37,6 +36,7 @@ export interface Subject {
   faculty_ids?: number[];
   session?: string | null;
   semester?: string | null;
+  term?: '1st Term' | '2nd Term' | null;
   academic_year?: string | null;
   grade_weights?: Partial<Record<'Prelim' | 'Midterm' | 'Final', number>>;
   faculty_assignments?: FacultyAssignment[];
@@ -45,6 +45,7 @@ export interface Subject {
 export interface FacultyAssignment {
   id?: number;
   faculty_id: number;
+  faculty_name?: string;
   semester: string;
   academic_year: string;
   section: string | null;
@@ -61,12 +62,14 @@ export interface FacultyScheduleItem {
   days: string;
   code: string;
   subject: string;
+  units: number;
   session: string;
   start: string;
   end: string;
   room: string;
   section: string;
   semester: string;
+  term?: '1st Term' | '2nd Term' | null;
   academic_year: string;
 }
 
@@ -115,6 +118,9 @@ export interface User {
   major?: string;
   semester?: string;
   yr?: number;
+  academicYear?: string;
+  createdAt?: string;
+  mustChangePassword?: boolean;
 }
 
 export interface Req {
@@ -211,7 +217,7 @@ export interface Notif {
   sid: number;
   user_id?: number | null;
   announcement_id?: number | null;
-  type: 'grade' | 'alert';
+  type: 'grade' | 'alert' | 'service_request_ready';
   t: string;
   m: string;
   d: string;
@@ -312,38 +318,50 @@ export class DataService {
     role: 'staff' | 'faculty',
     search = '',
     semester = '',
-    academicYear = ''
-  ): Promise<{ data: SectionOverview[]; summary?: SectionSummary }> {
-    let params = new HttpParams().set('search', search).set('per_page', 50);
+    academicYear = '',
+    page = 1,
+    perPage = 10,
+  ): Promise<Page<SectionOverview> & { summary?: SectionSummary }> {
+    let params = new HttpParams().set('search', search).set('page', page).set('per_page', perPage);
     if (semester) params = params.set('semester', semester);
     if (academicYear) params = params.set('academic_year', academicYear);
     const endpoint = role === 'faculty' ? '/faculty/sections' : '/sections';
-    return firstValueFrom(this.http.get<{ data: SectionOverview[]; summary?: SectionSummary }>(
-      `${API_BASE_URL}${endpoint}`, { params }
-    ));
+    return firstValueFrom(
+      this.http.get<Page<SectionOverview> & { summary?: SectionSummary }>(
+        `${API_BASE_URL}${endpoint}`,
+        { params },
+      ),
+    );
   }
 
   async loadSectionStudents(
     role: 'staff' | 'faculty',
     section: SectionOverview,
-    search = ''
+    search = '',
+    page = 1,
+    perPage = 10,
   ): Promise<Page<SectionStudent>> {
     let params = new HttpParams()
       .set('search', search)
+      .set('page', page)
+      .set('per_page', perPage)
       .set('program', section.program)
       .set('year_level', section.year_level)
       .set('semester', section.semester || '')
       .set('academic_year', section.academic_year || '');
     const endpoint = role === 'faculty' ? '/faculty/sections' : '/sections';
-    return firstValueFrom(this.http.get<Page<SectionStudent>>(
-      `${API_BASE_URL}${endpoint}/${encodeURIComponent(section.section)}/students`, { params }
-    ));
+    return firstValueFrom(
+      this.http.get<Page<SectionStudent>>(
+        `${API_BASE_URL}${endpoint}/${encodeURIComponent(section.section)}/students`,
+        { params },
+      ),
+    );
   }
 
   async loadMySection(): Promise<{ section: string | null; total_count: number }> {
-    return firstValueFrom(this.http.get<{ section: string | null; total_count: number }>(
-      `${API_BASE_URL}/my-section`
-    ));
+    return firstValueFrom(
+      this.http.get<{ section: string | null; total_count: number }>(`${API_BASE_URL}/my-section`),
+    );
   }
 
   private async mutate<T>(request: Observable<T>): Promise<T> {
@@ -370,26 +388,18 @@ export class DataService {
     const request = (async () => {
       try {
         const data = await firstValueFrom(
-          this.http.get<Record<string, unknown>>(
-            `${API_BASE_URL}/portal`
-          )
+          this.http.get<Record<string, unknown>>(`${API_BASE_URL}/portal`),
         );
         if (version !== this.loadVersion) return;
 
         this.today = String(data['today']);
 
         this.rules = {
-          pass: Number(
-            (data['rules'] as Record<string, unknown>)?.['pass'] ?? 75
-          ),
-          safe: Number(
-            (data['rules'] as Record<string, unknown>)?.['safe'] ?? 80
-          ),
+          pass: Number((data['rules'] as Record<string, unknown>)?.['pass'] ?? 75),
+          safe: Number((data['rules'] as Record<string, unknown>)?.['safe'] ?? 80),
         };
 
-        this.disabled = new Set(
-          (data['disabled'] as string[] | undefined) ?? []
-        );
+        this.disabled = new Set((data['disabled'] as string[] | undefined) ?? []);
 
         const subjects = (data['subjects'] as Record<string, Subject>) ?? {};
         this.subjects = Object.fromEntries(
@@ -399,12 +409,10 @@ export class DataService {
               ...subject,
               faculty_ids: this.facultyIds(subject),
             },
-          ])
+          ]),
         );
 
-        this.students = (
-          (data['students'] as Student[] | undefined) ?? []
-        ).map(student => ({
+        this.students = ((data['students'] as Student[] | undefined) ?? []).map((student) => ({
           ...student,
           g: student.g ?? {},
           gwa: student.gwa ?? null,
@@ -412,34 +420,28 @@ export class DataService {
         }));
         this.eligibleEnrollments = (
           (data['eligible_enrollments'] as Student[] | undefined) ?? []
-        ).map(student => ({
+        ).map((student) => ({
           ...student,
           g: student.g ?? {},
           subject_codes: student.subject_codes ?? [],
         }));
         this.currentAcademicYear = String(data['academic_year'] ?? this.currentAcademicYear);
 
-        this.users = (
-          (data['users'] as Array<Record<string, unknown>> | undefined) ?? []
-        ).map(user => this.mapUser(user));
-
-        this.anns =
-          (data['announcements'] as Ann[] | undefined) ?? [];
-
-        this.openRequestCount = Number(
-          data['open_request_count'] || 0
+        this.users = ((data['users'] as Array<Record<string, unknown>> | undefined) ?? []).map(
+          (user) => this.mapUser(user),
         );
 
-        this.notifications =
-          (data['notifications'] as Notif[] | undefined) ?? [];
+        this.anns = (data['announcements'] as Ann[] | undefined) ?? [];
 
-        this.reqTypes =
-          (data['requestTypes'] as string[] | undefined) ?? this.reqTypes;
+        this.openRequestCount = Number(data['open_request_count'] || 0);
+
+        this.notifications = (data['notifications'] as Notif[] | undefined) ?? [];
+
+        this.reqTypes = (data['requestTypes'] as string[] | undefined) ?? this.reqTypes;
         this.loaded = true;
       } catch (error) {
         if (version !== this.loadVersion) return;
-        this.loadError =
-          'Portal data could not be loaded. Check your connection and try again.';
+        this.loadError = 'Portal data could not be loaded. Check your connection and try again.';
         throw error;
       } finally {
         if (version === this.loadVersion) {
@@ -458,6 +460,14 @@ export class DataService {
     if (inFlight) await inFlight;
     this.loaded = false;
     return this.load();
+  }
+
+  async refreshNotifications(): Promise<void> {
+    const notifications = await firstValueFrom(
+      this.http.get<Notif[]>(`${API_BASE_URL}/notifications`),
+    );
+    this.notificationVersion++;
+    this.notifications = notifications;
   }
 
   reset(): void {
@@ -491,7 +501,7 @@ export class DataService {
     page = this.userPage,
     search = this.userSearch,
     append = false,
-    perPage = 25
+    perPage = 25,
   ): Promise<Page<User>> {
     this.userPage = page;
     this.userSearch = search;
@@ -502,20 +512,15 @@ export class DataService {
       .set('search', search);
 
     const result = await firstValueFrom(
-      this.http.get<Page<Record<string, unknown>>>(
-        `${API_BASE_URL}/users`,
-        { params }
-      )
+      this.http.get<Page<Record<string, unknown>>>(`${API_BASE_URL}/users`, { params }),
     );
 
     const mapped = {
       ...result,
-      data: result.data.map(user => this.mapUser(user)),
+      data: result.data.map((user) => this.mapUser(user)),
     };
 
-    this.users = append
-      ? [...this.users, ...mapped.data]
-      : mapped.data;
+    this.users = append ? [...this.users, ...mapped.data] : mapped.data;
 
     return mapped;
   }
@@ -526,15 +531,13 @@ export class DataService {
     search = '',
     status = 'All',
     perPage = 25,
-    append = false
+    append = false,
   ): Promise<Page<Enr>> {
     this.enrollmentPage = page;
     this.enrollmentSearch = search;
     this.enrollmentStatus = status;
 
-    const key = JSON.stringify([
-      page, search, status, perPage, append,
-    ]);
+    const key = JSON.stringify([page, search, status, perPage, append]);
 
     const inFlight = this.enrollmentLoads.get(key);
     if (inFlight) return inFlight;
@@ -548,15 +551,12 @@ export class DataService {
     const version = this.enrollmentVersion;
     let request: Promise<Page<Enr>>;
     request = firstValueFrom(
-      this.http.get<Page<EnrollmentApiRecord>>(
-        `${API_BASE_URL}/enrollments`,
-        { params }
-      )
+      this.http.get<Page<EnrollmentApiRecord>>(`${API_BASE_URL}/enrollments`, { params }),
     )
-      .then(result => {
+      .then((result) => {
         const mapped = {
           ...result,
-          data: result.data.map(application => ({
+          data: result.data.map((application) => ({
             ...application,
             first_name: this.nameField(application.first_name),
             middle_name: this.nameField(application.middle_name),
@@ -564,9 +564,7 @@ export class DataService {
           })),
         };
         if (version === this.enrollmentVersion) {
-          this.enrollments = append
-            ? [...this.enrollments, ...mapped.data]
-            : mapped.data;
+          this.enrollments = append ? [...this.enrollments, ...mapped.data] : mapped.data;
         }
 
         return mapped;
@@ -581,14 +579,9 @@ export class DataService {
     return request;
   }
 
-  async submitEnrollment(
-    form: Record<string, unknown>
-  ): Promise<string> {
+  async submitEnrollment(form: Record<string, unknown>): Promise<string> {
     const result = await this.mutate(
-      this.http.post<{ reference: string }>(
-        `${API_BASE_URL}/enrollments`,
-        form
-      )
+      this.http.post<{ reference: string }>(`${API_BASE_URL}/enrollments`, form),
     );
 
     return result.reference;
@@ -596,9 +589,7 @@ export class DataService {
 
   async loadAcademicYear(): Promise<string> {
     const result = await firstValueFrom(
-      this.http.get<{ academic_year: string }>(
-        `${API_BASE_URL}/settings/academic-year`
-      )
+      this.http.get<{ academic_year: string }>(`${API_BASE_URL}/settings/academic-year`),
     );
     this.currentAcademicYear = result.academic_year;
     return this.currentAcademicYear;
@@ -606,58 +597,40 @@ export class DataService {
 
   async saveAcademicYear(academicYear: string): Promise<void> {
     const result = await this.mutate(
-      this.http.put<{ academic_year: string }>(
-        `${API_BASE_URL}/settings/academic-year`,
-        { academic_year: academicYear }
-      )
+      this.http.put<{ academic_year: string }>(`${API_BASE_URL}/settings/academic-year`, {
+        academic_year: academicYear,
+      }),
     );
     this.currentAcademicYear = result.academic_year;
   }
 
-  async trackEnrollment(
-    reference: string,
-    email: string
-  ): Promise<Enr> {
+  async trackEnrollment(reference: string, email: string): Promise<Enr> {
     return firstValueFrom(
-      this.http.post<Enr>(
-        `${API_BASE_URL}/enrollments/track`,
-        { reference, email }
-      )
+      this.http.post<Enr>(`${API_BASE_URL}/enrollments/track`, { reference, email }),
     );
   }
 
-  async updateEnrollment(
-    ref: string,
-    status: string,
-    note?: string
-  ): Promise<void> {
+  async updateEnrollment(ref: string, status: string, note?: string): Promise<void> {
     const result = await this.mutate(
       this.http.put<{ status: string; note?: string; school_id?: string | null }>(
         `${API_BASE_URL}/enrollments/${encodeURIComponent(ref)}`,
-        { status, note }
-      )
+        { status, note },
+      ),
     );
 
     this.enrollmentVersion++;
     this.enrollmentLoads.clear();
-    this.enrollments = this.enrollments.map(item =>
+    this.enrollments = this.enrollments.map((item) =>
       item.ref === ref
         ? {
             ...item,
             st: result.status,
-            student_status:
-              result.status === 'Enrolled'
-                ? 'New Student'
-                : 'Applicant',
+            student_status: result.status === 'Enrolled' ? 'New Student' : 'Applicant',
             note: result.note ?? item.note,
-            school_id:
-              result.school_id === undefined
-                ? item.school_id
-                : result.school_id,
+            school_id: result.school_id === undefined ? item.school_id : result.school_id,
             log: [...item.log, [this.today, status]],
           }
-
-        : item
+        : item,
     );
     if (result.status === 'Enrolled') {
       await this.reload();
@@ -665,42 +638,68 @@ export class DataService {
   }
 
   async assignEnrollmentSection(ref: string, section: string): Promise<void> {
-      const result = await this.mutate(
-        this.http.put<{ section: string; subjects: string[] }>(
-          `${API_BASE_URL}/enrollments/${encodeURIComponent(ref)}`,
-          { section }
-        )
-      );
-      const application = this.enrollments.find(item => item.ref === ref);
-      if (application) {
-        application.sec = result.section;
-        application.subs = result.subjects;
+    const result = await this.mutate(
+      this.http.put<{ section: string; subjects: string[] }>(
+        `${API_BASE_URL}/enrollments/${encodeURIComponent(ref)}`,
+        { section },
+      ),
+    );
+    const application = this.enrollments.find((item) => item.ref === ref);
+    if (application) {
+      application.sec = result.section;
+      application.subs = result.subjects;
     }
   }
 
-  async saveApplicantSubjects(
+  async completeEnrollment(
     ref: string,
-    codes: string[]
-  ): Promise<void> {
-    await this.mutate(
-      this.http.put(
-        `${API_BASE_URL}/enrollments/${encodeURIComponent(ref)}`,
-        { subjects: codes }
-      )
+    section: string,
+  ): Promise<{ status: string; section: string; school_id: string; account_issued: boolean }> {
+    const result = await this.mutate(
+      this.http.post<{
+        status: string;
+        section: string;
+        school_id: string;
+        account_issued: boolean;
+      }>(`${API_BASE_URL}/enrollments/${encodeURIComponent(ref)}/complete`, { section }),
     );
 
     this.enrollmentVersion++;
     this.enrollmentLoads.clear();
-    this.enrollments = this.enrollments.map(item =>
-      item.ref === ref ? { ...item, subs: [...codes] } : item
+    this.enrollments = this.enrollments.map((item) =>
+      item.ref === ref
+        ? {
+            ...item,
+            st: result.status,
+            acct: result.account_issued,
+            sec: result.section,
+            school_id: result.school_id,
+            student_status: 'New Student',
+            log: [...item.log, [this.today, 'Enrollment completed; login credentials emailed']],
+          }
+        : item,
+    );
+
+    return result;
+  }
+
+  async saveApplicantSubjects(ref: string, codes: string[]): Promise<void> {
+    await this.mutate(
+      this.http.put(`${API_BASE_URL}/enrollments/${encodeURIComponent(ref)}`, { subjects: codes }),
+    );
+
+    this.enrollmentVersion++;
+    this.enrollmentLoads.clear();
+    this.enrollments = this.enrollments.map((item) =>
+      item.ref === ref ? { ...item, subs: [...codes] } : item,
     );
   }
 
   markEnrollmentAccountIssued(ref: string): void {
     this.enrollmentVersion++;
     this.enrollmentLoads.clear();
-    this.enrollments = this.enrollments.map(item =>
-      item.ref === ref ? { ...item, acct: true } : item
+    this.enrollments = this.enrollments.map((item) =>
+      item.ref === ref ? { ...item, acct: true } : item,
     );
   }
 
@@ -714,19 +713,19 @@ export class DataService {
       | 'father_first_name'
       | 'father_middle_name'
       | 'father_last_name'
-    >
+    >,
   ): Promise<void> {
     const updated = await this.mutate(
       this.http.put<Partial<Enr>>(
         `${API_BASE_URL}/enrollments/${encodeURIComponent(ref)}`,
-        parentFields
-      )
+        parentFields,
+      ),
     );
 
     this.enrollmentVersion++;
     this.enrollmentLoads.clear();
-    this.enrollments = this.enrollments.map(item =>
-      item.ref === ref ? { ...item, ...updated } : item
+    this.enrollments = this.enrollments.map((item) =>
+      item.ref === ref ? { ...item, ...updated } : item,
     );
   }
 
@@ -737,16 +736,14 @@ export class DataService {
     status = 'All',
     type = 'All',
     perPage = 25,
-    append = false
+    append = false,
   ): Promise<Page<Req>> {
     this.requestPage = page;
     this.requestSearch = search;
     this.requestStatus = status;
     this.requestType = type;
 
-    const key = JSON.stringify([
-      page, search, status, type, perPage, append,
-    ]);
+    const key = JSON.stringify([page, search, status, type, perPage, append]);
 
     const inFlight = this.requestLoads.get(key);
     if (inFlight) return inFlight;
@@ -760,17 +757,10 @@ export class DataService {
 
     const version = this.requestVersion;
     let request: Promise<Page<Req>>;
-    request = firstValueFrom(
-      this.http.get<Page<Req>>(
-        `${API_BASE_URL}/requests`,
-        { params }
-      )
-    )
-      .then(result => {
+    request = firstValueFrom(this.http.get<Page<Req>>(`${API_BASE_URL}/requests`, { params }))
+      .then((result) => {
         if (version === this.requestVersion) {
-          this.requests = append
-            ? [...this.requests, ...result.data]
-            : result.data;
+          this.requests = append ? [...this.requests, ...result.data] : result.data;
         }
 
         return result;
@@ -785,14 +775,9 @@ export class DataService {
     return request;
   }
 
-  async saveRequest(
-    data: Record<string, unknown>
-  ): Promise<string> {
+  async saveRequest(data: Record<string, unknown>): Promise<string> {
     const result = await this.mutate(
-      this.http.post<{ reference: string }>(
-        `${API_BASE_URL}/requests`,
-        data
-      )
+      this.http.post<{ reference: string }>(`${API_BASE_URL}/requests`, data),
     );
 
     this.requestVersion++;
@@ -801,21 +786,14 @@ export class DataService {
     return result.reference;
   }
 
-  async updateRequest(
-    ref: string,
-    status: string,
-    remarks?: string
-  ): Promise<void> {
+  async updateRequest(ref: string, status: string, remarks?: string): Promise<void> {
     await this.mutate(
-      this.http.put(
-        `${API_BASE_URL}/requests/${encodeURIComponent(ref)}`,
-        { status, remarks }
-      )
+      this.http.put(`${API_BASE_URL}/requests/${encodeURIComponent(ref)}`, { status, remarks }),
     );
 
     this.requestVersion++;
     this.requestLoads.clear();
-    this.requests = this.requests.map(item =>
+    this.requests = this.requests.map((item) =>
       item.id === ref
         ? {
             ...item,
@@ -823,29 +801,20 @@ export class DataService {
             rem: remarks ?? item.rem,
             log: [...item.log, [this.today, status]],
           }
-        : item
+        : item,
     );
   }
 
   // USERS: CREATE, UPDATE, DELETE
-  async saveUser(
-    id: number | undefined,
-    data: Record<string, unknown>
-  ): Promise<User> {
+  async saveUser(id: number | undefined, data: Record<string, unknown>): Promise<User> {
     const saved = await this.mutate(
       id
-        ? this.http.put<Record<string, unknown>>(
-            `${API_BASE_URL}/users/${id}`,
-            data
-          )
-        : this.http.post<Record<string, unknown>>(
-            `${API_BASE_URL}/users`,
-            data
-          )
+        ? this.http.put<Record<string, unknown>>(`${API_BASE_URL}/users/${id}`, data)
+        : this.http.post<Record<string, unknown>>(`${API_BASE_URL}/users`, data),
     );
 
     const user = this.mapUser(saved);
-    const index = this.users.findIndex(item => item.id === user.id);
+    const index = this.users.findIndex((item) => item.id === user.id);
 
     if (index < 0) {
       this.users.unshift(user);
@@ -857,18 +826,14 @@ export class DataService {
   }
 
   async deleteUser(id: number): Promise<void> {
-    await this.mutate(
-      this.http.delete<void>(`${API_BASE_URL}/users/${id}`)
-    );
+    await this.mutate(this.http.delete<void>(`${API_BASE_URL}/users/${id}`));
 
-    const sid = this.users.find(user => user.id === id)?.sid;
+    const sid = this.users.find((user) => user.id === id)?.sid;
 
-    this.users = this.users.filter(user => user.id !== id);
+    this.users = this.users.filter((user) => user.id !== id);
 
     if (sid) {
-      this.students = this.students.filter(
-        student => student.id !== sid
-      );
+      this.students = this.students.filter((student) => student.id !== sid);
     }
   }
 
@@ -879,36 +844,34 @@ export class DataService {
       student_id: number;
       enrollment_application_id?: number;
       scores: Partial<Record<GradingTerm, number>>;
-    }>
+    }>,
   ): Promise<void> {
     const result = await this.mutate(
       this.http.put<{
-        students: Record<string, {
-          gwa: number | null;
-          status: string;
-          declining: string[];
-        }>;
+        students: Record<
+          string,
+          {
+            gwa: number | null;
+            status: string;
+            declining: string[];
+          }
+        >;
       }>(`${API_BASE_URL}/grades`, {
         subject_code: code,
         grades,
-      })
+      }),
     );
 
     const changed = new Map(
-      grades.map(grade => [
-        grade.enrollment_application_id ?? grade.student_id,
-        grade.scores,
-      ])
+      grades.map((grade) => [grade.enrollment_application_id ?? grade.student_id, grade.scores]),
     );
 
-    this.students = this.students.map(student => {
+    this.students = this.students.map((student) => {
       const scores = changed.get(student.enrollment_id ?? student.id);
       if (scores === undefined) return student;
 
       const courseGrades = { ...student.g };
-      const terms = [
-        ...(courseGrades[code] ?? [null, null, null]),
-      ];
+      const terms = [...(courseGrades[code] ?? [null, null, null])];
 
       for (const [term, score] of Object.entries(scores) as [GradingTerm, number][]) {
         const termIndex = ['Prelim', 'Midterm', 'Final'].indexOf(term);
@@ -928,27 +891,31 @@ export class DataService {
   }
 
   // ANNOUNCEMENTS
-  async saveAnnouncement(
-    data: Record<string, unknown>,
-    authorName = 'Registrar'
-  ): Promise<void> {
+  async saveAnnouncement(data: Record<string, unknown>, authorName = 'Registrar'): Promise<void> {
     const result = await this.mutate(
-      this.http.post<{ id: number }>(
-        `${API_BASE_URL}/announcements`,
-        data
-      )
+      this.http.post<{ id: number }>(`${API_BASE_URL}/announcements`, data),
     );
 
     const publishDate = String(data['publish_date']);
     const yearLevel = data['year_level'] ?? 'All';
     const program = data['program'] ?? 'All';
-    const audience = String(data['audience'] ?? 'all_users');
+    const audienceValue = data['audience'] ?? 'all_users';
+    const audience = Array.isArray(audienceValue)
+      ? audienceValue.includes('all_users')
+        ? 'all_users'
+        : ['students', 'faculty', 'staff']
+            .filter((value) => audienceValue.includes(value))
+            .join('_')
+      : String(audienceValue);
     const audienceLabels: Record<string, string> = {
       all_users: 'All Users',
       students: 'Students Only',
       faculty: 'Faculty Only',
       staff: 'Staff Only',
       faculty_staff: 'Faculty & Staff Only',
+      students_faculty: 'Students & Faculty',
+      students_staff: 'Students & Staff',
+      students_faculty_staff: 'Students, Faculty & Staff',
     };
 
     this.anns = [
@@ -961,19 +928,18 @@ export class DataService {
         category: String(data['category'] ?? 'General'),
         pr: String(data['priority']),
         by: authorName,
-        d: new Date(`${publishDate}T00:00:00`).toLocaleDateString(
-          'en',
-          { month: 'short', day: '2-digit' }
-        ),
+        d: new Date(`${publishDate}T00:00:00`).toLocaleDateString('en', {
+          month: 'short',
+          day: '2-digit',
+        }),
         dt: publishDate,
-        end:
-          typeof data['valid_until'] === 'string'
-            ? data['valid_until']
-            : undefined,
+        end: typeof data['valid_until'] === 'string' ? data['valid_until'] : undefined,
         prog: program as string | string[],
         yr: Array.isArray(yearLevel)
-          ? yearLevel.map(value => value === 'All' ? value : Number(value))
-          : yearLevel === 'All' ? 'All' : Number(yearLevel),
+          ? yearLevel.map((value) => (value === 'All' ? value : Number(value)))
+          : yearLevel === 'All'
+            ? 'All'
+            : Number(yearLevel),
         sec: (data['section'] ?? 'All') as string | string[],
         meeting_time: typeof data['meeting_time'] === 'string' ? data['meeting_time'] : null,
         meeting_venue: typeof data['meeting_venue'] === 'string' ? data['meeting_venue'] : null,
@@ -985,45 +951,43 @@ export class DataService {
 
   async markAnnouncementRead(id: number): Promise<void> {
     await this.mutate(this.http.put(`${API_BASE_URL}/announcements/${id}/read`, {}));
-    this.notifications = this.notifications.map(notification =>
-      notification.announcement_id === id ? { ...notification, read: true } : notification
+    this.notifications = this.notifications.map((notification) =>
+      notification.announcement_id === id ? { ...notification, read: true } : notification,
     );
   }
 
-  async announcementReaders(id: number): Promise<{ recipients: number; read_count: number; readers: AnnouncementReader[] }> {
-    return this.mutate(this.http.get<{ recipients: number; read_count: number; readers: AnnouncementReader[] }>(
-      `${API_BASE_URL}/announcements/${id}/readers`
-    ));
+  async announcementReaders(
+    id: number,
+  ): Promise<{ recipients: number; read_count: number; readers: AnnouncementReader[] }> {
+    return this.mutate(
+      this.http.get<{ recipients: number; read_count: number; readers: AnnouncementReader[] }>(
+        `${API_BASE_URL}/announcements/${id}/readers`,
+      ),
+    );
   }
 
   // SUBJECTS
-  async saveSubject(
-    code: string,
-    data: Subject
-  ): Promise<void> {
+  async saveSubject(code: string, data: Subject): Promise<void> {
     const isUpdate = code in this.subjects;
 
     const payload = {
       code,
       name: data.n,
-      units: data.u,
+      units: Number(data.u),
       program: data.p,
       major: data.major ?? null,
       year_level: String(data.y),
       semester: data.semester ?? null,
-      ...(data.academic_year !== undefined
-        ? { academic_year: data.academic_year }
-        : {}),
+      term: data.term || null,
+      ...(data.academic_year !== undefined ? { academic_year: data.academic_year } : {}),
     };
 
     await this.mutate(
       this.http.request(
         isUpdate ? 'put' : 'post',
-        `${API_BASE_URL}/subjects${
-          isUpdate ? '/' + encodeURIComponent(code) : ''
-        }`,
-        { body: payload }
-      )
+        `${API_BASE_URL}/subjects${isUpdate ? '/' + encodeURIComponent(code) : ''}`,
+        { body: payload },
+      ),
     );
 
     const current = this.subjects[code];
@@ -1032,6 +996,7 @@ export class DataService {
       ...this.subjects,
       [code]: {
         ...data,
+        u: Number(data.u),
         session: data.session ?? current?.session ?? 'All',
         faculty_ids: facultyIds,
         faculty_assignments: current?.faculty_assignments ?? [],
@@ -1039,15 +1004,10 @@ export class DataService {
         f: facultyIds[0] ?? null,
       },
     };
-
   }
 
   async deleteSubject(code: string): Promise<void> {
-    await this.mutate(
-      this.http.delete(
-        `${API_BASE_URL}/subjects/${encodeURIComponent(code)}`
-      )
-    );
+    await this.mutate(this.http.delete(`${API_BASE_URL}/subjects/${encodeURIComponent(code)}`));
 
     const subjects = { ...this.subjects };
     delete subjects[code];
@@ -1058,23 +1018,30 @@ export class DataService {
     id: number,
     codes: string[],
     scope: Pick<FacultyAssignment, 'semester' | 'academic_year' | 'section'>,
-    schedules: Record<string, Array<Pick<FacultyAssignment, 'session' | 'days' | 'start_time' | 'end_time' | 'room'> & {section?: string | null}>> = {}
+    schedules: Record<
+      string,
+      Array<
+        Pick<FacultyAssignment, 'session' | 'days' | 'start_time' | 'end_time' | 'room'> & {
+          section?: string | null;
+        }
+      >
+    > = {},
   ): Promise<void> {
     const apiSchedules = Object.fromEntries(
       Object.entries(schedules).map(([code, entries]) => [
         code,
-        entries.map(schedule => ({
+        entries.map((schedule) => ({
           ...schedule,
           section: schedule.section ?? scope.section,
         })),
-      ])
+      ]),
     );
     await this.mutate(
       this.http.put(`${API_BASE_URL}/faculty/${id}/subjects`, {
         codes,
         ...scope,
         schedules: apiSchedules,
-      })
+      }),
     );
 
     const selected = new Set(codes);
@@ -1083,43 +1050,39 @@ export class DataService {
       Object.entries(this.subjects).map(([code, subject]) => [
         code,
         this.withFacultyAssignment(subject, id, scope, selected.has(code), schedules[code]),
-      ])
+      ]),
     );
   }
 
-  async assignStudent(
-    id: number,
-    codes: string[],
-    enrollmentReference: string
-  ): Promise<void> {
+  async assignStudent(id: number, codes: string[], enrollmentReference: string): Promise<void> {
     const result = await this.mutate<{ codes: string[] }>(
       this.http.put<{ codes: string[] }>(`${API_BASE_URL}/students/${id}/subjects`, {
         codes,
         enrollment_reference: enrollmentReference,
-      })
+      }),
     );
 
-    const updated = this.eligibleEnrollments.map(student =>
+    const updated = this.eligibleEnrollments.map((student) =>
       student.enrollment_ref === enrollmentReference
         ? { ...student, subject_codes: [...result.codes] }
-        : student
+        : student,
     );
     this.eligibleEnrollments = updated;
-    this.students = this.students.map(student =>
+    this.students = this.students.map((student) =>
       student.enrollment_ref === enrollmentReference
         ? { ...student, subject_codes: [...result.codes] }
-        : student
+        : student,
     );
   }
 
   async saveSubjectGradeWeights(
     code: string,
-    weights: Record<'Prelim' | 'Midterm' | 'Final', number>
+    weights: Record<'Prelim' | 'Midterm' | 'Final', number>,
   ): Promise<void> {
     await this.mutate(
       this.http.put(`${API_BASE_URL}/subjects/${encodeURIComponent(code)}`, {
         grade_weights: weights,
-      })
+      }),
     );
     this.subjects = {
       ...this.subjects,
@@ -1130,28 +1093,24 @@ export class DataService {
   // RULES AND MODULE SETTINGS
   async saveRules(pass: number, safe: number): Promise<void> {
     this.rules = await this.mutate(
-      this.http.put<{ pass: number; safe: number }>(
-        `${API_BASE_URL}/settings/rules`,
-        { pass, safe }
-      )
+      this.http.put<{ pass: number; safe: number }>(`${API_BASE_URL}/settings/rules`, {
+        pass,
+        safe,
+      }),
     );
-    this.students = this.students.map(student => ({
+    this.students = this.students.map((student) => ({
       ...student,
       st: this.calculatedStanding(student),
     }));
   }
 
-  async setModule(
-    role: string,
-    module: string,
-    enabled: boolean
-  ): Promise<void> {
+  async setModule(role: string, module: string, enabled: boolean): Promise<void> {
     await this.mutate(
       this.http.put(`${API_BASE_URL}/settings/modules`, {
         role,
         module,
         enabled,
-      })
+      }),
     );
 
     const key = `${role}:${module}`;
@@ -1174,16 +1133,11 @@ export class DataService {
 
     const version = this.notificationVersion;
     const operation = (async () => {
-      await this.mutate(
-        this.http.put(
-          `${API_BASE_URL}/notifications/${id}/read`,
-          {}
-        )
-      );
+      await this.mutate(this.http.put(`${API_BASE_URL}/notifications/${id}/read`, {}));
 
       if (version === this.notificationVersion) {
-        this.notifications = this.notifications.map(item =>
-          item.id === id ? { ...item, read: true } : item
+        this.notifications = this.notifications.map((item) =>
+          item.id === id ? { ...item, read: true } : item,
         );
       }
     })().finally(() => {
@@ -1202,8 +1156,8 @@ export class DataService {
     }
 
     const unreadIds = this.notifications
-      .filter(item => item.sid === sid && !item.read)
-      .map(item => item.id);
+      .filter((item) => item.sid === sid && !item.read)
+      .map((item) => item.id);
 
     if (!unreadIds.length) return;
 
@@ -1214,8 +1168,8 @@ export class DataService {
         await this.mutate(this.http.put(`${API_BASE_URL}/notifications/read-all`, {}));
         if (version === this.notificationVersion) {
           const unread = new Set(unreadIds);
-          this.notifications = this.notifications.map(item =>
-            unread.has(item.id) ? { ...item, read: true } : item
+          this.notifications = this.notifications.map((item) =>
+            unread.has(item.id) ? { ...item, read: true } : item,
           );
         }
       } finally {
@@ -1232,14 +1186,26 @@ export class DataService {
   async sendAlert(
     studentId: number,
     title: string,
-    message: string
-  ): Promise<void> {
-    await this.mutate(
-      this.http.post(`${API_BASE_URL}/notifications`, {
+    message: string,
+    subjectCodes: string[] = [],
+  ): Promise<{
+    sent: boolean;
+    duplicate: boolean;
+    email_sent: boolean;
+    message?: string;
+  }> {
+    return this.mutate(
+      this.http.post<{
+        sent: boolean;
+        duplicate: boolean;
+        email_sent: boolean;
+        message?: string;
+      }>(`${API_BASE_URL}/notifications`, {
         student_id: studentId,
         title,
         message,
-      })
+        ...(subjectCodes.length ? { subject_codes: subjectCodes } : {}),
+      }),
     );
   }
 
@@ -1255,10 +1221,7 @@ export class DataService {
       .map(([, grades]) => this.avg(grades))
       .filter((value): value is number => value != null);
 
-    return values.length
-      ? values.reduce((total, value) => total + value, 0) /
-          values.length
-      : null;
+    return values.length ? values.reduce((total, value) => total + value, 0) / values.length : null;
   }
 
   standingOf(s: Student): [string, string] {
@@ -1269,9 +1232,7 @@ export class DataService {
       no_data: ['No Data', ''],
     };
 
-    return s.st && map[s.st]
-      ? map[s.st]
-      : this.standing(this.gwa(s));
+    return s.st && map[s.st] ? map[s.st] : this.standing(this.gwa(s));
   }
 
   standing(a: number | null): [string, string] {
@@ -1308,40 +1269,36 @@ export class DataService {
 
   atRisk(uid?: number): Student[] {
     return (uid ? this.myStudents(uid) : this.students)
-      .filter(student =>
+      .filter((student) =>
         student.st
-          ? student.st === 'for_monitoring' ||
-            student.st === 'at_risk'
-          : (this.gwa(student) ?? 100) < this.rules.safe
+          ? student.st === 'for_monitoring' || student.st === 'at_risk'
+          : (this.gwa(student) ?? 100) < this.rules.safe,
       )
-      .sort(
-        (a, b) =>
-          (this.gwa(a) ?? 0) - (this.gwa(b) ?? 0)
-      );
+      .sort((a, b) => (this.gwa(a) ?? 0) - (this.gwa(b) ?? 0));
   }
 
   // GENERAL HELPERS
   unread(sid: number): number {
     return this.notifications.filter(
-      notification => notification.sid === sid && !notification.read
+      (notification) => notification.sid === sid && !notification.read,
     ).length;
   }
 
   unreadForUser(userId: number): number {
     return this.notifications.filter(
-      notification => notification.user_id === userId && !notification.read
+      (notification) => notification.user_id === userId && !notification.read,
     ).length;
   }
 
   async markAllForUser(userId: number): Promise<void> {
     const unreadIds = this.notifications
-      .filter(notification => notification.user_id === userId && !notification.read)
-      .map(notification => notification.id);
+      .filter((notification) => notification.user_id === userId && !notification.read)
+      .map((notification) => notification.id);
     if (!unreadIds.length) return;
     await this.mutate(this.http.put(`${API_BASE_URL}/notifications/read-all`, {}));
     const unread = new Set(unreadIds);
-    this.notifications = this.notifications.map(notification =>
-      unread.has(notification.id) ? { ...notification, read: true } : notification
+    this.notifications = this.notifications.map((notification) =>
+      unread.has(notification.id) ? { ...notification, read: true } : notification,
     );
   }
 
@@ -1362,16 +1319,16 @@ export class DataService {
 
   avg(grades: (number | null)[]): number | null {
     const scores = grades.slice(0, 3);
-    if (scores.length < 3 || scores.some(value =>
-      value == null || !Number.isFinite(value) || value < 0 || value > 100
-    )) {
+    if (
+      scores.length < 3 ||
+      scores.some((value) => value == null || !Number.isFinite(value) || value < 0 || value > 100)
+    ) {
       return null;
     }
 
-    return Number((scores.reduce<number>(
-      (total, value) => total + (value ?? 0),
-      0
-    ) / 3).toFixed(2));
+    return Number(
+      (scores.reduce<number>((total, value) => total + (value ?? 0), 0) / 3).toFixed(2),
+    );
   }
 
   subjectAverage(code: string, grades: (number | null)[]): number | null {
@@ -1381,14 +1338,20 @@ export class DataService {
     const weights = this.subjects[code]?.grade_weights;
     if (!weights) return average;
     const periodWeights = [weights.Prelim, weights.Midterm, weights.Final];
-    if (periodWeights.some(weight => typeof weight !== 'number' || !Number.isFinite(weight))
-      || Math.abs(periodWeights.reduce<number>((total, weight) => total + (weight ?? 0), 0) - 100) > 0.001) {
+    if (
+      periodWeights.some((weight) => typeof weight !== 'number' || !Number.isFinite(weight)) ||
+      Math.abs(periodWeights.reduce<number>((total, weight) => total + (weight ?? 0), 0) - 100) >
+        0.001
+    ) {
       return average;
     }
 
     const scores = grades.slice(0, 3) as number[];
-    return Number(scores.reduce((total, score, index) =>
-      total + score * (periodWeights[index] ?? 0) / 100, 0).toFixed(2));
+    return Number(
+      scores
+        .reduce((total, score, index) => total + (score * (periodWeights[index] ?? 0)) / 100, 0)
+        .toFixed(2),
+    );
   }
 
   overallGrade(value: number | null | undefined): string {
@@ -1400,56 +1363,60 @@ export class DataService {
   }
 
   yearLevelLabel(value: string | number): string {
-    return ({
-      '1': '1st Year',
-      '2': '2nd Year',
-      '3': '3rd Year',
-      '4': '4th Year',
-      '11': 'Grade 11',
-      '12': 'Grade 12',
-    } as Record<string, string>)[String(value)] ?? `Year ${value}`;
-  }
-
-  unitsOf(codes: string[]): number {
-    return codes.reduce(
-      (total, code) => total + (this.subjects[code]?.u || 0),
-      0
+    return (
+      (
+        {
+          '1': '1st Year',
+          '2': '2nd Year',
+          '3': '3rd Year',
+          '4': '4th Year',
+          '11': 'Grade 11',
+          '12': 'Grade 12',
+        } as Record<string, string>
+      )[String(value)] ?? `Year ${value}`
     );
   }
 
+  unitsOf(codes: string[]): number {
+    return codes.reduce((total, code) => total + (this.subjects[code]?.u || 0), 0);
+  }
+
   facName(id: number | null): string {
-    return this.users.find(user => user.id === id)?.name ||
-      'Unassigned';
+    return this.users.find((user) => user.id === id)?.name || 'Unassigned';
   }
 
   facultyIds(subject: Subject): number[] {
-    return subject.faculty_ids ?? subject.faculty_assignments?.map(item => item.faculty_id)
-      ?? (subject.f == null ? [] : [subject.f]);
+    return (
+      subject.faculty_ids ??
+      subject.faculty_assignments?.map((item) => item.faculty_id) ??
+      (subject.f == null ? [] : [subject.f])
+    );
   }
 
   facultyNames(ids: number[]): string {
-    return ids.map(id => this.users.find(user => user.id === id)?.name || '')
+    return ids
+      .map((id) => this.users.find((user) => user.id === id)?.name || '')
       .filter(Boolean)
       .join(', ');
   }
 
   faculty(): User[] {
-    return this.users.filter(user => user.role === 'Faculty');
+    return this.users.filter((user) => user.role === 'Faculty');
   }
 
   mySubjects(
     uid: number,
-    scope?: Pick<FacultyAssignment, 'semester' | 'academic_year' | 'section'>
+    scope?: Pick<FacultyAssignment, 'semester' | 'academic_year' | 'section'>,
   ): string[] {
-    return Object.keys(this.subjects).filter(
-      code => this.facultyAssignments(this.subjects[code]).some(assignment =>
-        assignment.faculty_id === uid
-        && (!scope || (
-          assignment.semester === scope.semester
-          && assignment.academic_year === scope.academic_year
-          && assignment.section === scope.section
-        ))
-      )
+    return Object.keys(this.subjects).filter((code) =>
+      this.facultyAssignments(this.subjects[code]).some(
+        (assignment) =>
+          assignment.faculty_id === uid &&
+          (!scope ||
+            (assignment.semester === scope.semester &&
+              assignment.academic_year === scope.academic_year &&
+              assignment.section === scope.section)),
+      ),
     );
   }
 
@@ -1462,37 +1429,51 @@ export class DataService {
     facultyId: number,
     scope: Pick<FacultyAssignment, 'semester' | 'academic_year' | 'section'>,
     assigned: boolean,
-    schedules?: Array<Pick<FacultyAssignment, 'session' | 'days' | 'start_time' | 'end_time' | 'room'> & {section?: string | null}>
+    schedules?: Array<
+      Pick<FacultyAssignment, 'session' | 'days' | 'start_time' | 'end_time' | 'room'> & {
+        section?: string | null;
+      }
+    >,
   ): Subject {
-    const previous = this.facultyAssignments(subject).filter(item =>
-      item.faculty_id === facultyId
-      && item.semester === scope.semester
-      && item.academic_year === scope.academic_year
-      && item.section === scope.section
+    const previous = this.facultyAssignments(subject).filter(
+      (item) =>
+        item.faculty_id === facultyId &&
+        item.semester === scope.semester &&
+        item.academic_year === scope.academic_year &&
+        item.section === scope.section,
     );
-    const assignments = this.facultyAssignments(subject).filter(item =>
-      item.faculty_id !== facultyId
-      || item.semester !== scope.semester
-      || item.academic_year !== scope.academic_year
-      || item.section !== scope.section
+    const assignments = this.facultyAssignments(subject).filter(
+      (item) =>
+        item.faculty_id !== facultyId ||
+        item.semester !== scope.semester ||
+        item.academic_year !== scope.academic_year ||
+        item.section !== scope.section,
     );
     if (assigned) {
-      const selectedSchedules=schedules??(previous.length?previous:[{
-        session:subject.session||'All',
-        section:scope.section,
-        days:subject.d,
-        start_time:subject.start,
-        end_time:subject.end,
-        room:subject.r,
-      }]);
-      assignments.push(...selectedSchedules.map(schedule => ({
-        ...schedule,
-        faculty_id: facultyId,
-        ...scope,
-        section:schedule.section ?? scope.section,
-      })));
+      const selectedSchedules =
+        schedules ??
+        (previous.length
+          ? previous
+          : [
+              {
+                session: subject.session || 'All',
+                section: scope.section,
+                days: subject.d,
+                start_time: subject.start,
+                end_time: subject.end,
+                room: subject.r,
+              },
+            ]);
+      assignments.push(
+        ...selectedSchedules.map((schedule) => ({
+          ...schedule,
+          faculty_id: facultyId,
+          ...scope,
+          section: schedule.section ?? scope.section,
+        })),
+      );
     }
-    const facultyIds = [...new Set(assignments.map(item => item.faculty_id))];
+    const facultyIds = [...new Set(assignments.map((item) => item.faculty_id))];
     return {
       ...subject,
       faculty_assignments: assignments,
@@ -1502,77 +1483,109 @@ export class DataService {
   }
 
   myStudents(uid: number): Student[] {
-    return this.students.filter(student => Object.entries(this.subjects).some(([code, subject]) =>
-      this.codes(student).includes(code)
-      && this.facultyAssignments(subject).some(assignment =>
-        assignment.faculty_id === uid
-        && assignment.semester === student.semester
-        && assignment.academic_year === student.academic_year
-        && (assignment.section === 'All' || assignment.section === student.sec)
-      )
-    ));
+    return this.students.filter((student) =>
+      Object.entries(this.subjects).some(
+        ([code, subject]) =>
+          this.codes(student).includes(code) &&
+          this.facultyAssignments(subject).some(
+            (assignment) =>
+              assignment.faculty_id === uid &&
+              assignment.semester === student.semester &&
+              assignment.academic_year === student.academic_year &&
+              (assignment.section === 'All' || assignment.section === student.sec),
+          ),
+      ),
+    );
   }
 
   studentsForAssignment(assignment: FacultyScheduleItem): Student[] {
-    return this.students.filter(student =>
-      this.codes(student).includes(assignment.code)
-      && student.semester === assignment.semester
-      && student.academic_year === assignment.academic_year
-      && (!assignment.session || assignment.session === 'All' || student.session === assignment.session)
-      && (assignment.section === 'All' || student.sec === assignment.section)
+    return this.students.filter(
+      (student) =>
+        this.codes(student).includes(assignment.code) &&
+        student.semester === assignment.semester &&
+        student.academic_year === assignment.academic_year &&
+        (!assignment.session ||
+          assignment.session === 'All' ||
+          student.session === assignment.session) &&
+        (assignment.section === 'All' || student.sec === assignment.section),
     );
   }
 
   facultySchedule(uid: number): FacultyScheduleItem[] {
     const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const dayNames: Record<string, string> = {
-      mon: 'Monday', monday: 'Monday',
-      tue: 'Tuesday', tues: 'Tuesday', tuesday: 'Tuesday',
-      wed: 'Wednesday', wednesday: 'Wednesday',
-      thu: 'Thursday', thur: 'Thursday', thurs: 'Thursday', thursday: 'Thursday',
-      fri: 'Friday', friday: 'Friday',
-      sat: 'Saturday', saturday: 'Saturday',
-      sun: 'Sunday', sunday: 'Sunday',
+      mon: 'Monday',
+      monday: 'Monday',
+      tue: 'Tuesday',
+      tues: 'Tuesday',
+      tuesday: 'Tuesday',
+      wed: 'Wednesday',
+      wednesday: 'Wednesday',
+      thu: 'Thursday',
+      thur: 'Thursday',
+      thurs: 'Thursday',
+      thursday: 'Thursday',
+      fri: 'Friday',
+      friday: 'Friday',
+      sat: 'Saturday',
+      saturday: 'Saturday',
+      sun: 'Sunday',
+      sunday: 'Sunday',
     };
-    const timeLabel = (value: string | null | undefined) => value ? value.slice(0, 5) : '—';
-    return Object.entries(this.subjects).flatMap(([code, subject]) => {
-      if (!subject) return [];
-      const assignments = this.facultyAssignments(subject).filter(item => item.faculty_id === uid);
-      return assignments.flatMap(assignment => {
-        const days = [...new Set((assignment.days ?? subject.d ?? '').split(/[\/,;|&]/)
-        .map(day => day.trim().toLowerCase().replace(/\.$/, ''))
-        .map(day => dayNames[day])
-        .filter((day): day is string => !!day))];
-        return (days.length ? days : ['—']).map(day => ({
-          assignment_id: assignment.id,
-          day,
-          days: assignment.days ?? subject.d ?? '',
-          code,
-          subject: subject.n,
-          session: assignment.session || subject.session || 'All',
-          start: timeLabel(assignment.start_time || subject.start),
-          end: timeLabel(assignment.end_time || subject.end),
-          room: assignment.room || subject.r || '—',
-          semester: assignment.semester,
-          academic_year: assignment.academic_year,
-          section: assignment.section || 'Not Assigned',
-        }));
-      });
-    }).sort((a, b) => weekdays.indexOf(a.day) - weekdays.indexOf(b.day)
-      || a.start.localeCompare(b.start)
-      || a.code.localeCompare(b.code));
+    const timeLabel = (value: string | null | undefined) => (value ? value.slice(0, 5) : '—');
+    return Object.entries(this.subjects)
+      .flatMap(([code, subject]) => {
+        if (!subject) return [];
+        const assignments = this.facultyAssignments(subject).filter(
+          (item) => item.faculty_id === uid,
+        );
+        return assignments.flatMap((assignment) => {
+          const days = [
+            ...new Set(
+              (assignment.days ?? subject.d ?? '')
+                .split(/[\/,;|&]/)
+                .map((day) => day.trim().toLowerCase().replace(/\.$/, ''))
+                .map((day) => dayNames[day])
+                .filter((day): day is string => !!day),
+            ),
+          ];
+          return (days.length ? days : ['—']).map((day) => ({
+            assignment_id: assignment.id,
+            day,
+            days: assignment.days ?? subject.d ?? '',
+            code,
+            subject: subject.n,
+            units: subject.u,
+            session: assignment.session || subject.session || 'All',
+            start: timeLabel(assignment.start_time || subject.start),
+            end: timeLabel(assignment.end_time || subject.end),
+            room: assignment.room || subject.r || '—',
+            semester: assignment.semester,
+            term: subject.term,
+            academic_year: assignment.academic_year,
+            section: assignment.section || 'Not Assigned',
+          }));
+        });
+      })
+      .sort(
+        (a, b) =>
+          weekdays.indexOf(a.day) - weekdays.indexOf(b.day) ||
+          a.start.localeCompare(b.start) ||
+          a.code.localeCompare(b.code),
+      );
   }
 
   annsFor(s: Student): Ann[] {
     const matches = (target: string | number | string[] | number[], value: string | number) =>
-      target === 'All' || (Array.isArray(target)
-        ? target.some(item => String(item) === String(value))
+      target === 'All' ||
+      (Array.isArray(target)
+        ? target.some((item) => String(item) === String(value))
         : String(target) === String(value));
     return this.anns.filter(
-      announcement =>
+      (announcement) =>
         matches(announcement.prog, s.prog) &&
         matches(announcement.yr, s.yr) &&
-        matches(announcement.sec, s.sec)
+        matches(announcement.sec, s.sec),
     );
   }
 
@@ -1587,11 +1600,8 @@ export class DataService {
             ? a.start < b.end && b.start < a.end
             : a?.tm === b?.tm;
         const sameAcademicYear =
-          !a?.academic_year ||
-          !b?.academic_year ||
-          a.academic_year === b.academic_year;
-        const sameSemester =
-          !a?.semester || !b?.semester || a.semester === b.semester;
+          !a?.academic_year || !b?.academic_year || a.academic_year === b.academic_year;
+        const sameSemester = !a?.semester || !b?.semester || a.semester === b.semester;
 
         if (
           a &&
@@ -1599,7 +1609,7 @@ export class DataService {
           sameAcademicYear &&
           sameSemester &&
           overlaps &&
-          a.d.split('/').some(day => b.d.split('/').includes(day))
+          a.d.split('/').some((day) => b.d.split('/').includes(day))
         ) {
           return `Schedule conflict: ${codes[i]} and ${codes[j]} meet at the same time.`;
         }
@@ -1624,24 +1634,14 @@ export class DataService {
       schoolId: typeof x['school_id'] === 'string' ? x['school_id'] : undefined,
       act: Boolean(x['active'] ?? x['act']),
       phone: String(x['phone'] ?? ''),
-      sid: x['student_id']
-        ? Number(x['student_id'])
-        : x['sid']
-          ? Number(x['sid'])
-          : undefined,
-      avatar:
-        typeof x['avatar'] === 'string'
-          ? x['avatar']
-          : undefined,
-      prog:
-        typeof x['program'] === 'string'
-          ? x['program']
-          : undefined,
+      sid: x['student_id'] ? Number(x['student_id']) : x['sid'] ? Number(x['sid']) : undefined,
+      avatar: typeof x['avatar'] === 'string' ? x['avatar'] : undefined,
+      prog: typeof x['program'] === 'string' ? x['program'] : undefined,
       major: typeof x['major'] === 'string' ? x['major'] : undefined,
       semester: typeof x['semester'] === 'string' ? x['semester'] : undefined,
-      yr: x['year_level']
-        ? Number(x['year_level'])
-        : undefined,
+      yr: x['year_level'] ? Number(x['year_level']) : undefined,
+      academicYear: typeof x['academic_year'] === 'string' ? x['academic_year'] : undefined,
+      createdAt: typeof x['created_at'] === 'string' ? x['created_at'] : undefined,
     };
   }
 

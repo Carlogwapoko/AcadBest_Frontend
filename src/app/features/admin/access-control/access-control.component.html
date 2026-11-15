@@ -1,12 +1,47 @@
 <div class="feature-content">
-  <p class="sub" style="margin:0 0 14px">Limit which modules each role can open. Disabled modules disappear from the sidebar and cannot be opened. Core modules are locked.</p>
-  <app-refresh-button [loading]="d.loading" (refreshed)="d.reload()"/>
-  <div class="tw"><table>
-    <tr><th>Role</th><th>Module</th><th>Record scope</th><th>Access</th></tr>
-    @for(m of mods;track m.role+m.key){
-      <tr><td>{{roleName[m.role]}}</td><td>{{m.label}}</td><td style="white-space:normal;min-width:240px">{{scope[m.role]}}</td>
-      <td>@if(m.locked){<span class="chip"><app-icon name="shield" [size]="12"/> Locked</span>}
-          @else{<button class="tg" [class.on]="on(m)" [disabled]="busy.has(m.role+':'+m.key)" (click)="toggle(m)" role="switch" [attr.aria-checked]="on(m)" [attr.aria-label]="'Toggle '+m.label"><i></i></button>}</td></tr>
-    }
-  </table></div>
+  <p class="sub" style="margin: 0 0 14px">
+    Limit which modules each role can open. Disabled modules disappear from the sidebar and cannot
+    be opened. Core modules are locked.
+  </p>
+  <app-refresh-button [loading]="d.loading" (refreshed)="d.reload()" />
+  <div class="tw">
+    <table>
+      <tr>
+        <th>Role</th>
+        <th>Module</th>
+        <th>Record scope</th>
+        <th>Access</th>
+      </tr>
+      @for (m of mods | paginate: page; track m.role + m.key) {
+        <tr>
+          <td>{{ roleName[m.role] }}</td>
+          <td>{{ m.label }}</td>
+          <td style="white-space: normal; min-width: 240px">{{ scope[m.role] }}</td>
+          <td>
+            @if (m.locked) {
+              <span class="chip"><app-icon name="shield" [size]="12" /> Locked</span>
+            } @else {
+              <button
+                class="tg"
+                [class.on]="on(m)"
+                [disabled]="busy.has(m.role + ':' + m.key)"
+                (click)="toggle(m)"
+                role="switch"
+                [attr.aria-checked]="on(m)"
+                [attr.aria-label]="'Toggle ' + m.label"
+              >
+                <i></i>
+              </button>
+            }
+          </td>
+        </tr>
+      }
+    </table>
+  </div>
+  <app-table-pagination
+    [page]="page"
+    [totalItems]="mods.length"
+    label="modules"
+    (pageChange)="page = $event"
+  />
 </div>

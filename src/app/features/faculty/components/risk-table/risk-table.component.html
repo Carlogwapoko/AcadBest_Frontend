@@ -1,6 +1,157 @@
-@if(!items.length){@if(!loading){<div class="empty"><div class="eic"><app-icon name="inbox" [size]="24"/></div>No records found. No at-risk advisees at this time.</div>}}
-@else{<div class="tw"><table><tr><th class="name-part">First Name</th><th class="name-part">Middle Name</th><th class="name-part">Last Name</th><th>School ID</th><th>Program / Major / Section</th><th>Average</th><th>Standing</th><th class="risk-action"></th></tr>
-@for(s of items;track s.id){<tr class="cl" (click)="sel=s"><td class="name-part">{{s.first_name||'—'}}</td><td class="name-part">{{s.middle_name||'—'}}</td><td class="name-part">{{s.last_name||'—'}}</td><td>{{s.school_id||'—'}}</td><td>{{s.prog}}@if(s.major){ · {{s.major}}} · {{d.yearLevelLabel(s.yr)}}{{s.sec}}</td><td>{{d.f1(d.gwa(s))}}</td><td (click)="$event.stopPropagation()" style="cursor:default"><span class="sb" style="cursor:default" [class]="'sb '+d.standing(d.gwa(s))[1]"><app-icon [name]="d.standing(d.gwa(s))[1]=='er'?'alert':'trend'" [size]="14"/>{{d.standing(d.gwa(s))[0]}}</span></td><td class="risk-action"><button class="btn sm sec risk-view" type="button" (click)="$event.stopPropagation();sel=s"><app-icon name="eye" [size]="14"/>View Details</button></td></tr>}</table></div>}
-<app-modal [open]="!!sel" [title]="sel?.name||''" [disableClose]="busy" (closed)="sel=null">@if(sel){<p class="risk-summary"><span>School ID {{sel.school_id||'—'}}</span><span>{{sel.prog}}@if(sel.major){ · {{sel.major}}} · {{d.yearLevelLabel(sel.yr)}} · Section {{sel.sec}}</span><span>Overall average <b>{{d.f1(d.gwa(sel))}}</b></span><span class="chip" [class]="d.standing(d.gwa(sel))[1]">{{d.standing(d.gwa(sel))[0]}}</span></p>
-<div class="tw"><table><tr><th>Subject</th><th>Prelim</th><th>Midterm</th><th>Final</th><th>Overall Grade</th></tr>@for(c of d.codes(sel);track c){<tr><td>{{c}}</td>@for(v of sel.g[c];track $index){<td>{{d.f1(v)}}</td>}<td><b>{{d.overallGrade(d.avg(sel.g[c]))}}</b></td></tr>}</table></div>
-<div class="acts"><button class="btn" [disabled]="busy" (click)="remind()">@if(busy){<span class="sp"></span>}Send Reminder</button></div>}</app-modal>
+@if (!items.length) {
+  @if (!loading) {
+    <div class="empty">
+      <div class="eic"><app-icon name="inbox" [size]="24" /></div>
+      No records found. No at-risk advisees at this time.
+    </div>
+  }
+} @else {
+  <div class="tw">
+    <table>
+      <tr>
+        <th class="name-part">First Name</th>
+        <th class="name-part">Middle Name</th>
+        <th class="name-part">Last Name</th>
+        <th>School ID</th>
+        <th>Program / Major / Section</th>
+        <th>Average</th>
+        <th>Standing</th>
+        <th class="risk-action"></th>
+      </tr>
+      @for (s of items | paginate: page; track s.id) {
+        <tr class="cl" (click)="openStudent(s)">
+          <td class="name-part">{{ s.first_name || '—' }}</td>
+          <td class="name-part">{{ s.middle_name || '—' }}</td>
+          <td class="name-part">{{ s.last_name || '—' }}</td>
+          <td>{{ s.school_id || '—' }}</td>
+          <td class="student-academic-cell">
+            <div class="student-academic-program">
+              <strong>{{ s.prog }}</strong>
+              @if (s.major) {
+                <span>{{ s.major }}</span>
+              }
+            </div>
+            <div class="student-academic-tags">
+              <span class="student-academic-tag">{{ d.yearLevelLabel(s.yr) }}</span>
+              <span class="student-academic-tag">Section {{ s.sec }}</span>
+            </div>
+          </td>
+          <td>{{ d.f1(d.gwa(s)) }}</td>
+          <td (click)="$event.stopPropagation()" style="cursor: default">
+            <span class="sb" style="cursor: default" [class]="'sb ' + d.standing(d.gwa(s))[1]"
+              ><app-icon
+                [name]="d.standing(d.gwa(s))[1] == 'er' ? 'alert' : 'trend'"
+                [size]="14"
+              />{{ d.standing(d.gwa(s))[0] }}</span
+            >
+          </td>
+          <td class="risk-action">
+            <button
+              class="btn sm sec risk-view"
+              type="button"
+              (click)="$event.stopPropagation(); openStudent(s)"
+            >
+              <app-icon name="eye" [size]="14" />View Details
+            </button>
+          </td>
+        </tr>
+      }
+    </table>
+  </div>
+  <app-table-pagination
+    [page]="page"
+    [totalItems]="items.length"
+    label="students"
+    [loading]="loading"
+    (pageChange)="page = $event"
+  />
+}
+<app-modal
+  [open]="!!sel"
+  [maxWidth]="760"
+  [title]="sel?.name || ''"
+  [disableClose]="busy"
+  (closed)="sel = null"
+>
+  @if (sel) {
+    <div class="risk-detail">
+      <section class="risk-summary" aria-label="Student summary">
+        <div class="risk-summary-card">
+          <span class="risk-summary-label">School ID</span>
+          <strong>{{ sel.school_id || '—' }}</strong>
+        </div>
+        <div class="risk-summary-card risk-program-card">
+          <span class="risk-summary-label">Program and major</span>
+          <strong>{{ sel.prog || '—' }}</strong>
+          @if (sel.major) {
+            <span class="risk-major">{{ sel.major }}</span>
+          }
+          <span class="student-academic-tags">
+            <span class="student-academic-tag">{{ d.yearLevelLabel(sel.yr) }}</span>
+            <span class="student-academic-tag">Section {{ sel.sec }}</span>
+          </span>
+        </div>
+        <div class="risk-summary-card risk-average-card">
+          <span class="risk-summary-label">Overall average</span>
+          <strong>{{ d.f1(d.gwa(sel)) }}</strong>
+          <span class="chip" [class]="d.standing(d.gwa(sel))[1]">{{
+            d.standing(d.gwa(sel))[0]
+          }}</span>
+        </div>
+      </section>
+
+      <section class="risk-grades" aria-labelledby="risk-grades-heading">
+        <div class="risk-grades-heading">
+          <div>
+            <h4 id="risk-grades-heading">Subject grades</h4>
+            <p>Review the student's grades by grading period.</p>
+          </div>
+          <span class="risk-grade-count">{{ d.codes(sel).length }} subjects</span>
+        </div>
+        <div class="tw risk-grade-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>Prelim</th>
+                <th>Midterm</th>
+                <th>Final</th>
+                <th>Overall Grade</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of d.codes(sel) | paginate: subjectPage; track c) {
+                <tr>
+                  <td><b>{{ c }}</b></td>
+                  @for (v of sel.g[c]; track $index) {
+                    <td>{{ d.f1(v) }}</td>
+                  }
+                  <td><b>{{ d.overallGrade(d.avg(sel.g[c])) }}</b></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        @if (d.codes(sel).length) {
+          <app-table-pagination
+            [page]="subjectPage"
+            [totalItems]="d.codes(sel).length"
+            label="subjects"
+            (pageChange)="subjectPage = $event"
+          />
+        } @else {
+          <div class="empty risk-empty-grades">No subject grades are available for this student.</div>
+        }
+      </section>
+
+      <div class="risk-modal-actions">
+        <button class="btn" [disabled]="busy" (click)="remind()">
+          @if (busy) {
+            <span class="sp"></span>
+          }
+          Send Reminder
+        </button>
+      </div>
+    </div>
+  }
+</app-modal>

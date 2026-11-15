@@ -1,4 +1,12 @@
-import { Component, ElementRef, HostListener, Input, OnDestroy, Renderer2, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  Input,
+  OnDestroy,
+  Renderer2,
+  ViewChild,
+} from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export interface EnrollmentSelectOption {
@@ -11,13 +19,15 @@ export interface EnrollmentSelectOption {
   standalone: true,
   templateUrl: './enrollment-select.component.html',
   styleUrl: './enrollment-select.component.css',
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: EnrollmentSelectComponent,
-    multi: true,
-  }],
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: EnrollmentSelectComponent,
+      multi: true,
+    },
+  ],
 })
-export class EnrollmentSelectComponent implements ControlValueAccessor,OnDestroy {
+export class EnrollmentSelectComponent implements ControlValueAccessor, OnDestroy {
   @Input('controlId') id = '';
   @Input() options: readonly EnrollmentSelectOption[] = [];
   @Input() placeholder = 'Select an option';
@@ -39,10 +49,12 @@ export class EnrollmentSelectComponent implements ControlValueAccessor,OnDestroy
   private onTouched: () => void = () => {};
   private typeahead = '';
   private typeaheadTimer?: ReturnType<typeof setTimeout>;
-  private readonly scrollHandler = () => { if (this.open) this.positionList(); };
+  private readonly scrollHandler = () => {
+    if (this.open) this.positionList();
+  };
 
   get selectedLabel(): string {
-    return this.options.find(option => option.value === this.value)?.label ?? this.placeholder;
+    return this.options.find((option) => option.value === this.value)?.label ?? this.placeholder;
   }
 
   get listId(): string {
@@ -51,7 +63,7 @@ export class EnrollmentSelectComponent implements ControlValueAccessor,OnDestroy
 
   writeValue(value: string | null): void {
     this.value = value ?? '';
-    this.activeIndex = this.options.findIndex(option => option.value === this.value);
+    this.activeIndex = this.options.findIndex((option) => option.value === this.value);
   }
 
   registerOnChange(fn: (value: string) => void): void {
@@ -90,7 +102,9 @@ export class EnrollmentSelectComponent implements ControlValueAccessor,OnDestroy
         this.openList(event.key === 'ArrowUp');
       } else {
         const direction = event.key === 'ArrowDown' ? 1 : -1;
-        this.setActiveIndex(Math.max(0, Math.min(this.options.length - 1, this.activeIndex + direction)));
+        this.setActiveIndex(
+          Math.max(0, Math.min(this.options.length - 1, this.activeIndex + direction)),
+        );
       }
       return;
     }
@@ -136,18 +150,20 @@ export class EnrollmentSelectComponent implements ControlValueAccessor,OnDestroy
   private openList(fromEnd = false): void {
     if (!this.options.length) return;
     this.open = true;
-    const list=this.optionList?.nativeElement;
-    if(list&&list.parentElement!==document.body)this.renderer.appendChild(document.body,list);
-    const selectedIndex = this.options.findIndex(option => option.value === this.value);
-    this.activeIndex = selectedIndex >= 0 ? selectedIndex : (fromEnd ? this.options.length - 1 : 0);
+    const list = this.optionList?.nativeElement;
+    if (list && list.parentElement !== document.body)
+      this.renderer.appendChild(document.body, list);
+    const selectedIndex = this.options.findIndex((option) => option.value === this.value);
+    this.activeIndex = selectedIndex >= 0 ? selectedIndex : fromEnd ? this.options.length - 1 : 0;
     requestAnimationFrame(() => this.positionList());
   }
 
   private close(): void {
     this.open = false;
     this.onTouched();
-    const list=this.optionList?.nativeElement;
-    if(list?.parentElement===document.body)this.renderer.appendChild(this.element.nativeElement,list);
+    const list = this.optionList?.nativeElement;
+    if (list?.parentElement === document.body)
+      this.renderer.appendChild(this.element.nativeElement, list);
   }
 
   @HostListener('window:resize')
@@ -173,7 +189,16 @@ export class EnrollmentSelectComponent implements ControlValueAccessor,OnDestroy
       list.style.maxHeight = `${this.maxHeight}px`;
     }
     const computed = getComputedStyle(trigger);
-    for (const variable of ['--card', '--bd', '--tx', '--mu', '--lb', '--lb2', '--navy2', '--blue']) {
+    for (const variable of [
+      '--card',
+      '--bd',
+      '--tx',
+      '--mu',
+      '--lb',
+      '--lb2',
+      '--navy2',
+      '--blue',
+    ]) {
       const value = computed.getPropertyValue(variable).trim();
       if (value) this.optionList?.nativeElement.style.setProperty(variable, value);
     }
@@ -186,7 +211,9 @@ export class EnrollmentSelectComponent implements ControlValueAccessor,OnDestroy
   }
 
   private scrollActiveOptionIntoView(): void {
-    const option = this.optionList?.nativeElement.querySelector<HTMLElement>(`[data-option-index="${this.activeIndex}"]`);
+    const option = this.optionList?.nativeElement.querySelector<HTMLElement>(
+      `[data-option-index="${this.activeIndex}"]`,
+    );
     if (option && typeof option.scrollIntoView === 'function') {
       option.scrollIntoView({ block: 'nearest' });
     }
@@ -195,24 +222,30 @@ export class EnrollmentSelectComponent implements ControlValueAccessor,OnDestroy
   private search(character: string): void {
     this.typeahead += character.toLocaleLowerCase();
     if (this.typeaheadTimer) clearTimeout(this.typeaheadTimer);
-    this.typeaheadTimer = setTimeout(() => this.typeahead = '', 700);
+    this.typeaheadTimer = setTimeout(() => (this.typeahead = ''), 700);
     const start = this.activeIndex + 1;
     const ordered = [...this.options.slice(start), ...this.options.slice(0, start)];
-    const match = ordered.find(option => option.label.toLocaleLowerCase().startsWith(this.typeahead));
+    const match = ordered.find((option) =>
+      option.label.toLocaleLowerCase().startsWith(this.typeahead),
+    );
     if (match) {
       if (!this.open) this.openList();
       this.setActiveIndex(this.options.indexOf(match));
     }
   }
 
-  constructor(private element: ElementRef<HTMLElement>,private renderer:Renderer2) {
-    window.addEventListener('scroll',this.scrollHandler,true);
+  constructor(
+    private element: ElementRef<HTMLElement>,
+    private renderer: Renderer2,
+  ) {
+    window.addEventListener('scroll', this.scrollHandler, true);
   }
 
-  ngOnDestroy():void {
-    window.removeEventListener('scroll',this.scrollHandler,true);
-    if(this.typeaheadTimer)clearTimeout(this.typeaheadTimer);
-    const list=this.optionList?.nativeElement;
-    if(list?.parentElement===document.body)this.renderer.appendChild(this.element.nativeElement,list);
+  ngOnDestroy(): void {
+    window.removeEventListener('scroll', this.scrollHandler, true);
+    if (this.typeaheadTimer) clearTimeout(this.typeaheadTimer);
+    const list = this.optionList?.nativeElement;
+    if (list?.parentElement === document.body)
+      this.renderer.appendChild(this.element.nativeElement, list);
   }
 }

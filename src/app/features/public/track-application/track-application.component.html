@@ -1,0 +1,103 @@
+<main class="track-page">
+  <section class="track-card" aria-labelledby="track-title">
+    <a class="close-link" routerLink="/" aria-label="Back to home">
+      <app-icon name="x" [size]="16" />
+    </a>
+
+    <header class="track-heading">
+      <span class="track-icon"><app-icon name="file" [size]="22" /></span>
+      <div>
+        <h1 id="track-title">Track Your Application</h1>
+        <p>Enter the reference number and e-mail address used when you applied.</p>
+      </div>
+    </header>
+
+    <form class="track-form" (ngSubmit)="track()">
+      <app-field label="Reference number" for="tracking-reference">
+        <input
+          id="tracking-reference"
+          name="reference"
+          [(ngModel)]="reference"
+          required
+          autocomplete="off"
+          placeholder="e.g. ENR-2026-ABC123"
+        />
+      </app-field>
+      <app-field label="E-mail address" for="tracking-email">
+        <input
+          id="tracking-email"
+          name="email"
+          type="email"
+          [(ngModel)]="email"
+          required
+          autocomplete="email"
+          placeholder="Enter the e-mail used in your application"
+        />
+      </app-field>
+      @if (error) {
+        <p class="track-error" role="alert">{{ error }}</p>
+      }
+      <button class="btn track-submit" type="submit" [disabled]="busy">
+        @if (busy) {
+          <span class="sp"></span>
+        }
+        {{ busy ? 'Checking…' : 'Check application status' }}
+      </button>
+    </form>
+
+    @if (application; as result) {
+      <section class="track-result" aria-live="polite" aria-labelledby="result-title">
+        <div class="result-heading">
+          <div>
+            <h2 id="result-title">Application status</h2>
+            <p>Reference number: <strong>{{ result.ref }}</strong></p>
+          </div>
+          <span class="status-badge" [class]="statusClass">{{ result.st }}</span>
+        </div>
+        <dl class="result-details">
+          <div>
+            <dt>Applicant</dt>
+            <dd>{{ result.name }}</dd>
+          </div>
+          <div>
+            <dt>Program</dt>
+            <dd>{{ result.prog }}</dd>
+          </div>
+          @if (result.academic_year) {
+            <div>
+              <dt>Academic year</dt>
+              <dd>{{ result.academic_year }}</dd>
+            </div>
+          }
+          @if (result.semester) {
+            <div>
+              <dt>Semester</dt>
+              <dd>{{ result.semester }}</dd>
+            </div>
+          }
+        </dl>
+        @if (result.note) {
+          <p class="review-note"><strong>Note from the registrar:</strong> {{ result.note }}</p>
+        }
+        @if (result.log.length) {
+          <div class="status-history">
+            <h3>Status history</h3>
+            <ol>
+              @for (entry of result.log; track $index) {
+                <li>
+                  <span>{{ entry[1] }}</span>
+                  <time>{{ entry[0] | displayDate }}</time>
+                </li>
+              }
+            </ol>
+          </div>
+        }
+      </section>
+    }
+
+    <footer class="track-footer">
+      <span>Haven’t applied yet?</span>
+      <a routerLink="/enroll">Start an application</a>
+    </footer>
+  </section>
+</main>

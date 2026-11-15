@@ -1,7 +1,12 @@
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { COMMON } from '../../../shared/common';
 import { AuthService } from '../../../core/auth.service';
-import { DataService, SectionOverview, SectionStudent, SectionSummary } from '../../../core/data.service';
+import {
+  DataService,
+  SectionOverview,
+  SectionStudent,
+  SectionSummary,
+} from '../../../core/data.service';
 
 @Component({
   selector: 'app-section-overview',
@@ -18,9 +23,13 @@ export class SectionOverviewComponent {
   search = '';
   semester = '';
   academicYear = '';
+  sectionTotal = 0;
   semesterOptions: string[] = [];
   academicYearOptions: string[] = [];
   studentSearch = '';
+  sectionPage = 1;
+  studentTotal = 0;
+  studentPage = 1;
   loading = false;
   studentsLoading = false;
   error = '';
@@ -45,11 +54,11 @@ export class SectionOverviewComponent {
 
   private async initialize(): Promise<void> {
     try {
-      await Promise.all([
-        this.d.loadAcademicYear().catch(() => ''),
-        this.load(),
-      ]);
-      if (this.d.currentAcademicYear && this.academicYearOptions.includes(this.d.currentAcademicYear)) {
+      await Promise.all([this.d.loadAcademicYear().catch(() => ''), this.load()]);
+      if (
+        this.d.currentAcademicYear &&
+        this.academicYearOptions.includes(this.d.currentAcademicYear)
+      ) {
         this.academicYear = this.d.currentAcademicYear;
         await this.load();
       }
@@ -59,22 +68,38 @@ export class SectionOverviewComponent {
     }
   }
 
-  async load(): Promise<void> {
+  async load(page = 1): Promise<void> {
     const request = ++this.sectionRequest;
     this.loading = true;
     this.error = '';
     try {
-      const result = await this.d.loadSections(this.role, this.search, this.semester, this.academicYear);
+      const optionsRequest = !this.filterOptionsLoaded
+        ? this.d.loadSections(this.role, '', '', '', 1, 50)
+        : Promise.resolve(null);
+      const [result, options] = await Promise.all([
+        this.d.loadSections(this.role, this.search, this.semester, this.academicYear, page, 10),
+        optionsRequest,
+      ]);
       if (request !== this.sectionRequest) return;
       this.sections = result.data;
+      this.sectionPage = result.current_page;
+      this.sectionTotal = result.total;
       this.summary = result.summary;
-      if (!this.filterOptionsLoaded && !this.semester && !this.academicYear && !this.search) {
-        this.semesterOptions = [...new Set(
-          result.data.map(section => section.semester).filter((value): value is string => !!value)
-        )].sort();
-        this.academicYearOptions = [...new Set(
-          result.data.map(section => section.academic_year).filter((value): value is string => !!value)
-        )].sort((a, b) => b.localeCompare(a));
+      if (options) {
+        this.semesterOptions = [
+          ...new Set(
+            options.data
+              .map((section) => section.semester)
+              .filter((value): value is string => !!value),
+          ),
+        ].sort();
+        this.academicYearOptions = [
+          ...new Set(
+            options.data
+              .map((section) => section.academic_year)
+              .filter((value): value is string => !!value),
+          ),
+        ].sort((a, b) => b.localeCompare(a));
         this.filterOptionsLoaded = true;
       }
     } catch {
@@ -85,16 +110,26 @@ export class SectionOverviewComponent {
     }
   }
 
-  async open(section: SectionOverview): Promise<void> {
+  async open(section: SectionOverview, page = 1): Promise<void> {
+    this.studentPage = page;
     const request = ++this.studentRequest;
     this.selected = section;
     this.students = [];
+    this.studentTotal = 0;
     this.studentsLoading = true;
     this.studentsError = '';
     try {
-      const result = await this.d.loadSectionStudents(this.role, section, this.studentSearch);
+      const result = await this.d.loadSectionStudents(
+        this.role,
+        section,
+        this.studentSearch,
+        page,
+        10,
+      );
       if (request !== this.studentRequest) return;
       this.students = result.data;
+      this.studentPage = result.current_page;
+      this.studentTotal = result.total;
     } catch {
       this.studentsError = 'Students could not be loaded. Check your connection and try again.';
     } finally {
@@ -104,7 +139,7 @@ export class SectionOverviewComponent {
   }
 
   async searchStudents(): Promise<void> {
-    if (this.selected) await this.open(this.selected);
+    if (this.selected) await this.open(this.selected, 1);
   }
 
   searchChanged(): void {
@@ -113,6 +148,7 @@ export class SectionOverviewComponent {
   }
 
   studentSearchChanged(): void {
+    this.studentPage = 1;
     if (this.studentSearchTimer) clearTimeout(this.studentSearchTimer);
     this.studentSearchTimer = setTimeout(() => void this.searchStudents(), 250);
   }

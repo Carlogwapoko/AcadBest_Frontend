@@ -1,14 +1,255 @@
-<div class="feature-content"><div class="tabs"><button [class.on]="tab=='g'" (click)="tab='g'">Grades</button><button [class.on]="tab=='s'" (click)="tab='s'">Schedule</button><button [class.on]="tab=='e'" (click)="tab='e'">Enrollment</button></div>
-<div class="r2 semester-filters"><app-field label="Semester"><app-dropdown [(ngModel)]="semesterFilter">@for(x of semesters;track x){<option>{{x}}</option>}</app-dropdown></app-field>
-<app-field label="Academic year"><app-dropdown [(ngModel)]="academicYearFilter">@for(x of academicYears;track x){<option>{{x}}</option>}</app-dropdown></app-field></div>
-@if(!rows.length){@if(!d.loading&&!d.loadError){<div class="empty"><div class="eic"><app-icon name="inbox" [size]="24"/></div>No records found. No subjects assigned yet. Please wait for the registrar to set your subjects.</div>}}
-@else if(tab=='g'){<div class="tw"><table><tr><th>Code</th><th>Subject</th><th>Prelim</th><th>Midterm</th><th>Final</th><th>Overall Grade</th><th>Standing</th></tr>
-@for(r of rows;track r.code){<tr class="cl" (click)="sel=r"><td>{{r.code}}</td><td>{{r.n}}</td>@for(v of r.g;track $index){<td>{{d.f1(v)}}</td>}<td><b>{{d.overallGrade(r.avg)}}</b></td><td><span class="chip" [class]="r.sd[1]">{{r.sd[0]}}</span></td></tr>}</table></div>
-<p style="color:var(--mu);font-size:12px">Overall Grade is the equal-weight average of Prelim, Midterm, and Final. It remains Incomplete until all three grades are recorded.</p>}
-@else if(tab=='s'){<div class="tw"><table><tr><th>Day</th><th>Time</th><th>Code</th><th>Subject</th><th>Section</th><th>Room</th></tr>@for(r of scheduleRows;track r.code){<tr class="cl" (click)="sel=r"><td>{{r.scheduleDays||'—'}}</td><td>{{r.scheduleTime||'—'}}</td><td>{{r.code}}</td><td>{{r.n}}</td><td>{{r.section}}</td><td>{{r.scheduleRoom||'—'}}</td></tr>}</table></div>}
-@else{<div class="grid g2" style="margin-bottom:20px"><div class="card" style="padding:18px 20px"><small style="color:var(--mu)">Status</small><div style="margin-top:8px"><span class="chip ok">Officially Enrolled</span></div></div><div class="card" style="padding:18px 20px"><small style="color:var(--mu)">Program</small><div style="margin-top:8px;font-weight:500">{{s.prog}}@if(s.major){ · {{s.major}}} · {{d.yearLevelLabel(s.yr)}} · Section {{s.sec}}</div><small style="color:var(--mu)">School ID {{s.school_id||'—'}} · {{s.academic_year||'Academic year not recorded'}} · {{s.session||'Session not recorded'}} · {{semesterFilter==='All'?'All semesters':semesterFilter}} · {{academicYearFilter==='All'?'All academic years':academicYearFilter}}</small></div></div>
-<div class="tw"><table><tr><th>Code</th><th>Subject</th><th>Units</th></tr>@for(r of rows;track r.code){<tr><td>{{r.code}}</td><td>{{r.n}}</td><td>{{r.u}}</td></tr>}</table></div>
-<div style="display:flex;justify-content:flex-end;margin-top:16px;padding:12px 16px;background:var(--lb);border-radius:10px"><b>Total units: {{totalUnits}}</b></div>}</div>
-<app-modal [open]="!!sel" [title]="sel?sel.code+' – '+sel.n:''" (closed)="sel=null">@if(sel){<p>Instructors: {{d.facultyNames(d.facultyIds(sel))||'Unassigned'}}<br>{{sel.d}} · {{sel.tm}} · {{sel.r}} · {{sel.u}} units</p>
-<p>Prelim {{d.f1(sel.g[0])}} · Midterm {{d.f1(sel.g[1])}} · Final {{d.f1(sel.g[2])}}<br>Overall Grade: <b>{{d.overallGrade(sel.avg)}}</b> <span class="chip" [class]="sel.sd[1]">{{sel.sd[0]}}</span></p>
-}</app-modal>
+<div class="feature-content">
+  <div class="tabs">
+    <button [class.on]="tab == 'g'" (click)="tab = 'g'">Grades</button
+    ><button [class.on]="tab == 's'" (click)="tab = 's'">Schedule</button
+    ><button [class.on]="tab == 'e'" (click)="tab = 'e'">Enrollment</button>
+  </div>
+  <section class="student-academic-filters" aria-label="Filter academic records">
+    <div class="student-academic-filters-heading">
+      <div>
+        <h3>Academic filters</h3>
+        <p>Choose a semester, term, and school year to narrow your records.</p>
+      </div>
+      <span class="student-filter-count">{{ rows.length }} subjects</span>
+    </div>
+    <div class="student-filter-grid">
+      <app-field label="Semester"
+        ><app-dropdown [(ngModel)]="semesterFilter" (ngModelChange)="resetPages()">
+          @for (x of semesters; track x) {
+            <option>{{ x }}</option>
+          }
+        </app-dropdown></app-field
+      >
+      <app-field label="Term"
+        ><app-dropdown [(ngModel)]="termFilter" (ngModelChange)="resetPages()">
+          @for (term of terms; track term) {
+            <option>{{ term }}</option>
+          }
+        </app-dropdown></app-field
+      >
+      <app-field label="Academic year"
+        ><app-dropdown [(ngModel)]="academicYearFilter" (ngModelChange)="resetPages()">
+          @for (x of academicYears; track x) {
+            <option>{{ x }}</option>
+          }
+        </app-dropdown></app-field
+      >
+    </div>
+  </section>
+  @if (!rows.length) {
+    @if (!d.loading && !d.loadError) {
+      <div class="empty">
+        <div class="eic"><app-icon name="inbox" [size]="24" /></div>
+        No records found. No subjects assigned yet. Please wait for the registrar to set your
+        subjects.
+      </div>
+    }
+  } @else if (tab == 'g') {
+    <section class="student-record-section">
+      <header class="student-record-heading">
+        <div>
+          <h3>Grade overview</h3>
+          <p>Review your grading periods and overall academic standing.</p>
+        </div>
+      </header>
+      <div class="tw student-record-table">
+        <table>
+          <tr>
+            <th>Code</th>
+            <th>Subject</th>
+            <th>Term</th>
+            <th>Prelim</th>
+            <th>Midterm</th>
+            <th>Final</th>
+            <th>Overall Grade</th>
+            <th>Standing</th>
+          </tr>
+          @for (r of rows | paginate: gradesPage; track r.code) {
+            <tr class="cl" (click)="sel = r">
+              <td>{{ r.code }}</td>
+              <td>{{ r.n }}</td>
+              <td>{{ r.term || '—' }}</td>
+              @for (v of r.g; track $index) {
+                <td>{{ d.f1(v) }}</td>
+              }
+              <td>
+                <b>{{ d.overallGrade(r.avg) }}</b>
+              </td>
+              <td>
+                <span class="chip" [class]="r.sd[1]">{{ r.sd[0] }}</span>
+              </td>
+            </tr>
+          }
+        </table>
+      </div>
+      <app-table-pagination
+        [page]="gradesPage"
+        [totalItems]="rows.length"
+        label="subjects"
+        (pageChange)="gradesPage = $event"
+      />
+      <p style="color: var(--mu); font-size: 12px">
+        Overall Grade is the equal-weight average of Prelim, Midterm, and Final. It remains
+        Incomplete until all three grades are recorded.
+      </p>
+    </section>
+  } @else if (tab == 's') {
+    <section class="student-record-section">
+      <header class="student-record-heading">
+        <div>
+          <h3>Class schedule</h3>
+          <p>Your assigned classes, meeting times, instructors, and rooms.</p>
+        </div>
+      </header>
+      <div class="tw student-record-table">
+        <table>
+          <tr>
+            <th>Day</th>
+            <th>Time</th>
+            <th>Code</th>
+            <th>Subject</th>
+            <th>Term</th>
+            <th>Section</th>
+            <th>Instructor Name</th>
+            <th>Room</th>
+          </tr>
+          @for (r of scheduleRows | paginate: schedulePage; track r.code) {
+            <tr class="cl" (click)="sel = r">
+              <td>{{ r.scheduleDays || '—' }}</td>
+              <td>{{ r.scheduleTime | displayTime }}</td>
+              <td>{{ r.code }}</td>
+              <td>{{ r.n }}</td>
+              <td>{{ r.term || '—' }}</td>
+              <td>{{ r.section }}</td>
+              <td>{{ r.instructorName }}</td>
+              <td>{{ r.scheduleRoom || '—' }}</td>
+            </tr>
+          }
+        </table>
+      </div>
+      <app-table-pagination
+        [page]="schedulePage"
+        [totalItems]="scheduleRows.length"
+        label="classes"
+        (pageChange)="schedulePage = $event"
+      />
+    </section>
+  } @else {
+    <section class="student-record-section">
+      <header class="student-record-heading">
+        <div>
+          <h3>Enrollment overview</h3>
+          <p>Your current enrollment details and registered subjects.</p>
+        </div>
+      </header>
+      <div class="enrollment-summary">
+        <article class="enrollment-summary-card enrollment-status-card">
+          <span class="enrollment-summary-label">Enrollment status</span>
+          <span class="chip ok">Officially Enrolled</span>
+        </article>
+        <article class="enrollment-summary-card">
+          <span class="enrollment-summary-label">Program</span>
+          <strong>{{ s.prog }}</strong>
+          @if (s.major) {
+            <span class="enrollment-summary-detail">{{ s.major }}</span>
+          }
+          <span>{{ d.yearLevelLabel(s.yr) }} · Section {{ s.sec }}</span>
+        </article>
+        <article class="enrollment-summary-card">
+          <span class="enrollment-summary-label">School ID</span>
+          <strong>{{ s.school_id || '—' }}</strong>
+        </article>
+        <article class="enrollment-summary-card">
+          <span class="enrollment-summary-label">School year & session</span>
+          <strong>{{ s.academic_year || 'Not recorded' }}</strong>
+          <span>{{ s.session || 'Session not recorded' }}</span>
+        </article>
+      </div>
+      <div class="student-record-heading enrollment-subject-heading">
+        <div>
+          <h4>Registered subjects</h4>
+          <p>{{ rows.length }} subjects in the selected academic period.</p>
+        </div>
+        <span class="enrollment-units-badge">{{ totalUnits }} total units</span>
+      </div>
+      <div class="tw student-record-table">
+        <table>
+          <tr>
+            <th>Code</th>
+            <th>Subject</th>
+            <th>Term</th>
+            <th>Units</th>
+          </tr>
+          @for (r of rows | paginate: enrollmentPage; track r.code) {
+            <tr>
+              <td>{{ r.code }}</td>
+              <td>{{ r.n }}</td>
+              <td>{{ r.term || '—' }}</td>
+              <td>{{ r.u }}</td>
+            </tr>
+          }
+        </table>
+      </div>
+      <app-table-pagination
+        [page]="enrollmentPage"
+        [totalItems]="rows.length"
+        label="subjects"
+        (pageChange)="enrollmentPage = $event"
+      />
+    </section>
+  }
+</div>
+<app-modal [open]="!!sel" [title]="sel ? sel.code + ' – ' + sel.n : ''" (closed)="sel = null">
+  @if (sel) {
+    <div class="student-subject-modal">
+      <section class="subject-modal-section subject-info">
+        <h4>Subject info</h4>
+        <div class="subject-info-grid">
+          <div>
+            <small>Instructor</small><b>{{ sel.instructorName }}</b>
+          </div>
+          <div>
+            <small>Units</small><b>{{ sel.u }} units</b>
+          </div>
+          <div>
+            <small>Term</small><b>{{ sel.term || '—' }}</b>
+          </div>
+        </div>
+        @if (sel.d || sel.tm || sel.r) {
+          <div class="subject-schedule">
+            @if (sel.d) {
+              <span>{{ sel.d }}</span>
+            }
+            @if (sel.tm) {
+              <span>{{ sel.tm | displayTime }}</span>
+            }
+            @if (sel.r) {
+              <span>{{ sel.r }}</span>
+            }
+          </div>
+        }
+      </section>
+      <section class="subject-modal-section">
+        <h4>Grades</h4>
+        <div class="grade-boxes">
+          <div>
+            <small>Prelim</small><b>{{ d.f1(sel.g[0]) }}</b>
+          </div>
+          <div>
+            <small>Midterm</small><b>{{ d.f1(sel.g[1]) }}</b>
+          </div>
+          <div>
+            <small>Final</small><b>{{ d.f1(sel.g[2]) }}</b>
+          </div>
+        </div>
+      </section>
+      <section class="subject-modal-section overall-grade">
+        <small>Overall Grade</small>
+        <div>
+          <b>{{ d.overallGrade(sel.avg) }}</b
+          ><span class="chip" [class]="sel.sd[1]">{{ sel.sd[0] }}</span>
+        </div>
+      </section>
+    </div>
+  }
+</app-modal>

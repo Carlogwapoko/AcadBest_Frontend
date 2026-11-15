@@ -1,0 +1,25 @@
+<div class="table-pagination">
+  <span>{{ totalItems }} {{ label }} · Page {{ page }} of {{ lastPage }}</span>
+  <span class="pagination-actions">
+    <button
+      class="btn sec sm pagination-arrow"
+      type="button"
+      aria-label="Previous page"
+      title="Previous page"
+      [disabled]="loading || page <= 1"
+      (click)="goTo(page - 1)"
+    >
+      ←
+    </button>
+    <button
+      class="btn sm pagination-arrow"
+      type="button"
+      aria-label="Next page"
+      title="Next page"
+      [disabled]="loading || page >= lastPage"
+      (click)="goTo(page + 1)"
+    >
+      →
+    </button>
+  </span>
+</div>

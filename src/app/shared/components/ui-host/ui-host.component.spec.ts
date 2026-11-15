@@ -5,40 +5,47 @@ import { UiService } from '../../../core/ui.service';
 import { ModalComponent } from '../modal/modal.component';
 import { UiHostComponent } from './ui-host.component';
 
-describe('UiHostComponent',()=>{
-  beforeEach(async()=>{
+describe('UiHostComponent', () => {
+  beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports:[UiHostComponent,ModalComponent],
-      providers:[provideRouter([])],
+      imports: [UiHostComponent, ModalComponent],
+      providers: [provideRouter([])],
     }).compileComponents();
-    TestBed.inject(AuthService).user = {id:1,name:'Test User',email:'test@example.com',phone:'',role:'Student',act:true};
+    TestBed.inject(AuthService).user = {
+      id: 1,
+      name: 'Test User',
+      email: 'test@example.com',
+      phone: '',
+      role: 'Student',
+      act: true,
+    };
   });
 
-  it('creates and renders the standalone component',()=>{
-    const fixture=TestBed.createComponent(UiHostComponent);
+  it('creates and renders the standalone component', () => {
+    const fixture = TestBed.createComponent(UiHostComponent);
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
     expect(fixture.debugElement.componentInstance).toBe(fixture.componentInstance);
   });
 
-  it('renders toast messages in its live region',()=>{
-    const fixture=TestBed.createComponent(UiHostComponent);
+  it('renders toast messages in its live region', () => {
+    const fixture = TestBed.createComponent(UiHostComponent);
     TestBed.inject(UiService).toast('Saved successfully.');
     fixture.detectChanges();
 
-    const toast:HTMLElement|null=fixture.nativeElement.querySelector('#toast');
+    const toast: HTMLElement | null = fixture.nativeElement.querySelector('#toast');
     expect(toast?.getAttribute('aria-live')).toBe('polite');
     expect(toast?.textContent).toContain('Saved successfully.');
     expect(toast?.querySelector('.t.ok')).not.toBeNull();
     fixture.destroy();
   });
 
-  it('locks background scrolling while a confirmation overlay is open',async()=>{
-    document.body.style.overflow='auto';
-    const fixture=TestBed.createComponent(UiHostComponent);
-    const ui=TestBed.inject(UiService);
+  it('locks background scrolling while a confirmation overlay is open', async () => {
+    document.body.style.overflow = 'auto';
+    const fixture = TestBed.createComponent(UiHostComponent);
+    const ui = TestBed.inject(UiService);
     fixture.detectChanges();
-    const answer=ui.confirm('Confirm','Continue?');
+    const answer = ui.confirm('Confirm', 'Continue?');
     fixture.detectChanges();
     expect(document.body.style.overflow).toBe('hidden');
     ui.answer(false);
@@ -46,19 +53,19 @@ describe('UiHostComponent',()=>{
     await answer;
     expect(document.body.style.overflow).toBe('auto');
     fixture.destroy();
-    document.body.style.overflow='';
+    document.body.style.overflow = '';
   });
 
-  it('keeps scrolling locked when a confirmation closes over an open feature modal',async()=>{
-    document.body.style.overflow='auto';
-    const modal=TestBed.createComponent(ModalComponent);
-    modal.componentRef.setInput('open',true);
+  it('keeps scrolling locked when a confirmation closes over an open feature modal', async () => {
+    document.body.style.overflow = 'auto';
+    const modal = TestBed.createComponent(ModalComponent);
+    modal.componentRef.setInput('open', true);
     modal.detectChanges();
-    const fixture=TestBed.createComponent(UiHostComponent);
-    const ui=TestBed.inject(UiService);
+    const fixture = TestBed.createComponent(UiHostComponent);
+    const ui = TestBed.inject(UiService);
     fixture.detectChanges();
 
-    const answer=ui.confirm('Confirm','Continue?');
+    const answer = ui.confirm('Confirm', 'Continue?');
     fixture.detectChanges();
     expect(document.body.style.overflow).toBe('hidden');
 
@@ -70,6 +77,6 @@ describe('UiHostComponent',()=>{
     modal.destroy();
     expect(document.body.style.overflow).toBe('auto');
     fixture.destroy();
-    document.body.style.overflow='';
+    document.body.style.overflow = '';
   });
 });

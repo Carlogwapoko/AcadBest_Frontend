@@ -25,11 +25,11 @@ export class PortalNotificationsComponent {
 
   get list(): Notif[] {
     const userId = this.auth.user?.id;
-    return userId ? this.d.notifications.filter(item => item.user_id === userId) : [];
+    return userId ? this.d.notifications.filter((item) => item.user_id === userId) : [];
   }
 
   get unread(): number {
-    return this.list.filter(item => !item.read).length;
+    return this.list.filter((item) => !item.read).length;
   }
 
   async read(notification: Notif): Promise<void> {
@@ -67,7 +67,9 @@ export class PortalNotificationsComponent {
   }
 
   private message(error: unknown, fallback: string): string {
-    return (error as { error?: { message?: string } })?.error?.message
-      || (error instanceof Error ? error.message : fallback);
+    return (
+      (error as { error?: { message?: string } })?.error?.message ||
+      (error instanceof Error ? error.message : fallback)
+    );
   }
 }

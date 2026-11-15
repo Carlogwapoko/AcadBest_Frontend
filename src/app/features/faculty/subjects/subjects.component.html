@@ -1,18 +1,189 @@
 <div class="card faculty-subjects-card">
-<div class="tabs session-tabs" role="tablist" aria-label="Class session">
-@for(value of sessions;track value){<button type="button" role="tab" [attr.aria-selected]="session===value" [class.on]="session===value" (click)="session=value">{{value}}</button>}
+  <div class="tabs session-tabs" role="tablist" aria-label="Class session">
+    @for (value of sessions; track value) {
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="session === value"
+        [class.on]="session === value"
+        (click)="session = value; page = 1"
+      >
+        {{ value }}
+      </button>
+    }
+  </div>
+  <div class="r2 subject-scope">
+    <app-field label="Semester"
+      ><app-dropdown [(ngModel)]="semester" (ngModelChange)="page = 1">
+        @for (value of semesters; track value) {
+          <option>{{ value }}</option>
+        }
+      </app-dropdown></app-field
+    >
+    <app-field label="Term"
+      ><app-dropdown [(ngModel)]="term" (ngModelChange)="page = 1">
+        @for (value of terms; track value) {
+          <option>{{ value }}</option>
+        }
+      </app-dropdown></app-field
+    >
+    <app-field label="Academic Year"
+      ><app-dropdown [(ngModel)]="academicYear" (ngModelChange)="page = 1">
+        @for (value of academicYears; track value) {
+          <option>{{ value }}</option>
+        }
+      </app-dropdown></app-field
+    >
+  </div>
+  @if (!assignments.length) {
+    @if (!d.loading && !d.loadError) {
+      <div class="empty">
+        <div class="eic"><app-icon name="book" [size]="24" /></div>
+        No subjects are assigned to you for this session and term.
+      </div>
+    }
+  } @else {
+    <div class="tw subject-table-wrap">
+      <table class="subject-table">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Subject</th>
+            <th>Units</th>
+            <th>Schedule</th>
+            <th>Semester</th>
+            <th>Term</th>
+            <th>Academic Year</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (
+            item of assignments | paginate: page;
+            track item.code +
+              '-' +
+              item.semester +
+              '-' +
+              item.academic_year +
+              '-' +
+              item.section +
+              '-' +
+              item.session
+          ) {
+            <tr>
+              <td>
+                <b>{{ item.code }}</b>
+              </td>
+              <td>{{ item.subject }}</td>
+              <td>{{ item.units }}</td>
+              <td>
+                {{ item.days || '—' }}
+                @if (item.start !== '—' && item.end !== '—') {
+                  · {{ item.start | displayTime }}–{{ item.end | displayTime }}
+                }
+                @if (item.room !== '—') {
+                  · {{ item.room }}
+                }
+              </td>
+              <td>{{ item.semester }}</td>
+              <td>{{ item.term || '—' }}</td>
+              <td>{{ item.academic_year }}</td>
+              <td>
+                <div class="subject-actions">
+                  <button type="button" class="btn sm sec" (click)="openClass(item)">
+                    <app-icon name="eye" [size]="14" />View Class</button
+                  ><a
+                    class="btn sm"
+                    routerLink="../grade-entry"
+                    [queryParams]="{
+                      s: item.code,
+                      semester: item.semester,
+                      academic_year: item.academic_year,
+                      section: item.section,
+                      session: item.session,
+                    }"
+                    ><app-icon name="edit" [size]="14" />Grade Entry</a
+                  >
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-table-pagination
+      [page]="page"
+      [totalItems]="assignments.length"
+      label="classes"
+      (pageChange)="page = $event"
+    />
+  }
 </div>
-<div class="r2 subject-scope">
-<app-field label="Semester"><app-dropdown [(ngModel)]="semester">@for(value of semesters;track value){<option>{{value}}</option>}</app-dropdown></app-field>
-<app-field label="Academic Year"><app-dropdown [(ngModel)]="academicYear">@for(value of academicYears;track value){<option>{{value}}</option>}</app-dropdown></app-field>
-</div>
-@if(!assignments.length){@if(!d.loading&&!d.loadError){<div class="empty"><div class="eic"><app-icon name="book" [size]="24"/></div>No subjects are assigned to you for this session and term.</div>}}
-@else{<div class="tw subject-table-wrap"><table class="subject-table"><thead><tr><th>Subject Code</th><th>Subject Name</th><th>Schedule</th><th>Semester</th><th>Academic Year</th><th>Action</th></tr></thead><tbody>
-@for(item of assignments;track item.code+'-'+item.semester+'-'+item.academic_year+'-'+item.section+'-'+item.session){<tr><td><b>{{item.code}}</b></td><td>{{item.subject}}</td><td>{{item.days||'—'}}@if(item.start!=='—'&&item.end!=='—'){ · {{item.start}}–{{item.end}}}@if(item.room!=='—'){ · {{item.room}}}</td><td>{{item.semester}}</td><td>{{item.academic_year}}</td><td><div class="subject-actions"><button type="button" class="btn sm sec" (click)="sel=item"><app-icon name="eye" [size]="14"/>View Class</button><a class="btn sm" routerLink="../grade-entry" [queryParams]="{s:item.code,semester:item.semester,academic_year:item.academic_year,section:item.section,session:item.session}"><app-icon name="edit" [size]="14"/>Grade Entry</a></div></td></tr>}
-</tbody></table></div>}
-</div>
-<app-modal [open]="!!sel" [title]="sel?sel.code+' – '+sel.subject:''" (closed)="sel=null">@if(sel){
-<p class="sub class-scope">{{sel.session}} · {{sel.semester}} · {{sel.academic_year}} · Section {{sel.section}}</p>
-@if(count(sel)){<div class="tw"><table><thead><tr><th>School ID</th><th>Student Name</th><th>Program / Major / Section</th><th>Overall Grade</th></tr></thead><tbody>@for(s of d.studentsForAssignment(sel);track s.enrollment_id){<tr><td>{{s.school_id||'—'}}</td><td>{{s.name}}</td><td>{{s.prog}}@if(s.major){ · {{s.major}}} · {{d.yearLevelLabel(s.yr)}}{{s.sec}}</td><td>{{d.overallGrade(d.subjectAverage(sel.code,s.g[sel.code]||[]))}}</td></tr>}</tbody></table></div>}
-@else if(!d.loading&&!d.loadError){<div class="empty">No students are enrolled in this assigned subject, section, and term.</div>}
-<div class="acts"><a class="btn" routerLink="../grade-entry" [queryParams]="{s:sel.code,semester:sel.semester,academic_year:sel.academic_year,section:sel.section,session:sel.session}">Grade Entry</a></div>}</app-modal>
+<app-modal [open]="!!sel" [title]="sel ? sel.code + ' – ' + sel.subject : ''" (closed)="sel = null">
+  @if (sel) {
+    <p class="sub class-scope">
+      {{ sel.session }} · {{ sel.semester }} · {{ sel.academic_year }} · Section {{ sel.section }} ·
+      {{ sel.units }} units
+    </p>
+    @if (count(sel)) {
+      <div class="tw">
+        <table>
+          <thead>
+            <tr>
+              <th>School ID</th>
+              <th>Student Name</th>
+              <th>Program / Major / Section</th>
+              <th>Overall Grade</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (
+              s of d.studentsForAssignment(sel) | paginate: studentPage;
+              track s.enrollment_id
+            ) {
+              <tr>
+                <td>{{ s.school_id || '—' }}</td>
+                <td>{{ s.name }}</td>
+                <td class="student-academic-cell">
+                  <div class="student-academic-program">
+                    <strong>{{ s.prog }}</strong>
+                    @if (s.major) {
+                      <span>{{ s.major }}</span>
+                    }
+                  </div>
+                  <div class="student-academic-tags">
+                    <span class="student-academic-tag">{{ d.yearLevelLabel(s.yr) }}</span>
+                    <span class="student-academic-tag">Section {{ s.sec }}</span>
+                  </div>
+                </td>
+                <td>{{ d.overallGrade(d.subjectAverage(sel.code, s.g[sel.code] || [])) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-table-pagination
+        [page]="studentPage"
+        [totalItems]="count(sel)"
+        label="students"
+        (pageChange)="studentPage = $event"
+      />
+    } @else if (!d.loading && !d.loadError) {
+      <div class="empty">No students are enrolled in this assigned subject, section, and term.</div>
+    }
+    <div class="acts">
+      <a
+        class="btn"
+        routerLink="../grade-entry"
+        [queryParams]="{
+          s: sel.code,
+          semester: sel.semester,
+          academic_year: sel.academic_year,
+          section: sel.section,
+          session: sel.session,
+        }"
+        >Grade Entry</a
+      >
+    </div>
+  }
+</app-modal>

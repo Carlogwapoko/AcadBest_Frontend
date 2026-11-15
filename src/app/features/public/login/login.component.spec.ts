@@ -1,43 +1,56 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController,provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideRouter,Router } from '@angular/router';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter, Router } from '@angular/router';
 import { AuthService } from '../../../core/auth.service';
 import { routes } from '../../../app.routes';
 import { HOME } from '../../../core/nav';
 import { API_BASE_URL } from '../../../core/api-config';
 import { LoginComponent } from './login.component';
 
-describe('LoginComponent',()=>{
-  beforeEach(async()=>{
+describe('LoginComponent', () => {
+  beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports:[LoginComponent],
-      providers:[provideRouter(routes),provideHttpClient(),provideHttpClientTesting()],
+      imports: [LoginComponent],
+      providers: [provideRouter(routes), provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
-    TestBed.inject(AuthService).user = {id:1,name:'Test User',email:'test@example.com',phone:'',role:'Student',act:true};
+    TestBed.inject(AuthService).user = {
+      id: 1,
+      name: 'Test User',
+      email: 'test@example.com',
+      phone: '',
+      role: 'Student',
+      act: true,
+    };
   });
 
-  it('creates and renders the standalone component',()=>{
-    const fixture=TestBed.createComponent(LoginComponent);
+  it('creates and renders the standalone component', () => {
+    const fixture = TestBed.createComponent(LoginComponent);
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
     expect(fixture.debugElement.componentInstance).toBe(fixture.componentInstance);
   });
 
-  it('renders the authentication fields',()=>{
-    const fixture=TestBed.createComponent(LoginComponent);
+  it('renders the authentication fields', () => {
+    const fixture = TestBed.createComponent(LoginComponent);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('input[placeholder="Enter your email address"]')).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector('input[placeholder="Enter your email address"]'),
+    ).toBeTruthy();
     expect(fixture.nativeElement.querySelector('input[type=password]')).toBeTruthy();
     expect(fixture.nativeElement.textContent).not.toContain('Sign in as');
-    expect(fixture.nativeElement.querySelector('a[routerLink="/forgot-password"]')?.textContent).toContain('Forgot Password?');
+    expect(
+      fixture.nativeElement.querySelector('a[routerLink="/forgot-password"]')?.textContent,
+    ).toContain('Forgot Password?');
   });
 
-  it('toggles password visibility without changing the password value',()=>{
-    const fixture=TestBed.createComponent(LoginComponent);
+  it('toggles password visibility without changing the password value', () => {
+    const fixture = TestBed.createComponent(LoginComponent);
     fixture.detectChanges();
-    const input=fixture.nativeElement.querySelector('input[autocomplete="current-password"]') as HTMLInputElement;
-    input.value='secret';
+    const input = fixture.nativeElement.querySelector(
+      'input[autocomplete="current-password"]',
+    ) as HTMLInputElement;
+    input.value = 'secret';
     input.dispatchEvent(new Event('input'));
     fixture.detectChanges();
     fixture.nativeElement.querySelector('.password-toggle').click();
@@ -49,10 +62,10 @@ describe('LoginComponent',()=>{
     expect(input.type).toBe('password');
   });
 
-  it('does not submit when required credentials are missing',async()=>{
-    const auth=TestBed.inject(AuthService);
-    const login=vi.spyOn(auth,'login');
-    const fixture=TestBed.createComponent(LoginComponent);
+  it('does not submit when required credentials are missing', async () => {
+    const auth = TestBed.inject(AuthService);
+    const login = vi.spyOn(auth, 'login');
+    const fixture = TestBed.createComponent(LoginComponent);
 
     await fixture.componentInstance.go();
 
@@ -60,20 +73,28 @@ describe('LoginComponent',()=>{
     expect(fixture.componentInstance.err).toBe('Enter your email address and password.');
   });
 
-  it('redirects to the dashboard for the canonical role returned by the API',async()=>{
-    const http=TestBed.inject(HttpTestingController);
-    const router=TestBed.inject(Router);
-    const navigate=vi.spyOn(router,'navigateByUrl').mockResolvedValue(true);
-    const fixture=TestBed.createComponent(LoginComponent);
-    fixture.componentInstance.email=' test@example.com ';
-    fixture.componentInstance.pw='secret';
+  it('redirects to the dashboard for the canonical role returned by the API', async () => {
+    const http = TestBed.inject(HttpTestingController);
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.componentInstance.email = ' test@example.com ';
+    fixture.componentInstance.pw = 'secret';
 
-    const login=fixture.componentInstance.go();
-    const request=http.expectOne(`${API_BASE_URL}/auth/login`);
-    expect(request.request.body).toEqual({email:'test@example.com',password:'secret'});
-    request.flush({token:'test-token',user:{
-      id:1,name:'Test User',email:'test@example.com',role:'Registrar Staff',role_key:'registrar',active:true,
-    }});
+    const login = fixture.componentInstance.go();
+    const request = http.expectOne(`${API_BASE_URL}/auth/login`);
+    expect(request.request.body).toEqual({ email: 'test@example.com', password: 'secret' });
+    request.flush({
+      token: 'test-token',
+      user: {
+        id: 1,
+        name: 'Test User',
+        email: 'test@example.com',
+        role: 'Registrar Staff',
+        role_key: 'registrar',
+        active: true,
+      },
+    });
     await login;
 
     expect(TestBed.inject(AuthService).role).toBe('registrar');
@@ -81,18 +102,50 @@ describe('LoginComponent',()=>{
     localStorage.removeItem('acadbest.api_token');
   });
 
-  it('keeps login responsive and preserves credentials after an API failure',async()=>{
-    const http=TestBed.inject(HttpTestingController);
-    const fixture=TestBed.createComponent(LoginComponent);
-    fixture.componentInstance.email='student@example.com';
-    fixture.componentInstance.pw='entered-password';
+  it('requires temporary-password accounts to change their password before entering the portal', async () => {
+    const http = TestBed.inject(HttpTestingController);
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.componentInstance.email = 'student@example.com';
+    fixture.componentInstance.pw = 'temporary-password';
 
-    const operation=fixture.componentInstance.go();
-    await fixture.componentInstance.go();
-    const request=http.expectOne(`${API_BASE_URL}/auth/login`);
-    request.flush({errors:{email:['The provided credentials are incorrect.']}},{
-      status:422,statusText:'Unprocessable Content',
+    const login = fixture.componentInstance.go();
+    http.expectOne(`${API_BASE_URL}/auth/login`).flush({
+      token: 'temporary-token',
+      user: {
+        id: 10,
+        name: 'New Student',
+        email: 'student@example.com',
+        role: 'Student',
+        role_key: 'student',
+        active: true,
+        must_change_password: true,
+      },
     });
+    await login;
+
+    expect(navigate).toHaveBeenCalledWith('/change-password');
+    expect(navigate).not.toHaveBeenCalledWith(HOME.student);
+    localStorage.removeItem('acadbest.api_token');
+  });
+
+  it('keeps login responsive and preserves credentials after an API failure', async () => {
+    const http = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.componentInstance.email = 'student@example.com';
+    fixture.componentInstance.pw = 'entered-password';
+
+    const operation = fixture.componentInstance.go();
+    await fixture.componentInstance.go();
+    const request = http.expectOne(`${API_BASE_URL}/auth/login`);
+    request.flush(
+      { errors: { email: ['The provided credentials are incorrect.'] } },
+      {
+        status: 422,
+        statusText: 'Unprocessable Content',
+      },
+    );
     await operation;
     fixture.detectChanges();
 

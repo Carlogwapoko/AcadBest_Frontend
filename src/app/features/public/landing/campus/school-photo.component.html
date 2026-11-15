@@ -1,6 +1,36 @@
-<div class="photo-box">
+<div
+  class="photo-box"
+  role="region"
+  aria-roledescription="carousel"
+  aria-label="ACES Tagum College photos"
+>
   @if (!failed) {
-    <img [src]="src" [alt]="alt" (error)="failed = true">
+    @for (slide of slides; track slide.src; let i = $index) {
+      <img
+        [class.active]="i === currentIndex"
+        [style.transform]="'translateX(' + (i - currentIndex) * 100 + '%)'"
+        [src]="slide.src"
+        [alt]="slide.alt"
+        [attr.aria-hidden]="i !== currentIndex"
+        (error)="failed = true"
+      />
+    }
+    <button
+      class="carousel-control previous"
+      type="button"
+      aria-label="Previous image"
+      (click)="previous()"
+    >
+      <span aria-hidden="true">&lsaquo;</span>
+    </button>
+    <button
+      class="carousel-control next"
+      type="button"
+      aria-label="Next image"
+      (click)="next()"
+    >
+      <span aria-hidden="true">&rsaquo;</span>
+    </button>
   } @else {
     <div class="placeholder">
       <strong>Campus photo unavailable</strong>
@@ -8,9 +38,9 @@
     </div>
   }
   <div class="caption-bar">
-    <strong>{{caption}}</strong>
+    <strong>{{ caption }}</strong>
     @if (subcaption) {
-      <span>{{subcaption}}</span>
+      <span>{{ subcaption }}</span>
     }
   </div>
 </div>

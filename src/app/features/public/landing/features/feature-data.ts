@@ -1,8 +1,5 @@
 export type FeatureSlug =
-  | 'grades-schedule'
-  | 'service-requests'
-  | 'announcements'
-  | 'early-warning';
+  'grades-schedule' | 'service-requests' | 'announcements' | 'early-warning';
 
 export interface FeatureData {
   slug: FeatureSlug;
@@ -58,8 +55,7 @@ export const FEATURES: Record<FeatureSlug, FeatureData> = {
     title: 'Academic Early Warning',
     icon: 'alert',
     summary: 'Rule-based standing alerts help faculty support at-risk advisees early.',
-    description:
-      'Administrators configure grade thresholds; faculty see who needs help.',
+    description: 'Administrators configure grade thresholds; faculty see who needs help.',
     bullets: [
       'Configure grade thresholds for academic standing alerts.',
       'Identify advisees who may need support early.',

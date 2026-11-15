@@ -1,4 +1,22 @@
-:host{display:block;min-width:0}
-:host ::ng-deep app-dropdown[multiple]{min-width:0}
-:host ::ng-deep app-dropdown[multiple] .select-trigger span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-:host ::ng-deep app-dropdown[multiple] .select-list{min-width:220px}
+:host {
+  display: block;
+  min-width: 0;
+}
+:host ::ng-deep app-dropdown[multiple] {
+  min-width: 0;
+}
+:host ::ng-deep app-dropdown[multiple] .select-trigger span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+:host ::ng-deep app-dropdown[multiple] .select-list {
+  min-width: 220px;
+}
+.audience-hint {
+  display: block;
+  margin-top: 6px;
+  color: var(--mu);
+  font-size: 11px;
+  line-height: 1.4;
+}
