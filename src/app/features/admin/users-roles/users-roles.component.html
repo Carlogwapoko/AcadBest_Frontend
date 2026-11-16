@@ -111,11 +111,23 @@
     }
     @if (m.id) {
       <section class="account-picture-editor" aria-label="Manage user profile picture">
-        <div class="account-picture-preview">
+        <div class="account-picture-visual">
+          <div class="account-picture-preview">
+            @if (m.avatar) {
+              <img [src]="m.avatar" alt="Selected user profile picture" />
+            } @else {
+              <span>{{ avatarInitials(formName()) }}</span>
+            }
+          </div>
           @if (m.avatar) {
-            <img [src]="m.avatar" alt="Selected user profile picture" />
-          } @else {
-            <span>{{ avatarInitials(formName()) }}</span>
+            <button
+              class="btn dg sm account-picture-remove"
+              type="button"
+              (click)="removePicture()"
+              [disabled]="processingPicture"
+            >
+              Remove picture
+            </button>
           }
         </div>
         <div class="account-picture-controls">
@@ -134,16 +146,6 @@
               (change)="selectPicture($event)"
             />
             <label class="btn sec sm" for="account-profile-picture">Choose picture</label>
-            @if (m.avatar) {
-              <button
-                class="btn sec sm"
-                type="button"
-                (click)="removePicture()"
-                [disabled]="processingPicture"
-              >
-                Remove
-              </button>
-            }
             @if (processingPicture) {
               <span class="sub" role="status">Preparing picture…</span>
             }

@@ -80,6 +80,41 @@ describe('UsersRolesComponent', () => {
     ).toBe(false);
   });
 
+  it('places the remove-picture action under the selected avatar and clears it', () => {
+    const data = TestBed.inject(DataService);
+    data.users = [
+      {
+        id: 2,
+        name: 'Ada Lovelace',
+        first_name: 'Ada',
+        last_name: 'Lovelace',
+        email: 'ada@example.com',
+        role: 'Faculty',
+        act: true,
+        phone: '',
+        avatar: 'data:image/png;base64,selected-picture',
+      },
+    ];
+    const fixture = TestBed.createComponent(UsersRolesComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.open(data.users[0]);
+    fixture.detectChanges();
+
+    const visual = fixture.nativeElement.querySelector('.account-picture-visual') as HTMLElement;
+    const removeButton = visual.querySelector('button') as HTMLButtonElement;
+    expect(removeButton.textContent?.trim()).toBe('Remove picture');
+    expect(
+      fixture.nativeElement.querySelector('.account-picture-actions button'),
+    ).toBeNull();
+
+    removeButton.click();
+    fixture.detectChanges();
+
+    expect(component.m.avatar).toBeNull();
+    expect(visual.querySelector('button')).toBeNull();
+  });
+
   it('creates a faculty account without an assigned program', async () => {
     const data = TestBed.inject(DataService);
     const saveUser = vi.spyOn(data, 'saveUser').mockResolvedValue({
