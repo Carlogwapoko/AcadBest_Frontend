@@ -27,6 +27,7 @@ export class EnrollmentComponent {
   accountApplicant: Enr | null = null;
   accountSection = '';
   accountBusy = false;
+  resendingCredentials = false;
   accountError = '';
   editingParents = false;
   parentBusy = false;
@@ -129,9 +130,9 @@ export class EnrollmentComponent {
   get list() {
     return this.d.enrollments;
   }
-  async set(s: string, note?: string) {
-    if (this.busy || !this.sel) return;
-    const e = this.sel;
+  async set(s: string, note?: string, application: Enr | null = this.sel) {
+    if (this.busy || !application) return;
+    const e = application;
     this.busy = true;
     if (
       !(await this.ui.confirm(
@@ -149,7 +150,7 @@ export class EnrollmentComponent {
       await this.d.updateEnrollment(e.ref, s, note);
       await this.loadPage(this.page);
       this.ui.toast(`${e.ref} is now ${s}.`);
-      this.sel = null;
+      if (this.sel?.ref === e.ref) this.sel = null;
       this.rejecting = false;
       this.reason = '';
       this.err = '';
@@ -160,10 +161,13 @@ export class EnrollmentComponent {
       this.cdr.markForCheck();
     }
   }
+  approveEnrollment(application: Enr) {
+    void this.set('Enrolled', undefined, application);
+  }
   openAccount(application: Enr) {
-    if (!['Pending', 'Under Review', 'Enrolled'].includes(application.st) || application.acct) {
+    if (application.st !== 'Enrolled' || application.acct) {
       this.ui.toast(
-        'Only applications without an existing student account can be completed.',
+        'Approve the enrollment before creating a student account.',
         'er',
       );
       return;
@@ -189,13 +193,26 @@ export class EnrollmentComponent {
         student_status: 'New Student',
       });
       this.ui.toast(
-        `Student account created. Login credentials were emailed to ${application.email}.`,
+        `Student account created. Credentials are being sent to ${application.email}; resend them from the application details if they do not arrive.`,
       );
       this.accountApplicant = null;
     } catch (error) {
       this.accountError = this.message(error);
     } finally {
       this.accountBusy = false;
+      this.cdr.markForCheck();
+    }
+  }
+  async resendCredentials(application: Enr) {
+    if (this.resendingCredentials || !application.acct) return;
+    this.resendingCredentials = true;
+    try {
+      const result = await this.d.resendEnrollmentCredentials(application.ref);
+      this.ui.toast(`Login credentials sent to ${result.email}.`);
+    } catch (error) {
+      this.ui.toast(this.message(error), 'er');
+    } finally {
+      this.resendingCredentials = false;
       this.cdr.markForCheck();
     }
   }

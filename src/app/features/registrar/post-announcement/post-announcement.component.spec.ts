@@ -36,6 +36,26 @@ describe('PostAnnouncementComponent', () => {
     expect(buttons.some((label: string) => label?.trim() === 'Clear')).toBe(false);
   });
 
+  it('shows an optional Valid until date field', () => {
+    const fixture = TestBed.createComponent(PostAnnouncementComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const validUntilField = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('app-field'),
+    ).find(
+      (field) =>
+        field.querySelector('.field-label')?.textContent?.trim() === 'Valid until (optional)',
+    );
+
+    expect(validUntilField?.querySelector('input[type="date"]')).toBeTruthy();
+    component.f.t = 'Announcement title';
+    component.f.m = 'Announcement message with enough characters.';
+    component.f.end = '';
+    expect(component.valid()).toBe(true);
+    expect(component.build().end).toBe('');
+  });
+
   it('supports multiple audiences, Staff targeting, and student-only filters', () => {
     const fixture = TestBed.createComponent(PostAnnouncementComponent);
     const component = fixture.componentInstance;

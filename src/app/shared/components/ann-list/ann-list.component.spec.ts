@@ -76,6 +76,7 @@ describe('AnnListComponent', () => {
         by: 'Registrar',
         d: 'Nov 06',
         dt: '2026-11-06',
+        end: '2026-11-13',
         prog: 'All',
         yr: 'All',
         sec: 'All',
@@ -90,6 +91,9 @@ describe('AnnListComponent', () => {
     expect(item.querySelector('.announcement-badges')?.textContent).toContain('All Users');
     expect(item.querySelector('.announcement-badges')?.textContent).toContain('General');
     expect(item.querySelector('.announcement-date')?.textContent).toContain('November 6, 2026');
+    expect(item.querySelector('.announcement-date')?.textContent).toContain(
+      'Valid until November 13, 2026',
+    );
     expect(item.querySelector('.announcement-title')?.nextElementSibling).toBe(
       item.querySelector('.announcement-badges'),
     );

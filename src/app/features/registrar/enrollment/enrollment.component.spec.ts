@@ -66,6 +66,8 @@ describe('EnrollmentComponent', () => {
         .slice(1, 4)
         .map((cell) => cell.textContent?.trim()),
     ).toEqual(['—', 'Middle', '—']);
+    expect(cells[cells.length - 1].textContent).toContain('Approve Enrollment');
+    expect(cells[cells.length - 1].textContent).not.toContain('Create Account');
     expect(fixture.nativeElement.querySelector('td[colspan="3"]')).toBeNull();
   });
 
@@ -121,8 +123,12 @@ describe('EnrollmentComponent', () => {
     expect(component.editingParents).toBe(false);
   });
 
-  it('completes enrollment and requests a generated emailed account without a manual password', async () => {
+  it('creates an account only for an already-enrolled student without a manual password', async () => {
     const data = TestBed.inject(DataService);
+    const resend = vi.spyOn(data, 'resendEnrollmentCredentials').mockResolvedValue({
+      email: 'applicant@example.com',
+      email_sent: true,
+    });
     const complete = vi.spyOn(data, 'completeEnrollment').mockResolvedValue({
       status: 'Enrolled',
       section: 'B',
@@ -170,5 +176,11 @@ describe('EnrollmentComponent', () => {
     expect(complete).toHaveBeenCalledWith('ENR-2026-ABC123', 'B');
     expect(applicant.acct).toBe(true);
     expect(component.accountApplicant).toBeNull();
+
+    component.sel = applicant;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Resend Login Credentials');
+    await component.resendCredentials(applicant);
+    expect(resend).toHaveBeenCalledWith('ENR-2026-ABC123');
   });
 });

@@ -221,6 +221,7 @@ export interface Notif {
   t: string;
   m: string;
   d: string;
+  end?: string | null;
   read: boolean;
 }
 
@@ -277,6 +278,7 @@ export class DataService {
   students: Student[] = [];
   eligibleEnrollments: Student[] = [];
   users: User[] = [];
+  facultyUsers: User[] = [];
   requests: Req[] = [];
   anns: Ann[] = [];
   enrollments: Enr[] = [];
@@ -427,9 +429,9 @@ export class DataService {
         }));
         this.currentAcademicYear = String(data['academic_year'] ?? this.currentAcademicYear);
 
-        this.users = ((data['users'] as Array<Record<string, unknown>> | undefined) ?? []).map(
-          (user) => this.mapUser(user),
-        );
+        this.facultyUsers = (
+          (data['users'] as Array<Record<string, unknown>> | undefined) ?? []
+        ).map((user) => this.mapUser(user));
 
         this.anns = (data['announcements'] as Ann[] | undefined) ?? [];
 
@@ -481,6 +483,7 @@ export class DataService {
     this.students = [];
     this.eligibleEnrollments = [];
     this.users = [];
+    this.facultyUsers = [];
     this.requests = [];
     this.anns = [];
     this.enrollments = [];
@@ -675,12 +678,21 @@ export class DataService {
             sec: result.section,
             school_id: result.school_id,
             student_status: 'New Student',
-            log: [...item.log, [this.today, 'Enrollment completed; login credentials emailed']],
+            log: [...item.log, [this.today, 'Student account created; credentials queued for delivery']],
           }
         : item,
     );
 
     return result;
+  }
+
+  async resendEnrollmentCredentials(ref: string): Promise<{ email: string; email_sent: boolean }> {
+    return this.mutate(
+      this.http.post<{ email: string; email_sent: boolean }>(
+        `${API_BASE_URL}/enrollments/${encodeURIComponent(ref)}/credentials/resend`,
+        {},
+      ),
+    );
   }
 
   async saveApplicantSubjects(ref: string, codes: string[]): Promise<void> {
@@ -1382,7 +1394,7 @@ export class DataService {
   }
 
   facName(id: number | null): string {
-    return this.users.find((user) => user.id === id)?.name || 'Unassigned';
+    return this.facultyUsers.find((user) => user.id === id)?.name || 'Unassigned';
   }
 
   facultyIds(subject: Subject): number[] {
@@ -1395,13 +1407,13 @@ export class DataService {
 
   facultyNames(ids: number[]): string {
     return ids
-      .map((id) => this.users.find((user) => user.id === id)?.name || '')
+      .map((id) => this.facultyUsers.find((user) => user.id === id)?.name || '')
       .filter(Boolean)
       .join(', ');
   }
 
   faculty(): User[] {
-    return this.users.filter((user) => user.role === 'Faculty');
+    return this.facultyUsers;
   }
 
   mySubjects(

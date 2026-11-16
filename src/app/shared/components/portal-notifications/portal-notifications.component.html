@@ -35,8 +35,13 @@
           <span class="chip">New</span>
         }
         <br /><span class="notification-message">{{ n.m }}</span
-        ><br /><small>{{ n.d | displayDate }}</small></span
-      >
+        ><br /><small>{{ n.d | displayDate }}</small>
+        @if (n.end) {
+          <br /><small class="notification-valid-until"
+            >Valid until {{ n.end | displayDate }}</small
+          >
+        }
+      </span>
       @if (reading.has(n.id)) {
         <span class="sp" role="status" aria-label="Marking as read"></span>
       }

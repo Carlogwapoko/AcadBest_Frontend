@@ -21,7 +21,12 @@
         >{{ a.category || 'General' }}</span
       >
     </div>
-    <small class="announcement-date" style="color: var(--mu)">{{ a.dt | displayDate }}</small>
+    <small class="announcement-date" style="color: var(--mu)"
+      >{{ a.dt | displayDate }}
+      @if (a.end) {
+        · Valid until {{ a.end | displayDate }}
+      }
+    </small>
   </div>
 } @empty {
   @if (!loading) {
@@ -68,7 +73,12 @@
     @if (readError) {
       <p class="announcement-error" role="alert">{{ readError }}</p>
     }
-    <small style="color: var(--mu)">Posted by {{ sel.by }} · {{ sel.dt | displayDate }}</small>
+    <small style="color: var(--mu)"
+      >Posted by {{ sel.by }} · {{ sel.dt | displayDate }}
+      @if (sel.end) {
+        · Valid until {{ sel.end | displayDate }}
+      }
+    </small>
     @if (showReadReceipts) {
       <section class="read-confirmations" aria-label="Faculty and staff read confirmations">
         <h4>Faculty &amp; Staff Read Confirmations</h4>

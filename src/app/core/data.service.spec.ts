@@ -347,6 +347,39 @@ describe('DataService list loading', () => {
     expect(data.users[0].last_name).toBe('Last');
   });
 
+  it('keeps portal faculty lookups separate from the Users & Roles list', async () => {
+    const student = {
+      id: 2,
+      name: 'Student Account',
+      email: 'student@example.com',
+      role: 'Student',
+      act: true,
+      phone: '',
+    };
+    data.users = [student];
+
+    const load = data.load();
+    http.expectOne(`${API_BASE_URL}/portal`).flush({
+      today: '2026-11-16',
+      users: [
+        {
+          id: 3,
+          name: 'Faculty Account',
+          first_name: 'Faculty',
+          last_name: 'Account',
+          email: 'faculty@example.com',
+          role: 'Faculty',
+          active: true,
+          phone: '',
+        },
+      ],
+    });
+    await load;
+
+    expect(data.users).toEqual([student]);
+    expect(data.faculty().map((user) => user.name)).toEqual(['Faculty Account']);
+  });
+
   it('maps enrollment API name columns without splitting or rearranging them', async () => {
     const load = data.loadEnrollments();
     http.expectOne(`${API_BASE_URL}/enrollments?page=1&per_page=25&search=&status=All`).flush({
@@ -515,6 +548,21 @@ describe('DataService list loading', () => {
       section: 'B',
       school_id: '2026001460',
       account_issued: true,
+    });
+  });
+
+  it('resends login credentials for an enrolled student', async () => {
+    const operation = data.resendEnrollmentCredentials('ENR-2026-ABC123');
+    const request = http.expectOne(
+      `${API_BASE_URL}/enrollments/ENR-2026-ABC123/credentials/resend`,
+    );
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({});
+    request.flush({ email: 'student@example.com', email_sent: true });
+
+    await expect(operation).resolves.toEqual({
+      email: 'student@example.com',
+      email_sent: true,
     });
   });
 

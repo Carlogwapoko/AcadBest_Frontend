@@ -26,3 +26,7 @@
 .notification-copy small {
   color: var(--mu);
 }
+.notification-valid-until {
+  display: inline-block;
+  margin-top: 4px;
+}

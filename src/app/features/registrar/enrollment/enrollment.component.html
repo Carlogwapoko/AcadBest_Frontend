@@ -67,14 +67,23 @@
               >
             </td>
             <td>
-              @if (['Pending', 'Under Review', 'Enrolled'].includes(e.st) && !e.acct) {
+              @if (['Pending', 'Under Review'].includes(e.st)) {
+                <button
+                  class="btn sm"
+                  type="button"
+                  [disabled]="busy"
+                  (click)="$event.stopPropagation(); approveEnrollment(e)"
+                >
+                  Approve Enrollment
+                </button>
+              } @else if (e.st === 'Enrolled' && !e.acct) {
                 <button
                   class="btn sm"
                   type="button"
                   [disabled]="accountBusy"
                   (click)="$event.stopPropagation(); openAccount(e)"
                 >
-                  Complete Enrollment
+                  Create Account
                 </button>
               } @else if (e.acct) {
                 <span class="chip ok">Account created</span>
@@ -98,7 +107,7 @@
 <app-modal
   [open]="!!sel"
   [title]="sel?.ref || ''"
-  [disableClose]="busy || parentBusy"
+  [disableClose]="busy || parentBusy || resendingCredentials"
   (closed)="sel = null"
 >
   @if (sel) {
@@ -276,17 +285,30 @@
       </div>
     } @else {
       <div class="acts">
-        @if (['Pending', 'Under Review', 'Enrolled'].includes(sel.st) && !sel.acct) {
+        @if (['Pending', 'Under Review'].includes(sel.st) && !sel.acct) {
           @if (sel.st == 'Pending') {
             <button class="btn sec" [disabled]="busy" (click)="set('Under Review')">
               Mark Under Review
             </button>
           }
-          @if (sel.st !== 'Enrolled') {
-            <button class="btn dg" [disabled]="busy" (click)="rejecting = true">Reject</button>
-          }
-          <button class="btn" [disabled]="busy" (click)="openAccount(sel)">
-            Complete Enrollment
+          <button class="btn dg" [disabled]="busy" (click)="rejecting = true">Reject</button>
+          <button class="btn" [disabled]="busy" (click)="set('Enrolled')">
+            Approve Enrollment
+          </button>
+        } @else if (sel.st === 'Enrolled' && !sel.acct) {
+          <button class="btn" [disabled]="busy || accountBusy" (click)="openAccount(sel)">
+            Create Student Account
+          </button>
+        } @else if (sel.acct) {
+          <button
+            class="btn"
+            [disabled]="resendingCredentials"
+            (click)="resendCredentials(sel)"
+          >
+            @if (resendingCredentials) {
+              <span class="sp"></span>
+            }
+            Resend Login Credentials
           </button>
         }
       </div>
@@ -295,15 +317,15 @@
 </app-modal>
 <app-modal
   [open]="!!accountApplicant"
-  [title]="accountApplicant ? 'Complete enrollment' : ''"
+  [title]="accountApplicant ? 'Create student account' : ''"
   [disableClose]="accountBusy"
   (closed)="accountApplicant = null"
 >
   @if (accountApplicant) {
     <p class="sub">
-      Applicant: <b>{{ accountApplicant.name }}</b
+      Enrolled student: <b>{{ accountApplicant.name }}</b
       ><br />{{ accountApplicant.email }} · School ID
-      {{ accountApplicant.school_id || 'assigned on completion' }}
+      {{ accountApplicant.school_id || 'assigned when enrollment was approved' }}
     </p>
     <app-field label="Section" [error]="accountError"
       ><app-dropdown [(ngModel)]="accountSection" [disabled]="accountBusy"
@@ -315,9 +337,9 @@
     >
     <p class="sub">
       {{ accountApplicant.semester }} · School year {{ accountApplicant.academic_year }} · Subjects
-      will be linked for the selected section. AcadBest will generate a temporary password and email
-      the login credentials to the registered address. The student must change the password on first
-      sign-in.
+      will be linked for the selected section. Creating the account will generate a temporary
+      password and send the login credentials to the registered address. The student must change
+      the password on first sign-in.
     </p>
     <div class="acts">
       <button class="btn sec" [disabled]="accountBusy" (click)="accountApplicant = null">
@@ -326,7 +348,7 @@
         @if (accountBusy) {
           <span class="sp"></span>
         }
-        Complete Enrollment &amp; Create Account
+        Create Account &amp; Send Credentials
       </button>
     </div>
   }
